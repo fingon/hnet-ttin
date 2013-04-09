@@ -1,0 +1,70 @@
+#!/bin/sh
+# -*- sh -*-
+#
+# $Id: use-6rd-params $
+#
+# Author: Markus Stenberg <fingon@iki.fi>
+#
+# Created:       Tue Jul 23 11:01:51 2012 mstenber
+# Last modified: Mon Feb 25 13:46:09 2013 mstenber
+# Edit time:     22 min
+#
+
+LAN_INTERFACE=eth0
+DEVICE=6rd
+IPUTIL_DIRECTORY=/usr/share/lsadr
+
+#. $IPUTIL_DIRECTORY/ip-util.sh
+
+start() {
+    if [ -z "$new_option_6rd" ]
+    then
+	logger -p daemon.info -t dhclient-6rd "no 6RD parameters available"
+	return
+    fi
+    if [ "x$interface" = "x$LAN_INTERFACE" ]
+    then
+	logger -p daemon.info -t dhclient-6rd "DHCP interface $interface = LAN_INTERFACE, skipping configuration"
+        return
+    fi
+
+    MASKLEN=`echo $new_option_6rd | cut -d ' ' -f 1`
+    PREFIXLEN=`echo $new_option_6rd | cut -d ' ' -f 2`
+    PREFIX=`echo $new_option_6rd | cut -d ' ' -f 3`
+    BR=`echo $new_option_6rd | cut -d ' ' -f 4`
+    
+    args="${PREFIX}/${PREFIXLEN} ${interface} ${LAN_INTERFACE} ${MASKLEN} ${BR}"
+    echo "Doing: $args" 
+    logger -p daemon.info -t dhclient-6rd "starting 6rd-client-setup.sh $args"
+
+    ${IPUTIL_DIRECTORY}/6rd-client-setup.sh `echo $args`
+
+    #reconfigure_radvd $LAN_INTERFACE
+}
+
+stop() {
+    if [ -z "$old_option_6rd" ]
+    then
+	return
+    fi
+    #logger -p daemon.info -t dhclient-6rd "deleting 6rd tunnel - $reason"
+    #ip tunnel del 6rd || true
+
+    #reconfigure_radvd $LAN_INTERFACE
+    ip tunnel del $DEVICE
+
+    skvtool "6rd.$DEVICE=" 
+}
+
+case $reason in
+    BOUND)
+        start
+        ;;
+    RENEW|REBIND)
+        stop
+        start
+        ;;
+    REBOOT|RELEASE|TIMEOUT)
+        stop
+	;;
+esac

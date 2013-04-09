@@ -1,0 +1,21 @@
+# ~adapted from bird.startup
+
+# (the big difference is that oabird uses the built-in bird6 binary in
+# OpenWRT image)
+
+BIRD=/hosthome/uml/bird
+
+# Make sure interfaces are up
+ifconfig eth0 up
+ifconfig eth1 up
+ifconfig eth2 up
+ifconfig eth3 up
+#ifconfig lo up 
+#ifconfig lo 127.0.0.1
+
+# Make sure shell scripts are executable (sigh)
+chmod a+x /usr/share/hnet/*.sh
+
+# Start hnet (it is initially disabled)
+/etc/init.d/hnet start
+

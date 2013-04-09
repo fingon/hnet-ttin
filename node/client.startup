@@ -1,0 +1,36 @@
+# Fire up SSH
+/etc/init.d/ssh start
+
+# Enable ssh.. copy script does things badly, sigh
+chown root /root
+chown root /root/.ssh
+chmod 0700 /root
+chmod 0700 /root/.ssh
+chmod 0600 /root/.ssh/authorized_keys
+
+# Fire up rdnssd
+
+# DNSSL handling in rdnssd seems horribly broken, so use SHOULD use
+# dhcpd instead.. however, that doesn't work too well either (no
+# stateless support in ISC DHCP 4.2.4), so I guess at some point we
+# have to do stateful DHCPv6 config so it can provide stateless info
+# to those who rather do SLAAC
+
+# (Fix the resolv.conf - by default Debian leaves some dummy there
+# even if resolvconf is in use, sigh)
+rm -f /etc/resolv.conf
+ln -s /etc/resolvconf/run/resolv.conf /etc/resolv.conf
+
+BIRD=/hosthome/uml/bird
+ln -sf $BIRD/rdisc6 /usr/sbin
+ln -sf $BIRD/rdnssd /usr/sbin
+
+/etc/init.d/rdnssd start
+
+# Start tcpdump based on `hostname` as well, to store all packets
+# (useful for finding out problems)
+LOGDIR=/hostlab/logs/`hostname`
+mkdir -p $LOGDIR
+ifconfig eth0 up
+/usr/sbin/tcpdump -i eth0 -s 1500 -w $LOGDIR/tcpdump.dat &
+

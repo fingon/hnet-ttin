@@ -1,0 +1,17 @@
+# ../.. = ttin directory
+kernel=../../openwrt/openwrt-uml-vmlinux
+model-fs=../../openwrt/openwrt-uml-ext4.img
+
+# apparently the console lives on serial => override vstart defaults
+append_con1=con=null
+append_con2=ssl=null
+append_con3=ssl0=fd:0,fd:1
+append_con4=con0=null,fd:2
+
+# override preinit
+append_init=init=/sbin/preinit
+
+append_root=root=98:0
+
+0=HOME
+1=ISP

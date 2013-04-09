@@ -1,0 +1,7 @@
+# Start tcpdump based on `hostname` as well, to store all mdns packets
+# (useful for finding out problems)
+#LOGDIR=/hostlab/logs/`hostname`
+#/usr/sbin/tcpdump -i eth0 -s 1500 -w $LOGDIR/tcpdump.dat port 5353 &
+
+/etc/init.d/dbus start
+/etc/init.d/avahi-daemon start

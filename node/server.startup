@@ -1,0 +1,3 @@
+# fire up HTTP server so we have something 'clearly nice' to e.g. wget
+# if we want to
+/etc/init.d/apache2 start

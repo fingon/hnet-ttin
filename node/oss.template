@@ -1,0 +1,6 @@
+# openwrt strongswan test image
+
+# notable configuration artifact is that it ONLY talks with other
+# hosts via IPsec
+
+inherit=openwrt

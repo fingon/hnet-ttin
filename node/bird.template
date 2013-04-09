@@ -1,0 +1,3 @@
+# Use BIRD from local /hosthome/uml/bird 
+inherit=bird-lua,dhclient-6rd,dhclient-pd,skv-6rd-pd
+

@@ -1,0 +1,29 @@
+This is a canned development/network play infrastructure.
+
+Basic idea: Use 'any' nodes, with fairly flexible configuration (Base
+NetKit lab.conf + improvements detailed in netkit-improvements.txt), to run within one Linux (that can itself be a VM if need be).
+
+Contents:
+
+doc/
+ documentation about this setup (.. I wish ..)
+
+openwrt/
+ OpenWRT-specific stuff 
+
+topology/
+ individual topology setups (one per sub directory)
+
+node/
+ templates for individual machines within topologies
+
+util/
+ utility scripts (e.g. the one used by 'make')
+
+Old contents (symlinks)
+
+case -> topology/
+ individual topology setups (one per sub directory)
+
+template -> node/
+ templates for individual machines within topologies

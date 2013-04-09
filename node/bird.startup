@@ -1,0 +1,43 @@
+# Use dnsmasq, no ULA
+PM_ARGS="--disable_ula -m"
+
+# Use fakeDHCPv6d + ISC DHCPv4 server + radvd, no ULA
+#PM_ARGS="--disable_ula -f"
+
+. /usr/bin/birdenv.sh
+
+rm -f /usr/sbin/{bird,birdc,skvtool}
+ln -s $BIRD/bird /usr/sbin
+ln -s $BIRD/birdc /usr/sbin
+ln -s $BIRD/skvtool.sh /usr/sbin/skvtool
+ln -sf $BIRD/radvd /usr/sbin
+ln -sf $BIRD/rdisc6 /usr/sbin
+
+mkdir -p /usr/local/var/run
+
+# .. just in case (if this is used stand-alone)
+# enable ipv6 forwarding
+echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
+
+# Make sure interfaces are up
+ifconfig eth0 up
+ifconfig eth1 up
+ifconfig eth2 up
+ifconfig eth3 up
+
+# Make sure utility scripts are executable
+chmod a+x /usr/share/hnet/*.sh
+
+mkdir -p $LOGDIR
+
+# Start pm
+(cd $BIRD/lua && ENABLE_MST_DEBUG=1 lua pm.lua $PM_ARGS 2>&1 > $LOGDIR/pm.log) &
+
+# Start mdns
+#sleep 1
+#(cd $BIRD/lua && ENABLE_MST_DEBUG=1 lua mdns.lua 2>&1 > $LOGDIR/mdns.log) &
+
+# Start bird
+sleep 1
+
+/usr/bin/run_bird.sh

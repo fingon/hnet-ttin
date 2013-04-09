@@ -1,0 +1,6 @@
+# Disable dhclient, dhclient6 (which hopefully run after us) (If
+# they're installed, we probably don't want to run them by default,
+# but instead use built-in busybox udhcpc script?)
+
+/etc/init.d/dhclient disable
+/etc/init.d/dhclient6 disable

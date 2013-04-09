@@ -1,0 +1,5 @@
+inherit=lsadr
+0=ISP,192.168.100.1,ipv6:2000:dead::1/64
+1=REST,192.168.10.100,ipv6:2000::2/64
+mem=64
+ns=isp

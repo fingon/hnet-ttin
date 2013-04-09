@@ -1,0 +1,56 @@
+#!/bin/sh
+#-*-sh-*-
+#
+# $Id: use-pd $
+#
+# Author: Markus Stenberg <fingon@iki.fi>
+#
+# Created:       Tue Jul 24 11:01:51 2012 mstenber
+# Last modified: Wed Jul 25 16:25:08 2012 mstenber
+# Edit time:     14 min
+#
+
+IPUTIL_DIRECTORY=/usr/share/lsadr
+SCRIPT=pd-setup.sh
+LAN_INTERFACE=eth0
+
+. $IPUTIL_DIRECTORY/ip-util.sh
+
+start() {
+    if [ "x$new_ip6_prefix" = x ]
+    then
+        return
+    fi
+
+    args="start ${new_ip6_prefix} ${interface} ${LAN_INTERFACE}"
+    logger -p daemon.info -t dhclient-pd "${SCRIPT} $args"
+    ${IPUTIL_DIRECTORY}/${SCRIPT} `echo $args`
+
+    reconfigure_radvd $LAN_INTERFACE
+}
+
+stop() {
+    if [ "x$old_ip6_prefix" = x ]
+    then
+        return
+    fi
+
+    args="stop ${new_ip6_prefix} ${interface} ${LAN_INTERFACE}"
+    logger -p daemon.info -t dhclient-pd "${SCRIPT} $args"
+    ${IPUTIL_DIRECTORY}/${SCRIPT} `echo $args`
+
+    reconfigure_radvd $LAN_INTERFACE
+}
+
+case $reason in
+    BOUND6)
+        start
+        ;;
+    RENEW6|REBIND6)
+        stop
+        start
+        ;;
+    DEPREF6|EXPIRE6|RELEASE6|STOP6)
+        stop
+	;;
+esac
