@@ -7,8 +7,8 @@
 # Author: Markus Stenberg <fingon@iki.fi>
 #
 # Created:       Wed Jul  4 11:28:46 2012 mstenber
-# Last modified: Tue Apr  9 14:14:30 2013 mstenber
-# Edit time:     472 min
+# Last modified: Wed Apr 10 14:48:41 2013 mstenber
+# Edit time:     480 min
 #
 """
 
@@ -524,7 +524,7 @@ class Configuration(ReCollectionProcessor, HKVStore):
 
         kv = self.getInheritedKV()
         if kv.get(KEY_SKIP):
-            print ' skipping'
+            #print ' skipping'
             return
 
 
@@ -910,10 +910,11 @@ class Configuration(ReCollectionProcessor, HKVStore):
         os.system("rsync -a '%(spath)s' '%(dpath)s'" % locals())
 
 class ConfigurationDatabase:
-    def __init__(self, replace_template):
+    def __init__(self, replace_template, lab_filter):
         self.c = {}
         self.t = {}
         self.replace_template = replace_template
+        self.lab_filter = lab_filter
         # Read everything under case/
         for filename in os.listdir(CASE_DIRECTORY):
             cpath = os.path.join(CASE_DIRECTORY, filename)
@@ -923,7 +924,7 @@ class ConfigurationDatabase:
                 continue
             npath = cpath[:-len(CASE_SUFFIX)]
             cname = filename[:-len(CASE_SUFFIX)]
-            print cpath, filename, cname
+            #print cpath, filename, cname
             conf = Configuration(self, cname, npath)
             conf.processLines(open(cpath))
             assert conf.hkv
@@ -947,9 +948,10 @@ class ConfigurationDatabase:
         it = self.c.items()
         it.sort()
         for cname, c in it:
-            cdir = os.path.join(LAB_DIRECTORY, cname)
-            print '.. setting up', cdir
-            c.toLab(cdir)
+            if not self.lab_filter or cname in self.lab_filter:
+                cdir = os.path.join(LAB_DIRECTORY, cname)
+                print '.. setting up', cdir
+                c.toLab(cdir)
 
     def getCase(self, name):
         return self.c[name]
@@ -960,18 +962,21 @@ class ConfigurationDatabase:
 if __name__ == '__main__':
     import argparse
     ap = argparse.ArgumentParser()
+    ap.add_argument('lab',
+                    nargs='*',
+                    help="Build out only specific labs (by default, all are built).")
     ap.add_argument('--replace-template',
                     nargs=1,
                     help='Replace template X with template Y (given as X=Y)'
                     )
     replace_template = {}
     args = ap.parse_args()
-    for s in args.replace_template:
+    for s in args.replace_template or []:
         l = s.split('=')
         assert(len(l) == 2)
         k, v = l
         replace_template[k] = v
-    cdb = ConfigurationDatabase(replace_template)
+    cdb = ConfigurationDatabase(replace_template, args.lab)
     cdb.writeLabs()
 
 

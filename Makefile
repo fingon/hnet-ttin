@@ -6,14 +6,22 @@
 # Copyright (c) 2013 cisco Systems, Inc.
 #
 # Created:       Tue Apr  9 14:04:26 2013 mstenber
-# Last modified: Tue Apr  9 15:18:23 2013 mstenber
-# Edit time:     0 min
+# Last modified: Wed Apr 10 14:02:36 2013 mstenber
+# Edit time:     1 min
 #
 #
 
 # By default, create OWRT-using templates
-build:
-	python util/case2lab.py --replace-template bird=obird
+CASEARGS=--replace-template bird=obird
+
+build: lab/.all
+
+lab/.all:
+	python util/case2lab.py $(CASEARGS)
+	touch lab/.all
+
+lab/%:
+	python util/case2lab.py $(CASEARGS) bird=obird $*
 
 clean:
 	vclean --clean-all
