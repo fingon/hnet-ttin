@@ -3,8 +3,6 @@
 # (the big difference is that oabird uses the built-in bird6 binary in
 # OpenWRT image)
 
-BIRD=/hosthome/uml/bird
-
 # Make sure interfaces are up
 ifconfig eth0 up
 ifconfig eth1 up

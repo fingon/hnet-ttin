@@ -21,10 +21,6 @@ chmod 0600 /root/.ssh/authorized_keys
 rm -f /etc/resolv.conf
 ln -s /etc/resolvconf/run/resolv.conf /etc/resolv.conf
 
-BIRD=/hosthome/uml/bird
-ln -sf $BIRD/rdisc6 /usr/sbin
-ln -sf $BIRD/rdnssd /usr/sbin
-
 /etc/init.d/rdnssd start
 
 # Start tcpdump based on `hostname` as well, to store all packets
