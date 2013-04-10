@@ -1,0 +1,19 @@
+# -*- shell-script -*-
+ENVSH=/usr/bin/hnetenv.sh
+
+HOSTLAB=`cat /proc/cmdline | sed 's/ /\n/g' | egrep '^hostlab=' | cut -d '=' -f 2`
+echo > $ENVSH
+if [ -n "$HOSTLAB" ]
+then
+    if [ ! -d /hostroot ]
+    then
+        mkdir /hostroot  
+        mount / /hostroot -t hostfs 
+    fi
+
+  echo "export HNET=/hostroot$HOSTLAB/../../.." >> $ENVSH
+  echo 'export LD_LIBRARY_PATH=$HNET/build/lib' >> $ENVSH
+  echo 'export PATH=$HNET/build/bin:$PATH' >> $ENVSH
+else
+  echo "echo 'No HOSTLAB available yet hnetenv.sh sourced?'" >> $ENVSH
+fi

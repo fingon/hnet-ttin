@@ -1,2 +1,3 @@
 # Just skeleton for using Bird-lua, but not starting it (this
 # can be used by anyone who wants to use e.g. birdenv.sh)
+inherit=hnet-build

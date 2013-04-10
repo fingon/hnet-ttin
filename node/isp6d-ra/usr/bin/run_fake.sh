@@ -8,15 +8,15 @@
 # Copyright (c) 2013 cisco Systems, Inc.
 #
 # Created:       Thu Feb  7 13:57:59 2013 mstenber
-# Last modified: Tue Mar 12 16:52:35 2013 mstenber
-# Edit time:     11 min
+# Last modified: Wed Apr 10 15:07:07 2013 mstenber
+# Edit time:     12 min
 #
 
 . /usr/bin/birdenv.sh
 
 mkdir -p $LOGDIR
 
-ENABLE_MST_DEBUG=1 lua $BIRD/lua/fakedhcpv6d.lua \
+ENABLE_MST_DEBUG=1 lua $CORE/fakedhcpv6d.lua \
   --join=eth0 \
   --dns=2000::2 \
   --search=v6.lab.example.com \

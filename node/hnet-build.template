@@ -1,0 +1,3 @@
+# This template uses hnet's build infra structure produced binaries or
+# libraries => appropriate environment is provided
+# (LD_LIBRARY_PATH, HNET, PATH=$HNET/build/bin)
