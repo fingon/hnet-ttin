@@ -8,12 +8,12 @@ then
     if [ ! -d /hostroot ]
     then
         mkdir /hostroot  
-        mount / /hostroot -t hostfs 
     fi
+    mount / /hostroot -t hostfs 
 
-  echo "export HNET=/hostroot$HOSTLAB/../../.." >> $ENVSH
-  echo 'export LD_LIBRARY_PATH=$HNET/build/lib' >> $ENVSH
-  echo 'export PATH=$HNET/build/bin:$PATH' >> $ENVSH
+    echo "export HNET=/hostroot$HOSTLAB/../../.." >> $ENVSH
+    echo 'export LD_LIBRARY_PATH=$HNET/build/lib' >> $ENVSH
+    echo 'export PATH=$HNET/build/bin:$PATH' >> $ENVSH
 else
-  echo "echo 'No HOSTLAB available yet hnetenv.sh sourced?'" >> $ENVSH
+    echo "echo 'No HOSTLAB available yet hnetenv.sh sourced?'" >> $ENVSH
 fi
