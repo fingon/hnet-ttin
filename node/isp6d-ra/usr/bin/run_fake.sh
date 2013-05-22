@@ -8,11 +8,11 @@
 # Copyright (c) 2013 cisco Systems, Inc.
 #
 # Created:       Thu Feb  7 13:57:59 2013 mstenber
-# Last modified: Wed Apr 10 15:07:07 2013 mstenber
+# Last modified: Wed May 22 14:27:16 2013 mstenber
 # Edit time:     12 min
 #
 
-. /usr/bin/birdenv.sh
+. /usr/bin/luaenv.sh
 
 mkdir -p $LOGDIR
 

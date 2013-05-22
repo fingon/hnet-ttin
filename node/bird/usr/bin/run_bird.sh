@@ -8,11 +8,11 @@
 # Copyright (c) 2013 cisco Systems, Inc.
 #
 # Created:       Thu Feb  7 13:57:59 2013 mstenber
-# Last modified: Thu Feb 28 13:31:52 2013 mstenber
+# Last modified: Wed May 22 14:25:29 2013 mstenber
 # Edit time:     6 min
 #
 
-. /usr/bin/birdenv.sh
+. /usr/bin/luaenv.sh
 
 mkdir -p $LOGDIR
 
@@ -23,7 +23,7 @@ cat $CONF > $RCONF
 echo "log \"$LOGDIR/bird6.log\" all;" >> $RCONF
 if [ ! -f /tmp/elsa.lua ]
 then
-  ln -s $BIRD/elsa.lua /tmp
+  ln -s $CORE/../bird/elsa.lua /tmp
 fi
 ulimit -c unlimited
 

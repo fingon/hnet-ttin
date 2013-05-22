@@ -6,8 +6,8 @@
 # Copyright (c) 2013 cisco Systems, Inc.
 #
 # Created:       Tue Apr  9 14:04:26 2013 mstenber
-# Last modified: Wed Apr 10 14:02:36 2013 mstenber
-# Edit time:     1 min
+# Last modified: Wed May 22 13:22:12 2013 mstenber
+# Edit time:     2 min
 #
 #
 
@@ -15,6 +15,10 @@
 CASEARGS=--replace-template bird=obird
 
 build: lab/.all
+
+debian: lab/.all
+	python util/case2lab.py
+	touch lab/.all
 
 lab/.all:
 	python util/case2lab.py $(CASEARGS)

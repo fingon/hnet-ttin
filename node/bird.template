@@ -1,2 +1,3 @@
 inherit=bird-lua,dhclient-6rd,dhclient-pd,skv-6rd-pd
+mem=64
 
