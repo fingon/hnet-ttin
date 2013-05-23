@@ -4,7 +4,7 @@
 0=HOME,dhcp
 
 # TAP interface to the host so we can use e.g. Firefox.
-1=tap,192.168.42.1,192.168.42.2
+1=tap,192.168.7.1,192.168.7.2
 
 # give bit more memory in case it's needed by something
 mem=64

@@ -7,8 +7,8 @@
 # Author: Markus Stenberg <fingon@iki.fi>
 #
 # Created:       Wed Jul  4 11:28:46 2012 mstenber
-# Last modified: Wed Apr 10 14:48:41 2013 mstenber
-# Edit time:     480 min
+# Last modified: Thu May 23 12:27:09 2013 mstenber
+# Edit time:     481 min
 #
 """
 
@@ -557,9 +557,9 @@ class Configuration(ReCollectionProcessor, HKVStore):
                     self.HKVToPP(h, k, v, pp, 0, None)
             # AUTOMGMT - disabled for now
             if 0:
-                myip = '192.168.42.%d' % rid
+                myip = '192.168.7.%d' % rid
                 rid += 1
-                pp('%s[9]=tap,192.168.42.1,%s' % (h, myip))
+                pp('%s[9]=tap,192.168.7.1,%s' % (h, myip))
                 addresses[h, '9', KEY_IPV4] = myip
         pp('# end (inherited) interface definitions')
 
@@ -609,7 +609,7 @@ class Configuration(ReCollectionProcessor, HKVStore):
                         for e in l[1:]:
                             if e == KEY_DHCP:
                                 pp('# remove default gw to admin host by default (if netkit somehow makes it) - it may hinder dhclient')
-                                pp('route delete default gw 192.168.42.1 2>/dev/null')
+                                pp('route delete default gw 192.168.7.1 2>/dev/null')
 
                                 pp('# fire up dhclient to configure interface')
                                 pp('dhclient %s' % iface)
