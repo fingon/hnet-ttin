@@ -1,5 +1,5 @@
-# Use dnsmasq, no ULA
-PM_ARGS="--disable_ula -m"
+# Use dnsmasq, no ULA, use hybrid proxy
+PM_ARGS="--disable_ula -m -h"
 
 # Use fakeDHCPv6d + ISC DHCPv4 server + radvd, no ULA
 #PM_ARGS="--disable_ula -f"
@@ -40,9 +40,13 @@ mkdir -p $LOGDIR
 (cd $CORE && ENABLE_MST_DEBUG=1 lua pm.lua $PM_ARGS 2>&1 > $LOGDIR/pm.log) &
 # < /dev/null 
 
-# Start mdns
+# Start OSPF-mdns (DEPRACATED)
 #sleep 1
-#(cd $BIRD/lua && ENABLE_MST_DEBUG=1 lua mdns.lua 2>&1 > $LOGDIR/mdns.log) &
+#(cd $CORE && ENABLE_MST_DEBUG=1 lua mdns.lua 2>&1 > $LOGDIR/mdns.log) &
+
+# Start hybrid proxy
+sleep 1
+(cd $CORE && ENABLE_MST_DEBUG=1 lua hp.lua --ospf 2>&1 > $LOGDIR/hp.log) &
 
 # Start bird
 sleep 1
