@@ -18,8 +18,12 @@ chmod 0600 /root/.ssh/authorized_keys
 
 # (Fix the resolv.conf - by default Debian leaves some dummy there
 # even if resolvconf is in use, sigh)
-rm -f /etc/resolv.conf
-ln -s /etc/resolvconf/run/resolv.conf /etc/resolv.conf
+ln -sf /etc/resolvconf/run/resolv.conf /etc/
+
+# Debian7.0 - /run/resolvconf/interface is missing -> create it
+resolvconf --create-runtime-directories
+#mkdir -p /run/resolvconf/interface
+resolvconf --enable-updates
 
 /etc/init.d/rdnssd start
 
