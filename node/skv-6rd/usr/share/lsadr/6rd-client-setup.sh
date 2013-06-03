@@ -6,8 +6,8 @@
 # Author: Markus Stenberg <fingon@iki.fi>
 #
 # Created:       Tue Jul 10 15:38:19 2012 mstenber
-# Last modified: Mon Jun  3 14:58:08 2013 mstenber
-# Edit time:     58 min
+# Last modified: Mon Jun  3 15:55:18 2013 mstenber
+# Edit time:     62 min
 #
 
 # Setup the server-side 6rd tunnel
@@ -68,4 +68,4 @@ ip -6 route add $PREFIX dev 6rd
 
 # Add to skvtool
 # (json syntax = argh)
-skvtool "6rd.$MYIF={{\"prefix\":\"${MYIP6PREFIX}/${MYIP6PREFIX_LEN}\",\"nh\":\"::${GW}\"}}"
+skvtool "tunnel.$MYIF={{\"prefix\":\"${MYIP6PREFIX}/${MYIP6PREFIX_LEN}\",\"nh\":\"::${GW}\"}}"

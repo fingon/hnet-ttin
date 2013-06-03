@@ -6,8 +6,8 @@
 # Author: Markus Stenberg <fingon@iki.fi>
 #
 # Created:       Tue Jul 23 11:01:51 2012 mstenber
-# Last modified: Mon Feb 25 13:46:09 2013 mstenber
-# Edit time:     22 min
+# Last modified: Mon Jun  3 16:09:01 2013 mstenber
+# Edit time:     25 min
 #
 
 LAN_INTERFACE=eth0
@@ -40,6 +40,8 @@ start() {
     ${IPUTIL_DIRECTORY}/6rd-client-setup.sh `echo $args`
 
     #reconfigure_radvd $LAN_INTERFACE
+    # Not needed - automatically added
+    #skvtool "tunnel.iflist=[\"$DEVICE\"]" 
 }
 
 stop() {
@@ -53,7 +55,9 @@ stop() {
     #reconfigure_radvd $LAN_INTERFACE
     ip tunnel del $DEVICE
 
-    skvtool "6rd.$DEVICE=" 
+    skvtool "tunnel.$DEVICE=" 
+    # Not needed
+    #skvtool "tunnel.iflist=" 
 }
 
 case $reason in
