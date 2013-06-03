@@ -1,0 +1,16 @@
+# Grab the env 
+. /usr/bin/hnetenv.sh
+
+export FILESDIR=$HNET/openwrt/feed/hnet/files
+export DHCPDIR=/etc/dhcp
+export EXITDIR=$DHCPDIR/dhclient-exit-hooks.d
+
+mkdir -p $EXITDIR
+
+for FILE in $FILESDIR/use-*
+do
+        cp $FILE $EXITDIR
+        # Necessary?
+        #chmod a+x $EXITDIR/`basename $FILE`
+done
+cp $FILESDIR/dhclient.conf $DHCPDIR

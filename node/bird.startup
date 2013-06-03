@@ -51,5 +51,10 @@ sleep 1
 # Start bird
 sleep 1
 
-/usr/bin/run_bird.sh
-# </dev/null >/dev/null 2>/dev/null
+/usr/bin/run_bird.sh 
+
+# Note: non-debug bird should detach itself 'soon' => no need for
+# redirects, running in background. Debug version on the other hand
+# doesn't.. *sigh*
+
+# </dev/null >/dev/null 2>/dev/null &

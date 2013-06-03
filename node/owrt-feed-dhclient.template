@@ -1,0 +1,5 @@
+# This will set itself up based on the OWRT package feed, without
+# requiring any files within. Assumptions: The dhclient-script (and
+# possibly dhclient-exit-hooks) are sane.
+
+# dhclient.conf, and use-* are copied from the openwrt/feed/hnet/files
