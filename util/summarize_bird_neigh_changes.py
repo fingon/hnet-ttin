@@ -9,8 +9,8 @@
 # Copyright (c) 2013 cisco Systems, Inc.
 #
 # Created:       Thu Feb 28 12:39:13 2013 mstenber
-# Last modified: Mon Mar 11 11:25:50 2013 mstenber
-# Edit time:     21 min
+# Last modified: Tue Jun  4 21:11:14 2013 mstenber
+# Edit time:     24 min
 #
 """
 
@@ -41,11 +41,11 @@ class Node:
         self.neigh = {}
         self.timeline = []
     def add_neigh(self, t, addr, ifname):
-        #assert not self.neigh.has_key(addr)
+        assert not self.neigh.has_key(addr), addr
         self.neigh[addr] = ifname
         self.timeline.append((t, 'add', addr))
     def remove_neigh(self, t, addr):
-        assert(self.neigh.has_key(addr))
+        assert self.neigh.has_key(addr), addr
         del self.neigh[addr]
         self.timeline.append((t, 'remove', addr))
     def peek(self):
@@ -69,12 +69,12 @@ def analyze_files(filelist):
             m = add_neigh_re(line)
             if m is not None:
                 gr = m.groupdict()
-                #print 'match add', gr
+                print 'match add', gr
                 node.add_neigh(gr['t'], gr['addr'], gr['ifname'])
             m = remove_neigh_re(line)
             if m is not None:
                 gr = m.groupdict()
-                #print 'match remove', gr
+                print 'match remove', gr
                 node.remove_neigh(gr['t'], gr['addr'])
         nodes.append(node)
         i = i + 1
