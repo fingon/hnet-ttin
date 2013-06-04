@@ -11,7 +11,9 @@ then
     fi
     mount / /hostroot -t hostfs 
 
-    echo "export HNET=/hostroot$HOSTLAB/../../.." >> $ENVSH
+    HNET=`realpath /hostroot$HOSTLAB`
+    HNET=`realpath $HNET/../../..`
+    echo "export HNET=$HNET" >> $ENVSH
     echo 'export LD_LIBRARY_PATH=/hostroot/lib/x86_64-linux-gnu:/hostroot/lib:$HNET/build/lib' >> $ENVSH
     echo 'export PATH=$HNET/build/bin:$PATH' >> $ENVSH
     echo 'export CORE=$HNET/component/core' >> $ENVSH
