@@ -9,8 +9,8 @@
 # Copyright (c) 2013 cisco Systems, Inc.
 #
 # Created:       Thu Feb 28 12:39:13 2013 mstenber
-# Last modified: Tue Jun  4 21:11:14 2013 mstenber
-# Edit time:     24 min
+# Last modified: Wed Jun  5 09:19:37 2013 mstenber
+# Edit time:     35 min
 #
 """
 
@@ -33,6 +33,9 @@ add_neigh_re = re.compile('^(?P<t>.*) <TRACE>.*New neighbor found: (?P<addr>.*) 
 
 remove_neigh_re = re.compile('^(?P<t>.*) <TRACE>.*Removing neighbor (?P<addr>.*)\s*$').match
 
+remove_neigh_re2 = re.compile('^(?P<t>.*) <TRACE>.*Neighbor (?P<addr>.*) changes state.*full.*init.*$').match
+
+reconf_re = re.compile('^(?P<t>.*) <INFO> Reconfiguring').match
 
 class Node:
     def __init__(self, path, name):
@@ -40,13 +43,23 @@ class Node:
         self.name = name
         self.neigh = {}
         self.timeline = []
+    def reconfigure(self, t):
+        self.timeline.append((t, 'reconfigure'))
+        for addr in self.neigh.keys():
+            self.remove_neigh(t, addr)
     def add_neigh(self, t, addr, ifname):
-        assert not self.neigh.has_key(addr), addr
-        self.neigh[addr] = ifname
-        self.timeline.append((t, 'add', addr))
+        if self.neigh.has_key(addr):
+            v = self.neigh[addr]
+            v[0] = v[0] + 1
+        else:
+            self.neigh[addr] = [1, ifname]
+        self.timeline.append((t, 'add', addr, ifname))
     def remove_neigh(self, t, addr):
-        assert self.neigh.has_key(addr), addr
-        del self.neigh[addr]
+        v = self.neigh[addr]
+        v[0] = v[0] - 1
+        if v[0] == 0:
+            #assert self.neigh.has_key(addr), addr
+            del self.neigh[addr]
         self.timeline.append((t, 'remove', addr))
     def peek(self):
         if len(self.timeline)>0:
@@ -69,13 +82,22 @@ def analyze_files(filelist):
             m = add_neigh_re(line)
             if m is not None:
                 gr = m.groupdict()
-                print 'match add', gr
+                #print 'match add', gr
                 node.add_neigh(gr['t'], gr['addr'], gr['ifname'])
             m = remove_neigh_re(line)
             if m is not None:
                 gr = m.groupdict()
-                print 'match remove', gr
+                #print 'match remove 1', gr
                 node.remove_neigh(gr['t'], gr['addr'])
+            m = remove_neigh_re2(line)
+            if m is not None and False:
+                gr = m.groupdict()
+                #print 'match remove 2', gr
+                node.remove_neigh(gr['t'], gr['addr'])
+            m = reconf_re(line)
+            if m is not None:
+                gr = m.groupdict()
+                node.reconfigure(gr['t'])
         nodes.append(node)
         i = i + 1
     while 1:
