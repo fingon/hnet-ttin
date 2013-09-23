@@ -1,6 +1,6 @@
 # ../.. = ttin directory
-kernel=../../openwrt/openwrt-uml-vmlinux
-model-fs=../../openwrt/openwrt-uml-ext4.img
+kernel=../../openwrt-uml-bin/openwrt-uml-vmlinux
+model-fs=../../openwrt-uml-bin/openwrt-uml-ext4.img
 
 # apparently the console lives on serial => override vstart defaults
 append_con1=con=null
