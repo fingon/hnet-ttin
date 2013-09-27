@@ -2,11 +2,12 @@
 kernel=../../openwrt-uml-bin/openwrt-uml-vmlinux
 model-fs=../../openwrt-uml-bin/openwrt-uml-ext4.img
 
-# apparently the console lives on serial => override vstart defaults
-#append_con1=con=null
-#append_con2=ssl=null
-#append_con3=ssl0=fd:0,fd:1
-#append_con4=con0=null,fd:2
+# Use console 1 for i/o (-> control+c should work)
+# and take console 0 output also to stderr
+append_con1=con=null
+append_con2=con1=fd:0,fd:1
+append_con3=con0=null,fd:2
+append_con4=console=tty1
 
 # override preinit
 #append_init=init=/sbin/preinit
