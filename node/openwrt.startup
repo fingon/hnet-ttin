@@ -4,3 +4,5 @@
 
 /etc/init.d/dhclient disable
 /etc/init.d/dhclient6 disable
+
+chmod a+x /usr/bin/hnetlua.sh
