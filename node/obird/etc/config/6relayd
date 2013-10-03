@@ -1,0 +1,18 @@
+# Example #2: Provide Router Discovery and stateless DHCPv6 in server mode
+# This can be used as a small radvd and stateless DHCPv6-server replacement.
+
+config server h0
+	option network	'h0'
+	option rd	'server'
+	option dhcpv6	'server'
+
+config server h1
+	option network	'h1'
+	option rd	'server'
+	option dhcpv6	'server'
+
+config server h2
+	option network	'h2'
+	option rd	'server'
+	option dhcpv6	'server'
+

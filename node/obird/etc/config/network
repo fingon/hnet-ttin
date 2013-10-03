@@ -6,8 +6,39 @@ config interface loopback
 	option ipaddr	127.0.0.1
 	option netmask	255.0.0.0
 
-config interface 'lan1'
+config interface 'h0'
        option ifname 'eth0'
+       option proto  hnet
 
-config interface 'lan2'
+config interface 'h0_4'
+       option ifname 'eth0'
+       option proto  dhcp
+
+config interface 'h0_6'
+       option ifname 'eth0'
+       option proto  dhcpv6
+
+config interface 'h1'
        option ifname 'eth1'
+       option proto  hnet
+
+config interface 'h1_4'
+       option ifname 'eth1'
+       option proto  dhcp
+
+config interface 'h1_6'
+       option ifname 'eth1'
+       option proto  dhcpv6
+
+config interface 'h2'
+       option ifname 'eth2'
+       option proto  hnet
+
+config interface 'h2_4'
+       option ifname 'eth2'
+       option proto  dhcp
+
+config interface 'h2_6'
+       option ifname 'eth2'
+       option proto  dhcpv6
+
