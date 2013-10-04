@@ -10,38 +10,21 @@ config interface 'h0'
        option ifname 'eth0'
        option proto  hnet
 
-config interface 'h0_4'
-       option ifname 'eth0'
-       option proto  dhcp
+# this is done dynamically by hnet.sh using add_protocol.
 
-config interface 'h0_6'
-       option ifname 'eth0'
-       option proto  dhcpv6
-       option reqaddress none
+#config interface 'h0_4'
+#       option ifname 'eth0'
+#       option proto  dhcp
+
+#config interface 'h0_6'
+#       option ifname 'eth0'
+#       option proto  dhcpv6
+#       option reqaddress none
 
 config interface 'h1'
        option ifname 'eth1'
        option proto  hnet
 
-config interface 'h1_4'
-       option ifname 'eth1'
-       option proto  dhcp
-
-config interface 'h1_6'
-       option ifname 'eth1'
-       option proto  dhcpv6
-       option reqaddress none
-
 config interface 'h2'
        option ifname 'eth2'
        option proto  hnet
-
-config interface 'h2_4'
-       option ifname 'eth2'
-       option proto  dhcp
-
-config interface 'h2_6'
-       option ifname 'eth2'
-       option proto  dhcpv6
-       option reqaddress none
-
