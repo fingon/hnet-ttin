@@ -16,3 +16,8 @@ config server h2
 	option rd	'server'
 	option dhcpv6	'server'
 
+config server h3
+	option network	'h3'
+	option rd	'server'
+	option dhcpv6	'server'
+

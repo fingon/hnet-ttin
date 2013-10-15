@@ -28,3 +28,7 @@ config interface 'h1'
 config interface 'h2'
        option ifname 'eth2'
        option proto  hnet
+
+config interface 'h2'
+       option ifname 'eth3'
+       option proto  hnet

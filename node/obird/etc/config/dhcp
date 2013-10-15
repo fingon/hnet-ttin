@@ -41,3 +41,9 @@ config dhcp h2
 	option start 	100
 	option limit	150
 	option leasetime	12h
+
+config dhcp h3
+	option interface	h0
+	option start 	100
+	option limit	150
+	option leasetime	12h
