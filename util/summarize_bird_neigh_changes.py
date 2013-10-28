@@ -9,8 +9,8 @@
 # Copyright (c) 2013 cisco Systems, Inc.
 #
 # Created:       Thu Feb 28 12:39:13 2013 mstenber
-# Last modified: Mon Oct 28 13:29:57 2013 mstenber
-# Edit time:     65 min
+# Last modified: Mon Oct 28 14:30:27 2013 mstenber
+# Edit time:     74 min
 #
 """
 
@@ -28,6 +28,9 @@ adjacency shown in rather compact fashion
 """
 
 import re
+import datetime
+
+TIMESTAMP_FORMAT='%d-%m-%Y %H:%M:%S'
 
 add_neigh_re = re.compile('^(?P<t>.*) <TRACE>.*New neighbor found: \S+ / (?P<addr>.*) on (?P<ifname>.*)\s*$').match
 
@@ -90,12 +93,12 @@ def analyze_files(filelist):
             m = add_neigh_re(line)
             if m is not None:
                 gr = m.groupdict()
-                #print 'match add', gr
+                print 'match add', gr
                 node.add_neigh(gr['t'], gr['addr'], gr['ifname'])
             m = remove_neigh_re(line)
             if m is not None:
                 gr = m.groupdict()
-                #print 'match remove 1', gr
+                print 'match remove 1', gr, line
                 node.remove_neigh(gr['t'], gr['addr'])
 
             m = reconf_re(line)
@@ -107,6 +110,7 @@ def analyze_files(filelist):
                 #node.reconfigure(gr['t'])
         nodes.append(node)
         i = i + 1
+    orig = None
     while 1:
         t = None
         n = None
@@ -119,8 +123,14 @@ def analyze_files(filelist):
         if not t:
             print 'End of timeline'
             break
+        if orig is None:
+            orig = datetime.datetime.strptime(t[0], TIMESTAMP_FORMAT)
+            now = orig
+        else:
+            now = datetime.datetime.strptime(t[0], TIMESTAMP_FORMAT)
         n.pop()
-        print n.name, t
+        delta = now - orig
+        print n.name, delta, t[1:]
     c = 0
     for node in nodes:
         c = c + node.count()
