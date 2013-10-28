@@ -9,8 +9,8 @@
 # Copyright (c) 2013 cisco Systems, Inc.
 #
 # Created:       Thu Feb 28 12:39:13 2013 mstenber
-# Last modified: Mon Oct 28 12:32:21 2013 mstenber
-# Edit time:     61 min
+# Last modified: Mon Oct 28 13:29:57 2013 mstenber
+# Edit time:     65 min
 #
 """
 
@@ -31,7 +31,15 @@ import re
 
 add_neigh_re = re.compile('^(?P<t>.*) <TRACE>.*New neighbor found: \S+ / (?P<addr>.*) on (?P<ifname>.*)\s*$').match
 
-remove_neigh_re = re.compile('^(?P<t>.*) <TRACE>.*Removing neighbor \S+ / (?P<addr>.*)\s*$').match
+remove_neigh_re = re.compile('''(?x)
+^(?P<t>.*)\s
+<TRACE>.*
+(?:
+Removing\sneighbor
+|
+Inactivity\stimer\sfired\son\sinterface.*for\sneighbor
+)
+\s\S+\s/\s(?P<addr>.*)\s*$''').match
 
 reconf_re = re.compile('^(?P<t>.*) <INFO> Reconfiguring').match
 
