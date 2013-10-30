@@ -1,15 +1,13 @@
 This is a canned development/network play infrastructure.
 
 Basic idea: Use 'any' nodes, with fairly flexible configuration (Base
-NetKit lab.conf + improvements detailed in netkit-improvements.txt), to run within one Linux (that can itself be a VM if need be).
+NetKit lab.conf + improvements detailed in netkit-improvements.txt),
+to run within one Linux (that can itself be a VM if need be).
 
 Contents:
 
 doc/
  documentation about this setup (.. I wish ..)
-
-openwrt/
- OpenWRT-specific stuff 
 
 topology/
  individual topology setups (one per sub directory)
@@ -27,3 +25,11 @@ case -> topology/
 
 template -> node/
  templates for individual machines within topologies
+
+Note: If experiencing too much I/O, following page may contain something of use:
+
+http://docs.neo4j.org/chunked/stable/linux-performance-guide.html
+
+Why? It seems that the default dirty page flushing behavior seems to
+trigger anomalies with UML; or at least serious performance
+degradations; at least in 3.2.0-55
