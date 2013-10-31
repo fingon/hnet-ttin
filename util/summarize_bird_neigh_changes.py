@@ -9,8 +9,8 @@
 # Copyright (c) 2013 cisco Systems, Inc.
 #
 # Created:       Thu Feb 28 12:39:13 2013 mstenber
-# Last modified: Thu Oct 31 10:15:07 2013 mstenber
-# Edit time:     82 min
+# Last modified: Thu Oct 31 11:24:40 2013 mstenber
+# Edit time:     94 min
 #
 """
 
@@ -50,6 +50,9 @@ route_fail_re = re.compile('(?P<t>.*) <TRACE> .*elsai_route_to_rid.*failed').mat
 
 route_ok_re = re.compile('(?P<t>.*) <TRACE> .*elsai_route_to_rid.*found').match
 
+def _ts2d(s):
+    return datetime.datetime.strptime(s, TIMESTAMP_FORMAT)
+
 class Node:
     def __init__(self, path, name):
         self.path = path
@@ -57,16 +60,26 @@ class Node:
         self.neigh = {}
         self.timeline = []
         self.route_state = False
+        self.route_state_count = 0
+        self.route_state_t = None
     def route_fail(self, t):
         self.set_route_state(t, False)
     def route_ok(self, t):
         self.set_route_state(t, True)
     def set_route_state(self, t, st):
+        t = _ts2d(t)
+        last_t = self.route_state_t
+        self.route_state_t = t
         if self.route_state == st:
+            self.route_state_count = self.route_state_count + 1
             return
         self.route_state = st
-        self.timeline.append((t, 'route state', st))
+        self.timeline.append((t, 'route state', st,
+                              #'repeats of last state', self.route_state_count,
+                              'changed within', last_t and t-last_t,
+                              ))
     def reconfigure(self, t):
+        t = _ts2d(t)
         self.timeline.append((t, 'reconfigure'))
         for addr in self.neigh.keys():
             # reconfigure does NOT apparently kill neighbor
@@ -75,6 +88,7 @@ class Node:
             #self.remove_neigh(t, addr)
             pass
     def add_neigh(self, t, addr, ifname):
+        t = _ts2d(t)
         if self.neigh.has_key(addr):
             v = self.neigh[addr]
             v[0] = v[0] + 1
@@ -82,6 +96,7 @@ class Node:
             self.neigh[addr] = [1, ifname]
         self.timeline.append((t, 'add', addr, ifname))
     def remove_neigh(self, t, addr):
+        t = _ts2d(t)
         assert self.neigh.has_key(addr), 'no %s for %s in %s' % (addr, self.name, self.neigh)
         v = self.neigh[addr]
         v[0] = v[0] - 1
@@ -153,10 +168,10 @@ def analyze_files(filelist):
             print 'End of timeline'
             break
         if orig is None:
-            orig = datetime.datetime.strptime(t[0], TIMESTAMP_FORMAT)
+            orig = t[0]
             now = orig
         else:
-            now = datetime.datetime.strptime(t[0], TIMESTAMP_FORMAT)
+            now = t[0]
         n.pop()
         delta = now - orig
         print n.name, delta, t[1:]
