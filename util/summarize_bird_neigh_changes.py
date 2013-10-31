@@ -9,8 +9,8 @@
 # Copyright (c) 2013 cisco Systems, Inc.
 #
 # Created:       Thu Feb 28 12:39:13 2013 mstenber
-# Last modified: Mon Oct 28 14:30:27 2013 mstenber
-# Edit time:     74 min
+# Last modified: Thu Oct 31 10:15:07 2013 mstenber
+# Edit time:     82 min
 #
 """
 
@@ -42,9 +42,13 @@ Removing\sneighbor
 |
 Inactivity\stimer\sfired\son\sinterface.*for\sneighbor
 )
-\s\S+\s/\s(?P<addr>.*)\s*$''').match
+\s\S+\s/\s(?P<addr>[0-9]\.[0-9]\.[0-9]\.[0-9])\.?\s*$''').match
 
 reconf_re = re.compile('^(?P<t>.*) <INFO> Reconfiguring').match
+
+route_fail_re = re.compile('(?P<t>.*) <TRACE> .*elsai_route_to_rid.*failed').match
+
+route_ok_re = re.compile('(?P<t>.*) <TRACE> .*elsai_route_to_rid.*found').match
 
 class Node:
     def __init__(self, path, name):
@@ -52,10 +56,24 @@ class Node:
         self.name = name
         self.neigh = {}
         self.timeline = []
+        self.route_state = False
+    def route_fail(self, t):
+        self.set_route_state(t, False)
+    def route_ok(self, t):
+        self.set_route_state(t, True)
+    def set_route_state(self, t, st):
+        if self.route_state == st:
+            return
+        self.route_state = st
+        self.timeline.append((t, 'route state', st))
     def reconfigure(self, t):
         self.timeline.append((t, 'reconfigure'))
         for addr in self.neigh.keys():
-            self.remove_neigh(t, addr)
+            # reconfigure does NOT apparently kill neighbor
+            # relations -> skip
+
+            #self.remove_neigh(t, addr)
+            pass
     def add_neigh(self, t, addr, ifname):
         if self.neigh.has_key(addr):
             v = self.neigh[addr]
@@ -90,24 +108,35 @@ def analyze_files(filelist):
         print name, filename
         for line in open(filename):
             line = line.strip()
+
             m = add_neigh_re(line)
             if m is not None:
                 gr = m.groupdict()
-                print 'match add', gr
+                #print 'match add', gr
                 node.add_neigh(gr['t'], gr['addr'], gr['ifname'])
+
             m = remove_neigh_re(line)
             if m is not None:
                 gr = m.groupdict()
-                print 'match remove 1', gr, line
+                #print 'match remove 1', gr, line
                 node.remove_neigh(gr['t'], gr['addr'])
 
             m = reconf_re(line)
             if m is not None:
                 gr = m.groupdict()
+                node.reconfigure(gr['t'])
 
-                # reconfigure does NOT apparently kill neighbor
-                # relations anymore
-                #node.reconfigure(gr['t'])
+            m = route_fail_re(line)
+            if m is not None:
+                gr = m.groupdict()
+                node.route_fail(gr['t'])
+
+            m = route_ok_re(line)
+            if m is not None:
+                gr = m.groupdict()
+                node.route_ok(gr['t'])
+
+
         nodes.append(node)
         i = i + 1
     orig = None
