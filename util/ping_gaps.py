@@ -9,7 +9,7 @@
 # Copyright (c) 2013 cisco Systems, Inc.
 #
 # Created:       Wed Oct 30 17:18:47 2013 mstenber
-# Last modified: Wed Oct 30 17:31:26 2013 mstenber
+# Last modified: Tue Nov  5 20:08:46 2013 mstenber
 # Edit time:     7 min
 #
 """
@@ -21,7 +21,7 @@ Given output of a ping, look for gaps.
 import sys
 import re
 
-ping_re = re.compile('icmp_seq=(\d+)\s').search
+ping_re = re.compile('icmp_seq=(\d+)\s.*time=').search
 
 
 last = 0
