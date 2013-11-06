@@ -17,5 +17,6 @@ fi
 # XXX SUPER HACK XXX
 
 # Start hnet (it is initially disabled)
-/etc/init.d/hnet start
+# No longer needed once we moved the START to beginning of file.. grumble
+#/etc/init.d/hnet start
 
