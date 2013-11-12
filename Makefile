@@ -6,7 +6,7 @@
 # Copyright (c) 2013 cisco Systems, Inc.
 #
 # Created:       Tue Apr  9 14:04:26 2013 mstenber
-# Last modified: Thu May 30 13:58:30 2013 mstenber
+# Last modified: Tue Nov 12 09:30:54 2013 mstenber
 # Edit time:     7 min
 #
 #
@@ -39,13 +39,13 @@ clean:
 
 bird7: clean
 	python util/case2lab.py $(CASEARGS) bird7
-	(cd lab/bird7 && lstart)
+	(cd lab/bird7 && lstart -p7)
 
 rebuild-bird7: clean
 	make -C ../openwrt
 	python util/case2lab.py $(CASEARGS) bird7
-	(cd lab/bird7 && lstart)
+	(cd lab/bird7 && lstart -p7)
 
 debian-bird7: clean
 	python util/case2lab.py bird7
-	(cd lab/bird7 && lstart)
+	(cd lab/bird7 && lstart -p7)
