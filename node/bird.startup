@@ -58,3 +58,10 @@ sleep 1
 # doesn't.. *sigh*
 
 # </dev/null >/dev/null 2>/dev/null &
+
+# Start ubus
+ubusd &
+
+# Start hnetd (need some delay to wait for ubusd to go up, sigh..)
+sleep 3
+hnetd `cat /etc/hnetd.args` 2>&1 > $LOGDIR/hnetd.log &
