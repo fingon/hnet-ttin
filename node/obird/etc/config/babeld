@@ -16,7 +16,7 @@ config general
 	# option 'assume_wireless' 'false'
 	# option 'no_split_horizon' 'false'
 	# option 'debug' '0'
-	option 'debug' '1' # create /var
+	option 'debug' '3' # create logfile with _everything_
 	# Listen for connections from a front-end, e.g. on port 33123.
 	## option 'local_server' '33123'
 	# option 'random_router_id' 'false'
@@ -56,7 +56,7 @@ config filter
 	option 'type' 'redistribute'
 	# Selectors: ip, eq, le, ge, neigh, id, proto, local, if
 	option 'ip' '0.0.0.0/0' 
-	option 'le' '0'
+	option 'eq' '0'
 	option 'proto' '3'
 	# Action 
 	option 'action' 'metric 128'
@@ -69,18 +69,20 @@ config filter
 	option 'eq' '0'
 	option 'action' 'metric 128'
 
-# 'any' IPv6 default route
+# 'any' IPv6 default route (including source ones)
 config filter
 	option 'type' 'redistribute'
-	option 'src_ip' '::/0'
-	option 'src_ge' '0'
 	option 'ip' '::/0'
-	option 'le' '0'
+	option 'eq' '0'
 	option 'action' 'metric 128'
+#        option 'proto' '4'
 
-# Any 'local' route
+# Any 'local'ish route that's for a network, not /128 (regardless of 
+# whether it is really flagged local or not)
 config filter
 	option 'type' 'redistribute'
-	option 'local' '1'
+        option 'eq' '64'
+
+
 
 
