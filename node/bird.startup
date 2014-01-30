@@ -1,23 +1,15 @@
-# Use dnsmasq, no ULA, use hybrid proxy
-PM_ARGS="--disable_ula -m -h"
-
-# Use fakeDHCPv6d + ISC DHCPv4 server + radvd, no ULA
-#PM_ARGS="--disable_ula -f"
-
 . /usr/bin/luaenv.sh
 
-for BIN in bird birdc dnsmasq odhcp6c
+for BIN in babeld jshn odhcp6c ubus uci
 do
-        ln -sf $BUILD/bin/$BIN /usr/sbin
+        ln -sf $BUILD/bin/$BIN /usr/bin
 done
-ln -sf /usr/bin/skvtool.sh /usr/sbin/skvtool
-# not really used anymore - we use instead dnsmasq
-#ln -sf $BIRD/radvd /usr/sbin
-# not needed - recent enough in Debian 7
-#ln -sf $BIRD/rdisc6 /usr/sbin
+for BIN in hnet-{call,ifup,ifdown} hnetd hnetd-backend odhcpd ohybridproxy ubusd
+do
+        ln -sf $BUILD/sbin/$BIN /usr/sbin
+done
 
-# Run scripts from their default location
-ln -s $CORE/openwrt /usr/share/hnet
+ln -sf $BUILD/share/hnetd /usr/share/
 
 mkdir -p /usr/local/var/run
 
@@ -31,37 +23,16 @@ ifconfig eth1 up
 ifconfig eth2 up
 ifconfig eth3 up
 
-# Make sure utility scripts are executable
-chmod a+x /usr/share/hnet/*.sh
-
 mkdir -p $LOGDIR
-
-# Start pm
-(cd $CORE && ENABLE_MST_DEBUG=1 lua pm.lua $PM_ARGS 2>&1 > $LOGDIR/pm.log) &
-# < /dev/null 
-
-# Start OSPF-mdns (DEPRACATED)
-#sleep 1
-#(cd $CORE && ENABLE_MST_DEBUG=1 lua mdns.lua 2>&1 > $LOGDIR/mdns.log) &
-
-# Start hybrid proxy
-sleep 1
-(cd $CORE && ENABLE_MST_DEBUG=1 lua hp.lua --ospf 2>&1 > $LOGDIR/hp.log) &
-
-# Start bird
-sleep 1
-
-/usr/bin/run_bird.sh 
-
-# Note: non-debug bird should detach itself 'soon' => no need for
-# redirects, running in background. Debug version on the other hand
-# doesn't.. *sigh*
-
-# </dev/null >/dev/null 2>/dev/null &
 
 # Start ubus
 ubusd &
 
 # Start hnetd (need some delay to wait for ubusd to go up, sigh..)
-sleep 3
-hnetd `cat /etc/hnetd.args` 2>&1 > $LOGDIR/hnetd.log &
+hnetd -b 2>&1 > $LOGDIR/hnetd.log &
+
+hnet-ifup eth0
+hnet-ifup eth1
+hnet-ifup eth2
+hnet-ifup eth3
+
