@@ -28,9 +28,15 @@ mkdir -p $LOGDIR
 # Start ubus
 ubusd &
 
-# Start hnetd (need some delay to wait for ubusd to go up, sigh..)
-hnetd -b 2>&1 > $LOGDIR/hnetd.log &
+# Start odhcpd
+sleep 1
+odhcpd &
 
+# Start hnetd (need some delay to wait for ubusd to go up, sigh..)
+sleep 1
+hnetd 2> $LOGDIR/hnetd.stderr > $LOGDIR/hnetd.stdout &
+
+# And configure it
 hnet-ifup eth0
 hnet-ifup eth1
 hnet-ifup eth2
