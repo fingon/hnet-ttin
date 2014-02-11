@@ -34,7 +34,7 @@ odhcpd &
 
 # Start hnetd (need some delay to wait for ubusd to go up, sigh..)
 sleep 1
-hnetd 2> $LOGDIR/hnetd.stderr > $LOGDIR/hnetd.stdout &
+hnetd -r /bin/true 2> $LOGDIR/hnetd.stderr > $LOGDIR/hnetd.stdout &
 
 # And configure it
 hnet-ifup eth0
