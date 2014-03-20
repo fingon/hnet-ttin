@@ -6,13 +6,14 @@
 # Copyright (c) 2013 cisco Systems, Inc.
 #
 # Created:       Tue Apr  9 14:04:26 2013 mstenber
-# Last modified: Tue Nov 12 09:30:54 2013 mstenber
-# Edit time:     7 min
+# Last modified: Thu Mar 20 12:02:54 2014 mstenber
+# Edit time:     8 min
 #
 #
 
 # By default, create OWRT-using templates
 CASEARGS=--replace-template bird=obird
+CASEARGS_DEBUG=--replace-template bird=obird-debug
 
 build: lab/.all
 
@@ -35,7 +36,11 @@ clean:
 
 # bird7 = OWRT home router nodes
 # rebuild-bird7 = bird7 with fresh rebuilt OWRT image as base
-# debian-bird7 = OWRT home router nodes
+
+# dbird7 = OWRT home router nodes (debug on)
+# rebuild-dbird7 = bird7 with fresh rebuilt OWRT image as base (debug on)
+
+# debian-bird7 = Debian home router nodes
 
 bird7: clean
 	python util/case2lab.py $(CASEARGS) bird7
@@ -44,6 +49,15 @@ bird7: clean
 rebuild-bird7: clean
 	make -C ../openwrt
 	python util/case2lab.py $(CASEARGS) bird7
+	(cd lab/bird7 && lstart -p7)
+
+dbird7: clean
+	python util/case2lab.py $(CASEARGS_DEBUG) bird7
+	(cd lab/bird7 && lstart -p7)
+
+rebuild-dbird7: clean
+	make -C ../openwrt
+	python util/case2lab.py $(CASEARGS_DEBUG) bird7
 	(cd lab/bird7 && lstart -p7)
 
 debian-bird7: clean

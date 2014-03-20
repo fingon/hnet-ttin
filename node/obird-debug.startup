@@ -1,0 +1,23 @@
+# Fire up extra debugging + start hnetd manually (as etc/init.d/hnetd
+# is disabled)
+
+# LOGDIR has been created before, and set -> just reuse it
+
+# Start hnetd (we intentionally don't use init script here)
+HNETD_ARGS="-d /etc/init.d/dnsmasq -f /tmp/dnsmasq.d/hnet.conf -o /usr/sbin/hnetd-ohp-script -n $HOSTNAME -r /bin/true"
+
+#HNETD_ARGS=""
+
+echo debug-start > $LOGDIR/status
+
+ifconfig eth0 up
+sleep 3
+
+tcpdump -n -i eth0 -s 1500 -w $LOGDIR/tcpdump_eth0.dat &
+ip monitor >& $LOGDIR/ip_monitor.txt &
+
+mkdir -p /tmp/dnsmasq.d
+/usr/sbin/hnetd `echo $HNETD_ARGS` 2> $LOGDIR/hnetd.stderr > $LOGDIR/hnetd.stdout &
+
+echo debug-done > $LOGDIR/status
+

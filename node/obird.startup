@@ -20,10 +20,9 @@ fi
 # No longer needed once we moved the START to beginning of file.. grumble
 #/etc/init.d/hnet start
 
-# Handle logfile
+# Create log directory
 HOSTNAME=`cat /proc/sys/kernel/hostname`
 LOGDIR=/hostlab/logs/$HOSTNAME
 mkdir -p $LOGDIR
-uci set hnet.@pm[0].debug="$LOGDIR/pm.log"
-uci set hnet.@hp[0].debug="$LOGDIR/hp.log"
-uci commit hnet
+
+echo done > $LOGDIR/status
