@@ -1,5 +1,6 @@
 # enable ipv6 forwarding (this may be spurious if config has RA, but oh well)
 echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
 
-# Start up the dibbler
-dibbler-server start
+# set up 6rd
+/usr/share/lsadr/6rd-server-setup.sh 2001::/16 eth0 `cat /etc/netkit/6rd-common-prefix-length`
+

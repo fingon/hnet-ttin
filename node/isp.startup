@@ -1,18 +1,10 @@
 # Start named
 named
 
-# Start up dhcpd - this ISP doesn't NAT
-dhcpd
-
-# enable ipv6 forwarding (this may be spurious if config has RA, but oh well)
-echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
-
-# set up 6rd
-/usr/share/lsadr/6rd-server-setup.sh 2001::/16 eth0 `cat /etc/netkit/6rd-common-prefix-length`
-
 # Start tcpdump based on `hostname` as well, to store all packets
 # (useful for finding out problems)
 LOGDIR=/hostlab/logs/`hostname`
 mkdir -p $LOGDIR
 ifconfig eth0 up
+sleep 1
 /usr/sbin/tcpdump -i eth0 -s 1500 -w $LOGDIR/tcpdump.dat &
