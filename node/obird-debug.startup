@@ -17,7 +17,12 @@ tcpdump -n -i eth0 -s 1500 -w $LOGDIR/tcpdump_eth0.dat &
 ip monitor >& $LOGDIR/ip_monitor.txt &
 
 mkdir -p /tmp/dnsmasq.d
-/usr/sbin/hnetd `echo $HNETD_ARGS` 2> $LOGDIR/hnetd.stderr > $LOGDIR/hnetd.stdout &
+VALGRIND=
+VALGRIND=valgrind
+
+$VALGRIND /usr/sbin/hnetd `echo $HNETD_ARGS` 2> $LOGDIR/hnetd.stderr > $LOGDIR/hnetd.stdout &
+
+$VALGRIND /usr/sbin/odhcpd 2> $LOGDIR/odhcpd.stderr > $LOGDIR/odhcpd.stdout &
 
 echo debug-done > $LOGDIR/status
 
