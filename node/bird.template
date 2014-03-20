@@ -1,3 +1,3 @@
-inherit=bird-lua,owrt-feed-dhclient,skv-6rd
+inherit=hnet-build,owrt-feed-dhclient,skv-6rd
 mem=64
 

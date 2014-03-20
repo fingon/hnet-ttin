@@ -1,5 +1,0 @@
-# Just skeleton for using Bird-lua, but not starting it (this can be
-# used by anyone who wants to use e.g. luaenv.sh [which provides Lua
-# stuff on top of hnetenv.sh, which provides base binaries +
-# HNET+BUILD+CORE env variables])
-inherit=hnet-build
