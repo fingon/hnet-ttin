@@ -16,7 +16,7 @@ then
     echo "export HNET=$HNET" >> $ENVSH
     echo 'export LD_LIBRARY_PATH=/hostroot/lib/x86_64-linux-gnu:/hostroot/lib:$HNET/build/lib' >> $ENVSH
     echo 'export PATH=$HNET/build/bin:$HNET/build/sbin:$PATH' >> $ENVSH
-    echo 'export CORE=$HNET/component/core' >> $ENVSH
+    #echo 'export CORE=$HNET/component/core' >> $ENVSH
     echo 'export BUILD=$HNET/build' >> $ENVSH
 else
     echo "echo 'No HOSTLAB available yet hnetenv.sh sourced?'" >> $ENVSH

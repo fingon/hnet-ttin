@@ -1,4 +1,4 @@
-. /usr/bin/luaenv.sh
+. /usr/bin/hnetenv.sh
 
 for BIN in babeld jshn odhcp6c uci
 do
