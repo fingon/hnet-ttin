@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Mon Mar 24 16:18:49 2014 mstenber
-# Edit time:     103 min
+# Last modified: Mon Mar 24 16:50:59 2014 mstenber
+# Edit time:     123 min
 #
 """
 
@@ -85,10 +85,8 @@ class Step(Named):
                 _info('%s precondition failed: %s' % (repr(self),
                                                       repr(pre)))
                 return False
-        print('x')
         r = yield from self.runAsync(state, self.command)
         if r != 0:
-            print('y')
             _info('%s failed: %s' % (repr(self), repr(self.command)))
             return False
         if self.post:
@@ -125,12 +123,10 @@ class StepSequence(Named):
         self.steps = steps
     def run(self, state=None):
         for i, o in enumerate(self.steps):
-            _debug('%s running step #%d: %s' % (repr(self),
-                                                       i+1,
-                                                       repr(o)))
+            _debug('%s running step #%d: %s' % (repr(self),i,repr(o)))
             r = yield from o.run(state)
             if not r:
-                _info("%s step #%d failed" % (repr(self), i+1))
+                _info("%s step #%d failed" % (repr(self), i))
                 return False
         return True
 
@@ -147,12 +143,17 @@ class TestCase(Named):
             r = self.runOne(state, self.setup)
         if r:
             r = self.runOne(state, self.main)
+        # We run tearDown always, even if we never ran the main sequence
         if self.tearDown:
-            if not self.runOne(state, self.tearDown):
-                return False
+            r = self.runOne(state, self.tearDown)
         _debug('%s run() result %s' % (repr(self), repr(r)))
         return r
     def runOne(self, state, x):
+        try:
+            iter(x)
+            x = StepSequence(list(x))
+        except:
+            pass
         if isinstance(x, Step):
             x = StepSequence([x])
         if isinstance(x, StepSequence):
@@ -161,55 +162,84 @@ class TestCase(Named):
         raise NotImplementedError
 
 # TestSuite == StepSequence. Brilliant!
+def run(*args):
+    loop = asyncio.get_event_loop()
+    for i, arg in enumerate(args):
+        _debug('run() running #%d:%s' % (i, repr(arg)))
+        loop.run_until_complete(arg())
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--debug', action='store_true')
+    ap.add_argument('--verbose', action='store_true')
+
+    DELAY=0.01
+    args = ap.parse_args()
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
     @asyncio.coroutine
-    def sleeperOk01(cmds):
-        yield from asyncio.sleep(0.1)
+    def sleeperOk1(cmds):
+        yield from asyncio.sleep(DELAY)
         cmds[0] += 1
         assert len(cmds) == 4
         return 1
     @asyncio.coroutine
-    def sleeperOk02(cmds):
-        yield from asyncio.sleep(0.2)
+    def sleeperOk2(cmds):
+        yield from asyncio.sleep(2 * DELAY)
         cmds[1] += 1
         assert len(cmds) == 4
         return 1
     @asyncio.coroutine
-    def sleeperFail01(cmds):
-        yield from asyncio.sleep(0.1)
+    def sleeperFail1(cmds):
+        yield from asyncio.sleep(DELAY)
         cmds[2] += 1
         assert len(cmds) == 4
         return 0
     @asyncio.coroutine
-    def assertFail01(cmds):
-        yield from asyncio.sleep(0.1)
+    def assertFail1(cmds):
+        yield from asyncio.sleep(DELAY)
         assert False
     @asyncio.coroutine
-    def sleeperFail02(cmds):
-        yield from asyncio.sleep(0.2)
+    def sleeperFail2(cmds):
+        yield from asyncio.sleep(2 * DELAY)
         cmds[3] += 1
         assert len(cmds) == 4
         return 0
     @asyncio.coroutine
     def _t():
-        f01 = Step(sleeperFail01)
-        s01 = Step(sleeperOk01)
-        a01 = Step(assertFail01, exceptionIsFailure=True)
+        f1 = Step(sleeperFail1)
+        s1 = Step(sleeperOk1)
+        a1 = Step(assertFail1, exceptionIsFailure=True)
         cmds = [0,0,0,0]
-        r = yield from s01.run(cmds)
+
+        r = yield from s1.run(cmds)
         assert r
-        r = yield from f01.run(cmds)
-        assert not r
-        r = yield from a01.run(cmds)
-        assert not r
-        r = yield from TestCase(s01).run(cmds)
-        assert r
-        # Failing functions should fail
-        r = yield from TestCase(f01).run(cmds)
+
+        r = yield from f1.run(cmds)
         assert not r
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(_t())
+        r = yield from a1.run(cmds)
+        assert not r
+
+        r = yield from TestCase(s1).run(cmds)
+        assert r
+
+        # Failing functions should fail
+        r = yield from TestCase(f1).run(cmds)
+        assert not r
+
+        cmds = [0,0,0,0]
+        r = yield from TestCase(StepSequence([s1, s1])).run(cmds)
+        assert r
+        assert cmds[0] == 2
+
+        # Shortened form
+        cmds = [0,0,0,0]
+        r = yield from TestCase([s1, s1]).run(cmds)
+        assert r
+        assert cmds[0] == 2
+    run(_t)
 
