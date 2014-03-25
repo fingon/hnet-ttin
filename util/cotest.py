@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Tue Mar 25 14:55:29 2014 mstenber
-# Edit time:     218 min
+# Last modified: Tue Mar 25 16:05:06 2014 mstenber
+# Edit time:     227 min
 #
 """
 
@@ -73,6 +73,7 @@ def async_system(cmd):
 # returns (fake) empty output
 def sync_system(cmd):
     _debug('!!! sync_system %s' % cmd)
+    cmd = cmd + '2>/dev/null >/dev/null'
     return subprocess.call(cmd, shell=True), b'', b''
 
 @asyncio.coroutine
