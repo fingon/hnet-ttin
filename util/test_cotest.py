@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:27:35 2014 mstenber
-# Last modified: Tue Mar 25 12:55:00 2014 mstenber
-# Edit time:     13 min
+# Last modified: Tue Mar 25 14:07:30 2014 mstenber
+# Edit time:     20 min
 #
 """
 
@@ -131,23 +131,41 @@ class CoTestTest(unittest.TestCase):
             r = yield from TestCase([s1, s1]).run(cmds)
             assert r
             assert cmds[0] == 2
-        run(_t)
+            return True
+        assert run(_t)
         # Make sure we can also run simple testcase directly
-        run(TestCase(immediateOk))
+        assert run(TestCase(immediateOk))
     def test_system(self):
         def _t():
             (rc, stdout, stderr) = yield from cotest.async_system("ls")
             assert stdout
             assert not stderr
             assert rc == 0
-        run(_t)
+            return True
+            # Stuff below doesn't seem to serve useful purpose :p
+            (rc, stdout, stderr) = yield from cotest.async_system("sleep 1 && ls")
+            assert stdout
+            assert not stderr
+            assert rc == 0
+            return True
+        assert run(_t)
     def test_exec(self):
         def _t():
             (rc, stdout, stderr) = yield from cotest.async_exec("/bin/ls")
             assert stdout
             assert not stderr
             assert rc == 0
-        run(_t)
+            return True
+        assert run(_t)
+    def test_state(self):
+        def first(state):
+            state['foo'] = 1
+            return True
+        def second(state):
+            assert 'foo' in state
+            return True
+        tc = TestCase([first, second])
+        assert run(tc)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

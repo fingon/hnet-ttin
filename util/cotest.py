@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Tue Mar 25 12:54:09 2014 mstenber
-# Edit time:     192 min
+# Last modified: Tue Mar 25 14:09:07 2014 mstenber
+# Edit time:     207 min
 #
 """
 
@@ -25,19 +25,20 @@ Basic idea:
     execute commands on VMs
 
 (In principle, could have reused e.g. unittest or nose; but in
-practise, the amouont of glue code is small, and the asyncio magic
+practise, the amount of glue code is small, and the asyncio magic
 involved is the hairy part).
 
 The datastructures are defined to be highly composable, with access to
-their 'parent' objects. The test runner is just responsible for firing
-up the root level objects, and ultimately execution is up to set of
-test steps.
+the shared 'state' object. The test runner is just responsible for
+firing up the root level objects, and ultimately execution is up to
+set of test steps.
 
 """
 
 import time
 import asyncio
 import concurrent.futures
+import subprocess
 from asyncio.subprocess import PIPE
 
 import logging
@@ -51,18 +52,32 @@ def _async_run(fun, *args):
     try:
         stdout, stderr = yield from p.communicate()
     except:
-        p.kill()
-        yield from p.wait()
+        _debug('communicate exception')
+        try:
+            p.kill()
+            yield from p.wait()
+        except:
+            _debug('.. kill failed')
+            pass
         raise
     exitcode = yield from p.wait()
     return (exitcode, stdout, stderr)
 
 @asyncio.coroutine
 def async_system(cmd):
+    _debug('async_system %s' % cmd)
     return _async_run(asyncio.create_subprocess_shell, cmd)
+
+
+# async_system seems to have issues.. so provide replacement that just
+# returns (fake) empty output
+def sync_system(cmd):
+    _debug('!!! sync_system %s' % cmd)
+    return subprocess.call(cmd, shell=True), b'', b''
 
 @asyncio.coroutine
 def async_exec(*args):
+    _debug('async_exec %s' % args)
     return _async_run(asyncio.create_subprocess_exec, *args)
 
 class Named:
@@ -117,7 +132,7 @@ class Step(StepBase):
         self.failIf = failIf
     def run(self, state=None):
         _debug('%s run()' % repr(self))
-        state = state or {}
+        if state is None: state = {}
         r = yield from self.runAsync(state, self.fun, self.failIf)
         if r != 0:
             _info('%s failed: %s' % (repr(self), repr(self.fun)))
@@ -175,7 +190,7 @@ class MultiStepBase(StepBase):
         self.steps = map(_toStep, steps)
     def run(self, state=None):
         _debug('%s run()' % repr(self))
-        state = state or {}
+        if state is None: state = {}
         def _convert(x):
             r = x.run(state)
             _debug('starting %s => %s' % (repr(x), repr(r)))
@@ -235,7 +250,7 @@ class StepSequence(Named, Runnable):
         self.steps = steps
         self.stopFail = stopFail
     def run(self, state=None):
-        state = state or {}
+        if state is None: state = {}
         r = True
         for i, o in enumerate(self.steps):
             o = _toStep(o)
@@ -255,7 +270,7 @@ class TestCase(Named, Runnable):
         self.setup = setup
         self.tearDown = tearDown
     def run(self, state=None):
-        state = state or {}
+        if state is None: state = {}
         _debug('%s run()' % repr(self))
         r = True
         if self.setup:
