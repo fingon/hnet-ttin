@@ -7,8 +7,8 @@
 # Author: Markus Stenberg <fingon@iki.fi>
 #
 # Created:       Wed Jul  4 11:28:46 2012 mstenber
-# Last modified: Tue Mar 25 11:14:42 2014 mstenber
-# Edit time:     487 min
+# Last modified: Tue Mar 25 16:25:53 2014 mstenber
+# Edit time:     493 min
 #
 """
 
@@ -546,7 +546,7 @@ class Configuration(ReCollectionProcessor, HKVStore):
                 continue
             t = d.get(KEY_TEMPLATE, None)
             if t:
-                pp('# %s[%s] = %s' % (k,KEY_TEMPLATE,t))
+                pp('# %s[%s] = %s' % (k,KEY_TEMPLATE, self.cdb.replace_template.get(t, t)))
 
         addresses = self.toPP(pp)
 
@@ -971,14 +971,14 @@ if __name__ == '__main__':
                     nargs='*',
                     help="Build out only specific labs (by default, all are built).")
     ap.add_argument('--replace-template',
-                    nargs=1,
+                    action='append',
                     help='Replace template X with template Y (given as X=Y)'
                     )
     replace_template = {}
     args = ap.parse_args()
     for s in args.replace_template or []:
         l = s.split('=')
-        assert(len(l) == 2)
+        assert len(l) == 2, 'weird content:%s' % l
         k, v = l
         replace_template[k] = v
     cdb = ConfigurationDatabase(replace_template, args.lab)
