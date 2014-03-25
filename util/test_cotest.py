@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:27:35 2014 mstenber
-# Last modified: Tue Mar 25 14:07:30 2014 mstenber
-# Edit time:     20 min
+# Last modified: Tue Mar 25 14:44:44 2014 mstenber
+# Edit time:     23 min
 #
 """
 
@@ -166,7 +166,24 @@ class CoTestTest(unittest.TestCase):
             return True
         tc = TestCase([first, second])
         assert run(tc)
-
+    def test_repeat(self):
+        def thirdok(state):
+            yield from asyncio.sleep(DELAY)
+            c = state.get('counter', 0)
+            c = c + 1
+            state['counter'] = c
+            return c == 3
+        def _t():
+            r = yield from cotest.RepeatStep(thirdok, times=4).run()
+            assert r
+            r = yield from cotest.RepeatStep(thirdok, times=2).run()
+            assert not r
+            r = yield from cotest.RepeatStep(thirdok, wait=DELAY, timeout=6*DELAY).run()
+            assert r
+            r = yield from cotest.RepeatStep(thirdok, wait=DELAY, timeout=3*DELAY).run()
+            assert not r
+            return True
+        assert run(_t)
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     unittest.main()

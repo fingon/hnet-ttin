@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Tue Mar 25 14:09:07 2014 mstenber
-# Edit time:     207 min
+# Last modified: Tue Mar 25 14:55:29 2014 mstenber
+# Edit time:     218 min
 #
 """
 
@@ -178,8 +178,40 @@ class NotStep(StepBase):
         StepBase.__init__(self, **kwargs)
         self.step = _toStep(step)
     def run(self, state=None):
+        if state is None: state = {}
         r = yield from self.step.run(state)
         return not r
+
+class RepeatStep(StepBase):
+    def __init__(self, step, *, wait=None, timeout=None, times=None, **kwargs):
+        StepBase.__init__(self, **kwargs)
+        assert timeout or times
+        self.step = _toStep(step)
+        self.times = times
+        self.timeout = timeout
+        self.wait = wait
+    def run(self, state=None):
+        if state is None: state = {}
+        i = 0
+        if self.timeout:
+            st = time.monotonic()
+            et = st + self.timeout
+        r = False
+        ot = self.step.timeout
+        while (self.times is None or i < self.times) and (self.timeout is None or time.monotonic() <= et):
+            if self.timeout:
+                self.step.timeout = et - time.monotonic()
+                if self.step.timeout <= 0:
+                    break
+            r = yield from self.step.run(state)
+            if r:
+                r = True
+                break
+            if self.wait:
+                yield from asyncio.sleep(self.wait)
+            i += 1
+        self.step.timeout = ot
+        return r
 
 # Abstract base class for multiple step bandling
 # NOTE: This does not support synchronous steps!
