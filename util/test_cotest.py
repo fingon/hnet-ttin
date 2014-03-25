@@ -9,14 +9,15 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:27:35 2014 mstenber
-# Last modified: Tue Mar 25 10:38:43 2014 mstenber
-# Edit time:     2 min
+# Last modified: Tue Mar 25 12:55:00 2014 mstenber
+# Edit time:     13 min
 #
 """
 
 """
 
 import unittest
+import cotest
 from cotest import Step, TestCase, run
 import asyncio
 import logging
@@ -62,6 +63,7 @@ class CoTestTest(unittest.TestCase):
             io = Step(immediateOk)
             f1 = Step(sleeperFail1)
             s1 = Step(sleeperOk1)
+            s2 = Step(sleeperOk2)
             a1 = Step(assertFail1, exceptionIsFailure=True)
             cmds = [0,0,0,0]
 
@@ -77,7 +79,47 @@ class CoTestTest(unittest.TestCase):
             r = yield from a1.run(cmds)
             assert not r
 
+            s = cotest.NotStep(a1)
+            r = yield from s.run(cmds)
+            assert r
+
+            print('AndStep 1')
+
+            s = cotest.AndStep(s1, s1)
+            r = yield from s.run(cmds)
+            assert r
+
+            s = cotest.AndStep(s1, f1)
+            r = yield from s.run(cmds)
+            assert not r
+
+            s = cotest.OrStep(s1, s1)
+            r = yield from s.run(cmds)
+            assert r
+
+            # Even later success is ok, as long as it's before timeout
+            s = cotest.OrStep(s2, f1)
+            r = yield from s.run(cmds)
+            assert r
+
+            # If timeout happens before ok, we should fail
+            s = cotest.OrStep(s2, f1, timeout=DELAY * 1.5)
+            r = yield from s.run(cmds)
+            assert not r
+
+
+            # And obviously, failure is failure
+            s = cotest.OrStep(f1, f1)
+            r = yield from s.run(cmds)
+            assert not r
+
+
             r = yield from TestCase(s1).run(cmds)
+            assert r
+
+            # Make sure we can feed in just single function
+            # (It should be converted to StepSequence, and SS should handle it)
+            r = yield from TestCase(sleeperOk1).run(cmds)
             assert r
 
             # Failing functions should fail
@@ -89,9 +131,24 @@ class CoTestTest(unittest.TestCase):
             r = yield from TestCase([s1, s1]).run(cmds)
             assert r
             assert cmds[0] == 2
-        logging.basicConfig(level=logging.DEBUG)
+        run(_t)
+        # Make sure we can also run simple testcase directly
+        run(TestCase(immediateOk))
+    def test_system(self):
+        def _t():
+            (rc, stdout, stderr) = yield from cotest.async_system("ls")
+            assert stdout
+            assert not stderr
+            assert rc == 0
+        run(_t)
+    def test_exec(self):
+        def _t():
+            (rc, stdout, stderr) = yield from cotest.async_exec("/bin/ls")
+            assert stdout
+            assert not stderr
+            assert rc == 0
         run(_t)
 
-
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     unittest.main()

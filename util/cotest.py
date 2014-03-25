@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Tue Mar 25 10:38:27 2014 mstenber
-# Edit time:     140 min
+# Last modified: Tue Mar 25 12:54:09 2014 mstenber
+# Edit time:     192 min
 #
 """
 
@@ -35,13 +35,35 @@ test steps.
 
 """
 
+import time
 import asyncio
-import logging
 import concurrent.futures
+from asyncio.subprocess import PIPE
 
+import logging
 _logger = logging.getLogger('cotest')
 _debug = _logger.debug
 _info = _logger.info
+
+@asyncio.coroutine
+def _async_run(fun, *args):
+    p = yield from fun(*args, stdout=PIPE, stderr=PIPE)
+    try:
+        stdout, stderr = yield from p.communicate()
+    except:
+        p.kill()
+        yield from p.wait()
+        raise
+    exitcode = yield from p.wait()
+    return (exitcode, stdout, stderr)
+
+@asyncio.coroutine
+def async_system(cmd):
+    return _async_run(asyncio.create_subprocess_shell, cmd)
+
+@asyncio.coroutine
+def async_exec(*args):
+    return _async_run(asyncio.create_subprocess_exec, *args)
 
 class Named:
     def __init__(self, name):
@@ -60,30 +82,51 @@ class Named:
     def reprValues(self):
         return {}
 
-class Step(Named):
+class Runnable:
+    def run():
+        raise NotImplementedError
+
+class StepBase(Named, Runnable):
     def __init__(self,
-                 command,
                  *,
-                 failIf=None,
                  name=None,
                  timeout=None,
                  exceptionIsFailure=False):
         Named.__init__(self, name)
-        self.command = command
-        self.failIf = failIf
         self.timeout = timeout
         self.exceptionIsFailure = exceptionIsFailure
+    def doneErrors(self, l):
+        for o in l:
+            _debug('checking errors in %s' % repr(o))
+            if self.exceptionIsFailure:
+                e = o.exception()
+                if e:
+                    _info('exception %s occurred in %s' % (repr(e),
+                                                           repr(o)))
+                    return True
+        return False
+
+class Step(StepBase):
+    def __init__(self,
+                 fun,
+                 *,
+                 failIf=None,
+                 **kwargs):
+        StepBase.__init__(self, **kwargs)
+        self.fun = fun
+        self.failIf = failIf
     def run(self, state=None):
         _debug('%s run()' % repr(self))
-        r = yield from self.runAsync(state, self.command, self.failIf)
+        state = state or {}
+        r = yield from self.runAsync(state, self.fun, self.failIf)
         if r != 0:
-            _info('%s failed: %s' % (repr(self), repr(self.command)))
+            _info('%s failed: %s' % (repr(self), repr(self.fun)))
             return False
         return True
     def runAsync(self, state, *args):
         assert args, 'must have at least one job'
         def _convert(x):
-            r = x(state or self)
+            r = x(state)
             _debug('starting %s => %s' % (repr(x), repr(r)))
             if r and asyncio.iscoroutine(r):
                 return asyncio.Task(r)
@@ -99,28 +142,103 @@ class Step(Named):
         done, pending = yield from asyncio.wait(l, timeout=self.timeout,
                                                 return_when=concurrent.futures.FIRST_COMPLETED)
         _debug('runAsync => %s' % repr(done))
+        if self.doneErrors(done):
+            return
         for i, o in enumerate(l):
             _debug('considering %s' % repr(o))
             if o and o in done:
-                if self.exceptionIsFailure:
-                    e = o.exception()
-                    if e:
-                        _info('exception %s occurred in %s' % (repr(e),
-                                                               repr(o)))
-                        return
                 if o.result():
                     return i
                 return
         return
 
-class StepSequence(Named):
+def _toStep(x):
+    assert x
+    if not isinstance(x, StepBase):
+        x = Step(x)
+    return x
+
+class NotStep(StepBase):
+    def __init__(self, step, **kwargs):
+        StepBase.__init__(self, **kwargs)
+        self.step = _toStep(step)
+    def run(self, state=None):
+        r = yield from self.step.run(state)
+        return not r
+
+# Abstract base class for multiple step bandling
+# NOTE: This does not support synchronous steps!
+class MultiStepBase(StepBase):
+    def __init__(self, *steps, **kwargs):
+        StepBase.__init__(self, **kwargs)
+        assert len(steps) >= 2, 'multistep with <= 1 arguments is not useful'
+        self.steps = map(_toStep, steps)
+    def run(self, state=None):
+        _debug('%s run()' % repr(self))
+        state = state or {}
+        def _convert(x):
+            r = x.run(state)
+            _debug('starting %s => %s' % (repr(x), repr(r)))
+            assert r and asyncio.iscoroutine(r)
+            return asyncio.Task(r)
+        l = map(_convert, self.steps)
+        return self.waitResult(l)
+    def waitResult(self, l):
+        # Child responsibility
+        raise NotImplementedError
+
+class OrStep(MultiStepBase):
+    def waitResult(self, l):
+        # This has bit more .. magical.. handling
+        l = list(l)
+        nto = None
+        to = self.timeout
+        if to:
+            st = time.monotonic()
+        while l:
+            if to:
+                nto = to - (time.monotonic() - st)
+                if nto <= 0:
+                    return
+            done, pending = yield from asyncio.wait(l, timeout=nto,
+                                                    return_when=concurrent.futures.FIRST_COMPLETED)
+            _debug('%s asyncio.wait got %s,%s' % (repr(self), done, pending))
+            if not done:
+                _debug('%s failed due to timeout')
+                return False
+            if self.doneErrors(done):
+                return False
+            for o in done:
+                if o.result():
+                    return True
+                l.remove(o)
+        # If we run out of list, we're failure
+        return
+
+class AndStep(MultiStepBase):
+    def waitResult(self, l):
+        done, pending = yield from asyncio.wait(l, timeout=self.timeout)
+        _debug('%s asyncio.wait got %s,%s' % (repr(self), done, pending))
+        if pending:
+            _debug('%s failed due to pending %s' % (repr(self), repr(pending)))
+            return False
+        if self.doneErrors(done):
+            return False
+        assert done
+        failed = list(filter(lambda x:not x.result(), done))
+        return not failed
+
+
+class StepSequence(Named, Runnable):
     def __init__(self, steps, *, name=None, stopFail=True):
         Named.__init__(self, name)
         self.steps = steps
         self.stopFail = stopFail
     def run(self, state=None):
+        state = state or {}
         r = True
         for i, o in enumerate(self.steps):
+            o = _toStep(o)
             _debug('%s running step #%d: %s' % (repr(self),i,repr(o)))
             cr = yield from o.run(state)
             if not cr:
@@ -130,13 +248,14 @@ class StepSequence(Named):
                 r = False
         return r
 
-class TestCase(Named):
+class TestCase(Named, Runnable):
     def __init__(self, main, *, name=None, setup=None, tearDown=None):
         Named.__init__(self, name)
         self.main = main
         self.setup = setup
         self.tearDown = tearDown
     def run(self, state=None):
+        state = state or {}
         _debug('%s run()' % repr(self))
         r = True
         if self.setup:
@@ -153,20 +272,24 @@ class TestCase(Named):
             iter(x)
             x = StepSequence(list(x))
         except:
-            pass
-        if isinstance(x, Step):
             x = StepSequence([x])
-        if isinstance(x, StepSequence):
-            r = yield from x.run(state or self)
-            return r
-        raise NotImplementedError
+        r = yield from x.run(state)
+        return r
 
 # TestSuite == StepSequence. Brilliant!
 def run(*args):
     loop = asyncio.get_event_loop()
+    r = True
     for i, arg in enumerate(args):
         _debug('run() running #%d:%s' % (i, repr(arg)))
-        loop.run_until_complete(arg())
+        if isinstance(arg, Runnable):
+            arg = arg.run
+        t = asyncio.async(arg())
+        loop.run_until_complete(t)
+        if not t.result():
+            r = False
+    _debug('run() result: %s' % repr(r))
+    return r
 
 if __name__ == '__main__':
     pass
