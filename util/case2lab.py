@@ -7,8 +7,8 @@
 # Author: Markus Stenberg <fingon@iki.fi>
 #
 # Created:       Wed Jul  4 11:28:46 2012 mstenber
-# Last modified: Thu May 23 12:27:09 2013 mstenber
-# Edit time:     481 min
+# Last modified: Tue Mar 25 11:14:42 2014 mstenber
+# Edit time:     487 min
 #
 """
 
@@ -540,8 +540,13 @@ class Configuration(ReCollectionProcessor, HKVStore):
 
         nodes = self.getActiveNodes()
         nodes.sort()
-        pp('# Active machines %s' % nodes)
-
+        pp('# Active nodes %s' % nodes)
+        for k, d in self.getInheritedInstances(expand=False):
+            if k not in nodes:
+                continue
+            t = d.get(KEY_TEMPLATE, None)
+            if t:
+                pp('# %s[%s] = %s' % (k,KEY_TEMPLATE,t))
 
         addresses = self.toPP(pp)
 
