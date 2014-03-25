@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Mar 25 14:50:58 2014 mstenber
-# Edit time:     79 min
+# Last modified: Tue Mar 25 16:14:27 2014 mstenber
+# Edit time:     94 min
 #
 """
 
@@ -42,6 +42,13 @@ _template_re = re.compile('^# (\S+)\[template\] = (\S+)$').match
 KEY_TOPOLOGY='topology'
 
 @asyncio.coroutine
+def _killTopology():
+    cmd = 'vclean --clean-all'
+    rc, *x = yield from cotest.async_system(cmd)
+    #rc, *x = cotest.sync_system(cmd)
+    return rc == 0
+
+@asyncio.coroutine
 def _nodeShell(node, cmd):
     s = "uml_mconsole %s exec '%s'" % (node, cmd)
     r = yield from cotest.async_system(s)
@@ -51,16 +58,18 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=120):
     @asyncio.coroutine
     def _run(state):
         # Check we're inside ttin main directory
-        assert open('util/cotest.py')
+        f = open('util/cotest.py')
+        f.close()
         args = []
         if routerTemplate:
             args.append('--replace-template')
             args.append('bird=%s' % routerTemplate)
         if ispTemplate:
             args.append('--replace-template')
-            args.append('isp=%s' % ispTemplate)
+            args.append('isp4-6=%s' % ispTemplate)
         args.append(topology)
         args = ' '.join(args)
+        r = yield from _killTopology()
         rc, *x = yield from cotest.async_system('python util/case2lab.py %s' % args)
         if rc:
             _info('case2lab failed with exit code %d' % rc)
@@ -73,7 +82,8 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=120):
         state['clients'] = cd
         isd = {}
         state['isps'] = isd
-        for line in open('lab/%s/lab.conf' % topology):
+        f = open('lab/%s/lab.conf' % topology)
+        for line in f:
             m = _template_re(line)
             if m is None: continue
             (node, template) = m.groups()
@@ -84,6 +94,7 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=120):
                 isd[node] = {}
             if 'client' in node:
                 cd[node] = {}
+        f.close()
         cmd = '(cd lab/%s && lstart -p123 < /dev/null)' % topology
         rc, stdout, stderr = cotest.sync_system(cmd)
         # wish this wasn't broken
@@ -128,27 +139,32 @@ def killTopology(timeout=60):
         del state['routers']
         del state['isps']
         del state['nodes']
-        cmd = 'vclean --clean-all'
-        rc, *x = yield from cotest.async_system(cmd)
-        #rc, *x = cotest.sync_system(cmd)
-        return rc == 0
+        r = yield from _killTopology()
+        return r
     return cotest.Step(_run, name='killTopology', timeout=timeout)
+
+# Built-in unit tests that just run through the templates once
+base_4_test = [
+    cotest.NotStep(nodePing4('client', 'h-server')),
+    nodeRun('client', 'dhclient eth0'),
+    cotest.RepeatStep(nodePing4('client', 'h-server'),
+                      wait=5, timeout=60),
+]
+
+base_6_test = [
+    cotest.RepeatStep(nodePing6('client', 'h-server'),
+                      wait=5, timeout=120),
+    ]
+
+base_test = [
+    startTopology('bird7', 'obird'),
+    ] + base_6_test + base_4_test
+
 
 if __name__ == '__main__':
     import logging
     #logging.basicConfig(level=logging.INFO)
     logging.basicConfig(level=logging.DEBUG)
-    # Built-in unit tests that just run through the templates once
-    l = [
-        startTopology('bird7', 'obird'),
-        cotest.RepeatStep(nodePing6('client', 'h-server'),
-                          wait=5, timeout=120),
-        cotest.NotStep(nodePing4('client', 'h-server')),
-        nodeRun('client', 'dhclient eth0'),
-        cotest.RepeatStep(nodePing4('client', 'h-server'),
-                          wait=5, timeout=60),
-        killTopology(),
-        ]
-    tc = cotest.TestCase(l)
+    tc = cotest.TestCase(base_test)
     cotest.run(tc)
 
