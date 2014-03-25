@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Mon Mar 24 16:50:59 2014 mstenber
-# Edit time:     123 min
+# Last modified: Tue Mar 25 10:35:09 2014 mstenber
+# Edit time:     140 min
 #
 """
 
@@ -64,42 +64,38 @@ class Step(Named):
     def __init__(self,
                  command,
                  *,
+                 failIf=None,
                  name=None,
-                 pre=None, failPre=None,
-                 post=None, failPost=None,
                  timeout=None,
                  exceptionIsFailure=False):
         Named.__init__(self, name)
         self.command = command
-        self.pre = pre
-        self.failPre = failPre
-        self.post = post
-        self.failPost = failPost
+        self.failIf = failIf
         self.timeout = timeout
         self.exceptionIsFailure = exceptionIsFailure
     def run(self, state=None):
         _debug('%s run()' % repr(self))
-        if self.pre:
-            r = yield from self.runAsync(state, self.pre, self.failPre)
-            if r != 0:
-                _info('%s precondition failed: %s' % (repr(self),
-                                                      repr(pre)))
-                return False
-        r = yield from self.runAsync(state, self.command)
+        r = yield from self.runAsync(state, self.command, self.failIf)
         if r != 0:
             _info('%s failed: %s' % (repr(self), repr(self.command)))
             return False
-        if self.post:
-            r = yield from self.runAsync(state, self.post, self.failPost)
-            if r != 0:
-                _info('%s postcondition failed: %s' % (repr(self),
-                                                       repr(post)))
-                return False
         return True
     def runAsync(self, state, *args):
-        l = filter(None, args)
-        assert l, 'must have at least one job'
-        l = list(map(lambda x:asyncio.Task(x(state or self)), l))
+        assert args, 'must have at least one job'
+        def _convert(x):
+            r = x(state or self)
+            _debug('starting %s => %s' % (repr(x), repr(r)))
+            if r and asyncio.iscoroutine(r):
+                return asyncio.Task(r)
+            return r
+        args = filter(None, args)
+        l = list(map(_convert, args))
+        # If there was immediate response, process it
+        for i, o in enumerate(l):
+            if not isinstance(o, asyncio.Task):
+                if o:
+                    return i
+                return
         done, pending = yield from asyncio.wait(l, timeout=self.timeout,
                                                 return_when=concurrent.futures.FIRST_COMPLETED)
         _debug('runAsync => %s' % repr(done))
@@ -118,17 +114,21 @@ class Step(Named):
         return
 
 class StepSequence(Named):
-    def __init__(self, steps, *, name=None):
+    def __init__(self, steps, *, name=None, stopFail=True):
         Named.__init__(self, name)
         self.steps = steps
+        self.stopFail = stopFail
     def run(self, state=None):
+        r = True
         for i, o in enumerate(self.steps):
             _debug('%s running step #%d: %s' % (repr(self),i,repr(o)))
-            r = yield from o.run(state)
-            if not r:
+            cr = yield from o.run(state)
+            if not cr:
                 _info("%s step #%d failed" % (repr(self), i))
-                return False
-        return True
+                if self.stopFail:
+                    return False
+                r = False
+        return r
 
 class TestCase(Named):
     def __init__(self, main, *, name=None, setup=None, tearDown=None):
@@ -169,77 +169,4 @@ def run(*args):
         loop.run_until_complete(arg())
 
 if __name__ == '__main__':
-    import argparse
-    ap = argparse.ArgumentParser()
-    ap.add_argument('--debug', action='store_true')
-    ap.add_argument('--verbose', action='store_true')
-
-    DELAY=0.01
-    args = ap.parse_args()
-    if args.debug:
-        logging.basicConfig(level=logging.DEBUG)
-    else:
-        logging.basicConfig(level=logging.INFO)
-    @asyncio.coroutine
-    def sleeperOk1(cmds):
-        yield from asyncio.sleep(DELAY)
-        cmds[0] += 1
-        assert len(cmds) == 4
-        return 1
-    @asyncio.coroutine
-    def sleeperOk2(cmds):
-        yield from asyncio.sleep(2 * DELAY)
-        cmds[1] += 1
-        assert len(cmds) == 4
-        return 1
-    @asyncio.coroutine
-    def sleeperFail1(cmds):
-        yield from asyncio.sleep(DELAY)
-        cmds[2] += 1
-        assert len(cmds) == 4
-        return 0
-    @asyncio.coroutine
-    def assertFail1(cmds):
-        yield from asyncio.sleep(DELAY)
-        assert False
-    @asyncio.coroutine
-    def sleeperFail2(cmds):
-        yield from asyncio.sleep(2 * DELAY)
-        cmds[3] += 1
-        assert len(cmds) == 4
-        return 0
-    @asyncio.coroutine
-    def _t():
-        f1 = Step(sleeperFail1)
-        s1 = Step(sleeperOk1)
-        a1 = Step(assertFail1, exceptionIsFailure=True)
-        cmds = [0,0,0,0]
-
-        r = yield from s1.run(cmds)
-        assert r
-
-        r = yield from f1.run(cmds)
-        assert not r
-
-        r = yield from a1.run(cmds)
-        assert not r
-
-        r = yield from TestCase(s1).run(cmds)
-        assert r
-
-        # Failing functions should fail
-        r = yield from TestCase(f1).run(cmds)
-        assert not r
-
-        cmds = [0,0,0,0]
-        r = yield from TestCase(StepSequence([s1, s1])).run(cmds)
-        assert r
-        assert cmds[0] == 2
-
-        # Shortened form
-        cmds = [0,0,0,0]
-        r = yield from TestCase([s1, s1]).run(cmds)
-        assert r
-        assert cmds[0] == 2
-    run(_t)
-
+    pass
