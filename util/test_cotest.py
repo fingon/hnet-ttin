@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 # -*- Python -*-
 #
-# $Id: test_pntf.py $
+# $Id: test_cotest.py $
 #
 # Author: Markus Stenberg <mstenber@cisco.com>
 #
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:27:35 2014 mstenber
-# Last modified: Tue Mar 25 10:31:21 2014 mstenber
+# Last modified: Tue Mar 25 10:38:43 2014 mstenber
 # Edit time:     2 min
 #
 """
@@ -17,7 +17,7 @@
 """
 
 import unittest
-from pntf import Step, TestCase, run
+from cotest import Step, TestCase, run
 import asyncio
 import logging
 
@@ -55,7 +55,7 @@ def immediateOk(cmds):
     return 1
 
 
-class PNTFTest(unittest.TestCase):
+class CoTestTest(unittest.TestCase):
     def test_base(self):
         @asyncio.coroutine
         def _t():

@@ -2,19 +2,19 @@
 # -*- coding: utf-8 -*-
 # -*- Python -*-
 #
-# $Id: pntf.py $
+# $Id: cotest.py $
 #
 # Author: Markus Stenberg <mstenber@cisco.com>
 #
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Tue Mar 25 10:35:09 2014 mstenber
+# Last modified: Tue Mar 25 10:38:27 2014 mstenber
 # Edit time:     140 min
 #
 """
 
-Python Netkit Testing Framework.
+(Python) Coroutine-based Testing Framework.
 
 Basic idea:
 
@@ -39,7 +39,7 @@ import asyncio
 import logging
 import concurrent.futures
 
-_logger = logging.getLogger('pntf')
+_logger = logging.getLogger('cotest')
 _debug = _logger.debug
 _info = _logger.info
 
