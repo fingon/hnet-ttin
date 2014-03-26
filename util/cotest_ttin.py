@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Mar 25 16:14:27 2014 mstenber
-# Edit time:     94 min
+# Last modified: Tue Mar 25 16:52:23 2014 mstenber
+# Edit time:     97 min
 #
 """
 
@@ -54,7 +54,7 @@ def _nodeShell(node, cmd):
     r = yield from cotest.async_system(s)
     return r
 
-def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=120):
+def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=60):
     @asyncio.coroutine
     def _run(state):
         # Check we're inside ttin main directory
@@ -70,6 +70,12 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=120):
         args.append(topology)
         args = ' '.join(args)
         r = yield from _killTopology()
+
+        rc, *x = yield from cotest.async_system('rm -rf lab/%s' % topology)
+        if rc:
+            _info('rm topology failed with exit code %d' % rc)
+            return
+
         rc, *x = yield from cotest.async_system('python util/case2lab.py %s' % args)
         if rc:
             _info('case2lab failed with exit code %d' % rc)
@@ -151,10 +157,17 @@ base_4_test = [
                       wait=5, timeout=60),
 ]
 
+base_6_local_test = [
+    cotest.RepeatStep(nodePing6('client', 'bird3.eth0.bird3.home'),
+                      wait=1, timeout=60),
+    cotest.RepeatStep(nodePing6('client', 'cpe.eth0.cpe.home'),
+                      wait=1, timeout=60),
+    ]
+
 base_6_test = [
     cotest.RepeatStep(nodePing6('client', 'h-server'),
-                      wait=5, timeout=120),
-    ]
+                      wait=5, timeout=60),
+    ] + base_6_local_test
 
 base_test = [
     startTopology('bird7', 'obird'),
