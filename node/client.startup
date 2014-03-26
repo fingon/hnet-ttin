@@ -1,3 +1,6 @@
+# Enable prefix info options with routes longer than 0 (WTF)
+echo 64 > /proc/sys/net/ipv6/conf/eth0/accept_ra_rt_info_max_plen 
+
 # Fire up SSH
 /etc/init.d/ssh start
 
@@ -33,4 +36,3 @@ LOGDIR=/hostlab/logs/`hostname`
 mkdir -p $LOGDIR
 ifconfig eth0 up
 /usr/sbin/tcpdump -i eth0 -s 1500 -w $LOGDIR/tcpdump.dat &
-
