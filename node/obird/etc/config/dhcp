@@ -3,7 +3,8 @@ config dnsmasq
 	option boguspriv	0
 	option filterwin2k	0  # enable for dial on demand
 	option localise_queries	1
-	option rebind_protection 1  # disable if upstream must serve RFC1918 addresses
+	#option rebind_protection 1  # disable if upstream must serve RFC1918 addresses
+	option rebind_protection 0  # we have RFC1918 addrs on ISP side too
 	option rebind_localhost 1  # enable for RBL checking and similar services
 	#list rebind_domain example.lan  # whitelist RFC1918 responses for domains
 	option expandhosts	1
