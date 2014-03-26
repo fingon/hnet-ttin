@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Wed Mar 26 15:21:56 2014 mstenber
-# Edit time:     230 min
+# Last modified: Wed Mar 26 19:54:54 2014 mstenber
+# Edit time:     233 min
 #
 """
 
@@ -75,7 +75,10 @@ def sync_system(cmd, timeout):
     assert timeout
     _debug('!!! sync_system %s' % cmd)
     cmd = cmd + '2>/dev/null >/dev/null'
-    return subprocess.call(cmd, shell=True, timeout=timeout), b'', b''
+    try:
+        return subprocess.call(cmd, shell=True, timeout=timeout), b'', b''
+    except subprocess.TimeoutExpired:
+        return -1, b'', b''
 
 @asyncio.coroutine
 def async_exec(*args):
@@ -220,7 +223,7 @@ class RepeatStep(StepBase):
 class MultiStepBase(StepBase):
     def __init__(self, *steps, **kwargs):
         StepBase.__init__(self, **kwargs)
-        assert len(steps) >= 2, 'multistep with <= 1 arguments is not useful'
+        assert len(steps) >= 1, 'multistep with 0 arguments is not useful'
         self.steps = map(_toStep, steps)
     def run(self, state=None):
         _debug('%s run()' % repr(self))
