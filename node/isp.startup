@@ -1,7 +1,8 @@
-# Start named
-mkdir -p /run/resolvconf/interface
-/etc/init.d/bind9 start
+# Debian7.0 - /run/resolvconf/interface is missing -> create it
+resolvconf --create-runtime-directories
 
+# Start named
+/etc/init.d/bind9 start
 
 # Start tcpdump based on `hostname` as well, to store all packets
 # (useful for finding out problems)
