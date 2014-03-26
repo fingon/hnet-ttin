@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Tue Mar 25 16:33:55 2014 mstenber
-# Edit time:     15 min
+# Last modified: Wed Mar 26 14:57:33 2014 mstenber
+# Edit time:     28 min
 #
 """
 
@@ -30,7 +30,8 @@ class TestBasic(unittest.TestCase):
         tc = cotest.TestCase(base_test)
         assert cotest.run(tc)
     def test_ula(self):
-        l = [startTopology('bird7', 'obird', ispTemplate='isp')] + base_6_local_test
+        l = [startTopology('bird7', 'obird', ispTemplate='isp'),
+             waitRouterPrefix6('fd')] + base_6_local_test
         tc = cotest.TestCase(l)
         assert cotest.run(tc)
     def test_4only(self):
@@ -46,8 +47,11 @@ class TestBasic(unittest.TestCase):
         tc = cotest.TestCase(l)
         assert cotest.run(tc)
     def test_6rd_6(self):
-        l = [startTopology('bird7', 'obird', ispTemplate='isp4-6rd-6')] + base_6_test + base_4_test
-        # XXX - add checks to make sure we have both 6rd and non-6rd addresses
+        pre = [startTopology('bird7', 'obird', ispTemplate='isp4-6rd-6')]
+        post = [nodeHasPrefix('client', '2000:'),
+                nodeHasPrefix('client', '2001:')]
+        l = pre + base_6_test + base_4_test + post
+        # XXX - make sure multiple IPv6 addresses work correctly
         tc = cotest.TestCase(l)
         assert cotest.run(tc)
 
@@ -55,16 +59,19 @@ class TestMH(unittest.TestCase):
     def test_mh(self):
         l = [startTopology('mhbird10', 'obird')] + base_6_test
         tc = cotest.TestCase(l)
+        # XXX - make sure multiple IPv6 addresses work correctly
         assert cotest.run(tc)
 
 
 class TestNasty(unittest.TestCase):
-    def test_mh(self):
+    def test_nasty(self):
         l = [startTopology('bird14', 'obird')] + base_6_test + base_4_test
         tc = cotest.TestCase(l)
         assert cotest.run(tc)
 
 if __name__ == '__main__':
-    #logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG)
+    al = logging.getLogger('asyncio')
+    al.setLevel(logging.CRITICAL)
     unittest.main()
 
