@@ -1,4 +1,5 @@
 # Variant which uses RA for default router, instead of DHCPv6 next-hop
 # (that is Dibbler-specific)
 
+inherit=isp
 0=ISP,192.168.100.1,ipv6:2000:dead::1/64,ipv6ra
