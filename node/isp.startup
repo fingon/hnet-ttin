@@ -1,5 +1,7 @@
 # Start named
-named
+mkdir -p /run/resolvconf/interface
+/etc/init.d/bind9 start
+
 
 # Start tcpdump based on `hostname` as well, to store all packets
 # (useful for finding out problems)
@@ -7,4 +9,8 @@ LOGDIR=/hostlab/logs/`hostname`
 mkdir -p $LOGDIR
 ifconfig eth0 up
 sleep 1
-/usr/sbin/tcpdump -i eth0 -s 1500 -w $LOGDIR/tcpdump.dat &
+if [ ! -f $LOGDIR/tcpdump.dat ]
+then
+        /usr/sbin/tcpdump -i eth0 -s 1500 -w $LOGDIR/tcpdump.dat &
+fi
+
