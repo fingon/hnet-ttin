@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Wed Mar 26 14:57:33 2014 mstenber
-# Edit time:     28 min
+# Last modified: Wed Mar 26 20:11:29 2014 mstenber
+# Edit time:     32 min
 #
 """
 
@@ -47,7 +47,8 @@ class TestBasic(unittest.TestCase):
         tc = cotest.TestCase(l)
         assert cotest.run(tc)
     def test_6rd_6(self):
-        pre = [startTopology('bird7', 'obird', ispTemplate='isp4-6rd-6')]
+        pre = [startTopology('bird7', 'obird', ispTemplate='isp4-6rd-6'),
+               ]
         post = [nodeHasPrefix('client', '2000:'),
                 nodeHasPrefix('client', '2001:')]
         l = pre + base_6_test + base_4_test + post
@@ -57,7 +58,13 @@ class TestBasic(unittest.TestCase):
 
 class TestMH(unittest.TestCase):
     def test_mh(self):
-        l = [startTopology('mhbird10', 'obird')] + base_6_test
+        pre = [
+            startTopology('mhbird10', 'obird'),
+            cotest.RepeatStep(updateNodeAddresses6('client', minimum=3),
+                              wait=5, timeout=60),
+            ]
+
+        l = pre + base_6_test
         tc = cotest.TestCase(l)
         # XXX - make sure multiple IPv6 addresses work correctly
         assert cotest.run(tc)

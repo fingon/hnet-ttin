@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Wed Mar 26 15:21:41 2014 mstenber
-# Edit time:     141 min
+# Last modified: Wed Mar 26 20:17:17 2014 mstenber
+# Edit time:     163 min
 #
 """
 
@@ -47,16 +47,20 @@ def _killTopology():
     rc, *x = yield from cotest.async_system(cmd)
     return rc == 0
 
+class MConsoleDeadException(Exception):
+    pass
+
 @asyncio.coroutine
 def _nodeShell(node, cmd):
     s = "uml_mconsole %s exec '%s'" % (node, cmd)
     (rc, stdout, stderr) = yield from cotest.async_system(s)
     if stdout[:3] != b'OK ':
         _info('_nodeShell returned non-ok for %s' % node)
-        return (-1, b'', b'')
+        raise MConsoleDeadException(node)
     return (rc, stdout[3:], stderr)
 
-def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=60):
+# Allow for fail or two
+def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
     @asyncio.coroutine
     def _run(state):
         # Check we're inside ttin main directory
@@ -114,9 +118,15 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=60):
             _info('lstart succeeded but topo was running before')
             return
         state[KEY_TOPOLOGY] = topology
+        # Check that all nodes actually started
+        for node in nd.keys():
+            rc, *x = yield from _nodeShell(node, 'echo')
+            assert rc == 0
         return True
     n = 'startTopology %s/%s/%s' % (topology, routerTemplate, ispTemplate)
-    return cotest.Step(_run, name=n, timeout=timeout)
+    return cotest.RepeatStep(cotest.Step(_run, name=n, timeout=timeout),
+                             wait=1,
+                             timeout=timeout)
 
 def nodeRun(node, cmd):
     def _run(state):
@@ -152,6 +162,40 @@ def nodeHasPrefix4(node, prefix, **kwargs):
 
 def nodeHasPrefix6(node, prefix, **kwargs):
     return nodeHasPrefix(node, IFCONFIG_V6_PREFIX + prefix, **kwargs)
+
+def updateNodeAddresses6(node, *, minimum=1, maximum=None, timeout=5):
+    def _run(state):
+        rc, stdout, stderr = yield from _nodeShell(node, 'ip -6 addr show scope global | grep -v deprecated | grep inet6')
+        rl = []
+        state['nodes'][node]['addrs'] = rl
+        for line in stdout.decode().split('\n'):
+            line = line.strip()
+            _debug(' got %s' % line)
+            l = line.split(' ')
+            if len(l) < 2:
+                continue
+            addr = l[1]
+            assert '/' in addr
+            addr = addr.split('/')[0]
+            rl.append(addr)
+        if minimum and len(rl) < minimum:
+            return
+        if maximum and len(rl) > maximum:
+            return
+        return True
+    return cotest.Step(_run,
+                       name='@%s get IPv6 addresses' % node,
+                       timeout=timeout)
+
+def nodePingFromAll6(node, remote):
+    def _run(state):
+        def _convert(a):
+            return nodePing6(node, '-I %s %s' % (a, remote))
+        l = list(map(_convert, state['nodes'][node]['addrs']))
+        s = cotest.AndStep(*l)
+        r = yield from s.run(state)
+        return r
+    return cotest.Step(_run, name='@%s:all-ping6 %s' % (node, remote))
 
 def waitRouterPrefix(prefix, *, timeout=120):
     def _run(state):
@@ -212,6 +256,8 @@ base_6_test = [
     nodeHasPrefix6('client', '200'),
     cotest.RepeatStep(nodePing6('client', 'h-server'), wait=1, timeout=30),
     nodePing6('client', 'server.v6.lab.example.com'),
+    updateNodeAddresses6('client'),
+    cotest.RepeatStep(nodePingFromAll6('client', 'h-server'), wait=1, timeout=30),
     ] + base_6_local_test
 
 base_test = [
