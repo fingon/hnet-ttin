@@ -9,7 +9,7 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Wed Mar 26 14:57:29 2014 mstenber
+# Last modified: Wed Mar 26 15:21:41 2014 mstenber
 # Edit time:     141 min
 #
 """
@@ -45,7 +45,6 @@ KEY_TOPOLOGY='topology'
 def _killTopology():
     cmd = 'vclean --clean-all'
     rc, *x = yield from cotest.async_system(cmd)
-    #rc, *x = cotest.sync_system(cmd)
     return rc == 0
 
 @asyncio.coroutine
@@ -105,7 +104,7 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=60):
                 cd[node] = {}
         f.close()
         cmd = '(cd lab/%s && lstart -p123 < /dev/null)' % topology
-        rc, stdout, stderr = cotest.sync_system(cmd)
+        rc, stdout, stderr = cotest.sync_system(cmd, timeout)
         # wish this wasn't broken
         #rc, stdout, stderr = yield from cotest.async_system(cmd)
         if rc:

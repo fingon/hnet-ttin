@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Tue Mar 25 16:05:06 2014 mstenber
-# Edit time:     227 min
+# Last modified: Wed Mar 26 15:21:56 2014 mstenber
+# Edit time:     230 min
 #
 """
 
@@ -71,10 +71,11 @@ def async_system(cmd):
 
 # async_system seems to have issues.. so provide replacement that just
 # returns (fake) empty output
-def sync_system(cmd):
+def sync_system(cmd, timeout):
+    assert timeout
     _debug('!!! sync_system %s' % cmd)
     cmd = cmd + '2>/dev/null >/dev/null'
-    return subprocess.call(cmd, shell=True), b'', b''
+    return subprocess.call(cmd, shell=True, timeout=timeout), b'', b''
 
 @asyncio.coroutine
 def async_exec(*args):
