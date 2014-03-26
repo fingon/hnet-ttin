@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Wed Mar 26 18:49:35 2014 mstenber
-# Last modified: Wed Mar 26 19:23:29 2014 mstenber
-# Edit time:     32 min
+# Last modified: Wed Mar 26 19:30:16 2014 mstenber
+# Edit time:     38 min
 #
 """
 
@@ -39,7 +39,7 @@ LOG_LENGTH=1
 # What do we really want from the output logs? system calls seem reasonable
 #spam_line_re = re.compile('(^asyncio:|.*result: False)').match
 spam_line_re = None
-useful_line_re = re.compile('^.*sync_system').match
+useful_line_re = re.compile('^cotest: DEBUG: async_system (.*)$').match
 #useful_line_re = None
 
 fail_re = re.compile('^FAIL: (\S+)').match
@@ -48,7 +48,7 @@ end_log_re = re.compile('^-+ >> end captured logging << -+$').match
 
 class Case:
     def __init__(self):
-        self.traces = ['']
+        self.traces = []
     def flaky(self):
         return '' in self.traces
     def inconsistent(self):
@@ -59,8 +59,6 @@ class Case:
 def parse_logs(*logs):
     cases = {}
     for log in logs:
-        for case in cases.values():
-            case.traces.append('')
         state = 0
         dq = collections.deque(maxlen=LOG_LENGTH)
         c = None
@@ -78,14 +76,23 @@ def parse_logs(*logs):
                 state = 2
             if state == 2:
                 if end_log_re(line) is not None:
-                    c.traces[-1] = '\n'.join(dq)
+                    c.traces.append('\n'.join(dq))
                     state = 0
                     continue
                 if spam_line_re and spam_line_re(line) is not None:
                     continue
-                if useful_line_re and useful_line_re(line) is None:
-                    continue
+                if useful_line_re:
+                    m = useful_line_re(line)
+                    if m is None:
+                        continue
+                    line = m.group(1)
                 dq.append(line.rstrip())
+    # Add 'successful' results to the end
+    for case in cases.values():
+        need = len(logs) - len(case.traces)
+        if need > 0:
+            l = [''] * need
+            case.traces.extend(l)
     return cases
 
 def print_cases(cases, call, st, st1=False):
@@ -99,9 +106,9 @@ def print_cases(cases, call, st, st1=False):
         if st:
             for t, c in collections.Counter(cases[k].traces).items():
                 if st1:
-                    print('',t)
+                    print('', t)
                     break
-                print(c,t)
+                print('', c, t)
     print()
 
 if __name__ == '__main__':
@@ -112,7 +119,7 @@ if __name__ == '__main__':
                     help='Log files to parse')
     args = ap.parse_args()
     cases = parse_logs(*args.logfile)
-    print_cases(cases, 'flaky', False)
+    print_cases(cases, 'flaky', True)
     print_cases(cases, 'inconsistent', True)
     print_cases(cases, 'broken', True, True)
 
