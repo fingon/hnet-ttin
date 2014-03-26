@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Mar 25 16:52:23 2014 mstenber
-# Edit time:     97 min
+# Last modified: Wed Mar 26 13:20:51 2014 mstenber
+# Edit time:     129 min
 #
 """
 
@@ -51,8 +51,11 @@ def _killTopology():
 @asyncio.coroutine
 def _nodeShell(node, cmd):
     s = "uml_mconsole %s exec '%s'" % (node, cmd)
-    r = yield from cotest.async_system(s)
-    return r
+    (rc, stdout, stderr) = yield from cotest.async_system(s)
+    if stdout[:3] != b'OK ':
+        _info('_nodeShell returned non-ok for %s' % node)
+        return (-1, b'', b'')
+    return (rc, stdout[3:], stderr)
 
 def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=60):
     @asyncio.coroutine
@@ -134,6 +137,43 @@ def nodePing6(node, remote):
         return rc == 0 and ' bytes from ' in stdout.decode()
     return cotest.Step(_run, name='@%s:ping6 %s' % (node, remote))
 
+def nodeHasPrefix(node, prefix, *, timeout=3):
+    def _run(state):
+        rc, stdout, stderr = yield from _nodeShell(node, 'ifconfig | grep -q "%s" && echo found' % prefix)
+        return rc == 0 and 'found' in stdout.decode()
+    return cotest.Step(_run,
+                       name='@%s:check for %s' % (node, prefix),
+                       timeout=timeout)
+
+IFCONFIG_V4_PREFIX='inet addr:'
+IFCONFIG_V6_PREFIX='inet6 addr: '
+
+def nodeHasPrefix4(node, prefix, **kwargs):
+    return nodeHasPrefix(node, IFCONFIG_V4_PREFIX + prefix, **kwargs)
+
+def nodeHasPrefix6(node, prefix, **kwargs):
+    return nodeHasPrefix(node, IFCONFIG_V6_PREFIX + prefix, **kwargs)
+
+def waitRouterPrefix(prefix, *, timeout=120):
+    def _run(state):
+        # For every router in the configuration, make sure the prefix is visible
+
+        def _convert(node):
+            return cotest.RepeatStep(nodeHasPrefix(node, prefix),
+                                     wait=1, timeout=timeout)
+        l = list(map(_convert, state['routers']))
+        assert len(l) >= 2
+        s = cotest.AndStep(*l)
+        r = yield from s.run(state)
+        return r
+    return cotest.Step(_run, name='wait prefix %s' % prefix)
+
+def waitRouterPrefix4(prefix, **kwargs):
+    return waitRouterPrefix(IFCONFIG_V4_PREFIX + prefix, **kwargs)
+
+def waitRouterPrefix6(prefix, **kwargs):
+    return waitRouterPrefix(IFCONFIG_V6_PREFIX + prefix, **kwargs)
+
 def killTopology(timeout=60):
     @asyncio.coroutine
     def _run(state):
@@ -151,22 +191,25 @@ def killTopology(timeout=60):
 
 # Built-in unit tests that just run through the templates once
 base_4_test = [
+    waitRouterPrefix4('10.'),
+    cotest.NotStep(nodeHasPrefix4('client', '10.')),
     cotest.NotStep(nodePing4('client', 'h-server')),
     nodeRun('client', 'dhclient eth0'),
-    cotest.RepeatStep(nodePing4('client', 'h-server'),
-                      wait=5, timeout=60),
+    nodeHasPrefix4('client', '10.'),
+    cotest.RepeatStep(nodePing4('client', 'h-server'), wait=1, timeout=5),
 ]
 
 base_6_local_test = [
     cotest.RepeatStep(nodePing6('client', 'bird3.eth0.bird3.home'),
-                      wait=1, timeout=60),
+                      wait=1, timeout=5),
     cotest.RepeatStep(nodePing6('client', 'cpe.eth0.cpe.home'),
-                      wait=1, timeout=60),
+                      wait=1, timeout=5),
     ]
 
 base_6_test = [
-    cotest.RepeatStep(nodePing6('client', 'h-server'),
-                      wait=5, timeout=60),
+    waitRouterPrefix6('200'),
+    nodeHasPrefix6('client', '200'),
+    cotest.RepeatStep(nodePing6('client', 'h-server'), wait=1, timeout=30),
     ] + base_6_local_test
 
 base_test = [
