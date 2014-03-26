@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Wed Mar 26 13:20:51 2014 mstenber
-# Edit time:     129 min
+# Last modified: Wed Mar 26 14:57:29 2014 mstenber
+# Edit time:     141 min
 #
 """
 
@@ -197,19 +197,22 @@ base_4_test = [
     nodeRun('client', 'dhclient eth0'),
     nodeHasPrefix4('client', '10.'),
     cotest.RepeatStep(nodePing4('client', 'h-server'), wait=1, timeout=5),
+    nodePing4('client', 'server.v4.lab.example.com'),
 ]
 
 base_6_local_test = [
+    # May need to wait for routing to settle here => need long timeouts
     cotest.RepeatStep(nodePing6('client', 'bird3.eth0.bird3.home'),
-                      wait=1, timeout=5),
+                      wait=1, timeout=60),
     cotest.RepeatStep(nodePing6('client', 'cpe.eth0.cpe.home'),
-                      wait=1, timeout=5),
+                      wait=1, timeout=60),
     ]
 
 base_6_test = [
     waitRouterPrefix6('200'),
     nodeHasPrefix6('client', '200'),
     cotest.RepeatStep(nodePing6('client', 'h-server'), wait=1, timeout=30),
+    nodePing6('client', 'server.v6.lab.example.com'),
     ] + base_6_local_test
 
 base_test = [
@@ -221,6 +224,8 @@ if __name__ == '__main__':
     import logging
     #logging.basicConfig(level=logging.INFO)
     logging.basicConfig(level=logging.DEBUG)
+    al = logging.getLogger('asyncio')
+    al.setLevel(logging.CRITICAL)
     tc = cotest.TestCase(base_test)
     cotest.run(tc)
 
