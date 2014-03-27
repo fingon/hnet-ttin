@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Wed Mar 26 18:49:35 2014 mstenber
-# Last modified: Wed Mar 26 19:30:16 2014 mstenber
-# Edit time:     38 min
+# Last modified: Thu Mar 27 12:57:42 2014 mstenber
+# Edit time:     40 min
 #
 """
 
@@ -42,7 +42,7 @@ spam_line_re = None
 useful_line_re = re.compile('^cotest: DEBUG: async_system (.*)$').match
 #useful_line_re = None
 
-fail_re = re.compile('^FAIL: (\S+)').match
+fail_re = re.compile('^FAIL: (\S+) \((\S+)\)').match
 start_log_re = re.compile('^-+ >> begin captured logging << -+$').match
 end_log_re = re.compile('^-+ >> end captured logging << -+$').match
 
@@ -67,7 +67,8 @@ def parse_logs(*logs):
                 m = fail_re(line)
                 if m is None:
                     continue
-                n = m.group(1)
+                n, c = m.groups()
+                n = '%s.%s' % (c, n)
                 if n not in cases:
                     cases[n] = Case()
                 c = cases[n]
@@ -106,9 +107,9 @@ def print_cases(cases, call, st, st1=False):
         if st:
             for t, c in collections.Counter(cases[k].traces).items():
                 if st1:
-                    print('', t)
+                    print('', '', t)
                     break
-                print('', c, t)
+                print('', '', c, t)
     print()
 
 if __name__ == '__main__':
