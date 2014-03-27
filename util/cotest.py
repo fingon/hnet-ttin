@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Wed Mar 26 19:54:54 2014 mstenber
-# Edit time:     233 min
+# Last modified: Thu Mar 27 09:34:06 2014 mstenber
+# Edit time:     269 min
 #
 """
 
@@ -103,7 +103,7 @@ class Named:
         return {}
 
 class Runnable:
-    def run():
+    def run(self, state=None, *, depth=0):
         raise NotImplementedError
 
 class StepBase(Named, Runnable):
@@ -135,12 +135,12 @@ class Step(StepBase):
         StepBase.__init__(self, **kwargs)
         self.fun = fun
         self.failIf = failIf
-    def run(self, state=None):
-        _debug('%s run()' % repr(self))
+    def run(self, state=None, *, depth=0):
+        _debug('[%d] %s run()' % (depth, repr(self)))
         if state is None: state = {}
         r = yield from self.runAsync(state, self.fun, self.failIf)
         if r != 0:
-            _info('%s failed: %s' % (repr(self), repr(self.fun)))
+            _info('[%d] %s failed: %s' % (depth, repr(self), repr(self.fun)))
             return False
         return True
     def runAsync(self, state, *args):
@@ -182,9 +182,9 @@ class NotStep(StepBase):
     def __init__(self, step, **kwargs):
         StepBase.__init__(self, **kwargs)
         self.step = _toStep(step)
-    def run(self, state=None):
+    def run(self, state=None, *, depth=0):
         if state is None: state = {}
-        r = yield from self.step.run(state)
+        r = yield from self.step.run(state, depth=depth+1)
         return not r
 
 class RepeatStep(StepBase):
@@ -195,7 +195,7 @@ class RepeatStep(StepBase):
         self.times = times
         self.timeout = timeout
         self.wait = wait
-    def run(self, state=None):
+    def run(self, state=None, *, depth=0):
         if state is None: state = {}
         i = 0
         if self.timeout:
@@ -208,7 +208,7 @@ class RepeatStep(StepBase):
                 self.step.timeout = et - time.monotonic()
                 if self.step.timeout <= 0:
                     break
-            r = yield from self.step.run(state)
+            r = yield from self.step.run(state, depth=depth+1)
             if r:
                 r = True
                 break
@@ -225,11 +225,11 @@ class MultiStepBase(StepBase):
         StepBase.__init__(self, **kwargs)
         assert len(steps) >= 1, 'multistep with 0 arguments is not useful'
         self.steps = map(_toStep, steps)
-    def run(self, state=None):
+    def run(self, state=None, *, depth=0):
         _debug('%s run()' % repr(self))
         if state is None: state = {}
         def _convert(x):
-            r = x.run(state)
+            r = x.run(state, depth=depth+1)
             _debug('starting %s => %s' % (repr(x), repr(r)))
             assert r and asyncio.iscoroutine(r)
             return asyncio.Task(r)
@@ -284,51 +284,57 @@ class AndStep(MultiStepBase):
 class StepSequence(Named, Runnable):
     def __init__(self, steps, *, name=None, stopFail=True):
         Named.__init__(self, name)
+        try:
+            iter(steps)
+        except:
+            steps = [steps]
+        steps = filter(None, steps)
         self.steps = steps
         self.stopFail = stopFail
-    def run(self, state=None):
+    def run(self, state=None, *, depth=0):
         if state is None: state = {}
         r = True
         for i, o in enumerate(self.steps):
-            o = _toStep(o)
-            _debug('%s running step #%d: %s' % (repr(self),i,repr(o)))
-            cr = yield from o.run(state)
+            if not isinstance(o, Runnable):
+                o = _toStep(o)
+            _debug('[%d] %s running step #%d: %s' % (depth,
+                                                     repr(self), i, repr(o)))
+            cr = yield from o.run(state, depth=depth+1)
             if not cr:
-                _info("%s step #%d failed" % (repr(self), i))
+                _info("[%d] %s step #%d failed" % (depth, repr(self), i))
                 if self.stopFail:
                     return False
                 r = False
         return r
 
-class TestCase(Named, Runnable):
-    def __init__(self, main, *, name=None, setup=None, tearDown=None):
-        Named.__init__(self, name)
-        self.main = main
-        self.setup = setup
-        self.tearDown = tearDown
-    def run(self, state=None):
-        if state is None: state = {}
-        _debug('%s run()' % repr(self))
-        r = True
-        if self.setup:
-            r = self.runOne(state, self.setup)
-        if r:
-            r = self.runOne(state, self.main)
-        # We run tearDown always, even if we never ran the main sequence
-        if self.tearDown:
-            r = self.runOne(state, self.tearDown)
-        _debug('%s run() result %s' % (repr(self), repr(r)))
-        return r
-    def runOne(self, state, x):
-        try:
-            iter(x)
-            x = StepSequence(list(x))
-        except:
-            x = StepSequence([x])
-        r = yield from x.run(state)
-        return r
+def _toStepSequence(x):
+    if isinstance(x, StepSequence):
+        return x
+    if not x:
+        return None
+    return StepSequence(x)
 
-# TestSuite == StepSequence. Brilliant!
+class TestCase(StepSequence):
+    def __init__(self, main, *,
+                 setup=None, tearDown=None, tearDownAlways=True, **kwargs):
+        setup = _toStepSequence(setup)
+        main = _toStepSequence(main)
+        tearDown = _toStepSequence(tearDown)
+        if tearDownAlways:
+            StepSequence.__init__(self,
+                                  [StepSequence([setup, main]), tearDown],
+                                  stopFail=False,
+                                  **kwargs)
+        else:
+            StepSequence.__init__(self,
+                                  [setup, StepSequence([main, tearDown],
+                                                       stopFail=False)],
+                                  **kwargs)
+
+class TestSuite(StepSequence):
+    def __init__(self, cases, **kwargs):
+        return StepSequence.__init__(self, cases, stopFail=False, **kwargs)
+
 def run(*args):
     loop = asyncio.get_event_loop()
     r = True
