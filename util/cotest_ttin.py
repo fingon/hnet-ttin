@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Wed Mar 26 20:17:17 2014 mstenber
-# Edit time:     163 min
+# Last modified: Thu Mar 27 09:29:56 2014 mstenber
+# Edit time:     165 min
 #
 """
 
@@ -255,7 +255,7 @@ base_6_test = [
     waitRouterPrefix6('200'),
     nodeHasPrefix6('client', '200'),
     cotest.RepeatStep(nodePing6('client', 'h-server'), wait=1, timeout=30),
-    nodePing6('client', 'server.v6.lab.example.com'),
+    cotest.RepeatStep(nodePing6('client', 'server.v6.lab.example.com'), wait=1, timeout=5),
     updateNodeAddresses6('client'),
     cotest.RepeatStep(nodePingFromAll6('client', 'h-server'), wait=1, timeout=30),
     ] + base_6_local_test
