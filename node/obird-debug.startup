@@ -18,11 +18,13 @@ ip monitor >& $LOGDIR/ip_monitor.txt &
 
 mkdir -p /tmp/dnsmasq.d
 VALGRIND=
-VALGRIND=valgrind
+#VALGRIND=valgrind
 
 $VALGRIND /usr/sbin/hnetd `echo $HNETD_ARGS` 2> $LOGDIR/hnetd.stderr > $LOGDIR/hnetd.stdout &
 
 $VALGRIND /usr/sbin/odhcpd 2> $LOGDIR/odhcpd.stderr > $LOGDIR/odhcpd.stdout &
+
+mdnsd -debug 2> $LOGDIR/mdnsd.stderr > $LOGDIR/mdnsd.stdout &
 
 echo debug-done > $LOGDIR/status
 
