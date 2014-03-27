@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Thu Mar 27 13:53:00 2014 mstenber
-# Edit time:     56 min
+# Last modified: Thu Mar 27 18:41:30 2014 mstenber
+# Edit time:     57 min
 #
 """
 
@@ -89,8 +89,10 @@ class MHFallback(MH):
 class Large(unittest.TestCase):
     topology = 'bird14'
     router = 'obird'
-    l = [startTopology(self.topology, self.router)]
-    l = l + base_6_test + base_4_test
+    def setUp(self):
+        l = [startTopology(self.topology, self.router)]
+        l = l + base_6_test + base_4_test
+        self.l = l
     def test(self):
         tc = cotest.TestCase(self.l)
         assert cotest.run(tc)
