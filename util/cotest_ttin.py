@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Thu Mar 27 15:36:05 2014 mstenber
-# Edit time:     191 min
+# Last modified: Thu Mar 27 18:48:44 2014 mstenber
+# Edit time:     193 min
 #
 """
 
@@ -232,7 +232,7 @@ def nodePingFromAll6(node, remote):
 
 def nodeInterfaceFirewallZoneIs(node, interface, zone):
     def _run(state):
-        cmd = 'ifstatus %s | grep "\\"zone\\": " | cut -d ":" -f 2 | grep ' % interface
+        cmd = 'ifstatus %s | grep "\\"zone\\": " | cut -d ":" -f 2' % interface
         rc, r, stderr = yield from _nodeExec(node, cmd)
         if rc:
             return
