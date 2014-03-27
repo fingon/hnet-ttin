@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Thu Mar 27 09:29:56 2014 mstenber
-# Edit time:     165 min
+# Last modified: Thu Mar 27 15:36:05 2014 mstenber
+# Edit time:     191 min
 #
 """
 
@@ -51,13 +51,31 @@ class MConsoleDeadException(Exception):
     pass
 
 @asyncio.coroutine
-def _nodeShell(node, cmd):
-    s = "uml_mconsole %s exec '%s'" % (node, cmd)
+def _node(node, cmd):
+    s = "uml_mconsole %s %s" % (node, cmd)
     (rc, stdout, stderr) = yield from cotest.async_system(s)
     if stdout[:3] != b'OK ':
-        _info('_nodeShell returned non-ok for %s' % node)
+        _info('_nodeExec returned non-ok for %s' % node)
         raise MConsoleDeadException(node)
     return (rc, stdout[3:], stderr)
+
+@asyncio.coroutine
+def _nodeExec(node, cmd):
+    return _node(node, "exec '%s'" % cmd)
+
+def nodeStop(node):
+    @asyncio.coroutine
+    def _run(state):
+        rc, *x = yield from _node(node, 'stop')
+        return rc == 0
+    return cotest.Step(_run, name='stop %s' % node)
+
+def nodeGo(node):
+    @asyncio.coroutine
+    def _run(state):
+        rc, *x = yield from _node(node, 'go')
+        return rc == 0
+    return cotest.Step(_run, name='go %s' % node)
 
 # Allow for fail or two
 def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
@@ -120,7 +138,7 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
         state[KEY_TOPOLOGY] = topology
         # Check that all nodes actually started
         for node in nd.keys():
-            rc, *x = yield from _nodeShell(node, 'echo')
+            rc, *x = yield from _nodeExec(node, 'echo')
             assert rc == 0
         return True
     n = 'startTopology %s/%s/%s' % (topology, routerTemplate, ispTemplate)
@@ -130,26 +148,41 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
 
 def nodeRun(node, cmd):
     def _run(state):
-        rc, *x = yield from _nodeShell(node, cmd)
+        rc, *x = yield from _nodeExec(node, cmd)
         return rc == 0
     return cotest.Step(_run, name='@%s:%s' % (node, cmd))
 
 def nodePing4(node, remote):
     def _run(state):
-        rc, stdout, stderr = yield from _nodeShell(node, 'ping -c 1 %s' % remote)
+        rc, stdout, stderr = yield from _nodeExec(node, 'ping -c 1 %s' % remote)
         return rc == 0 and ' bytes from ' in stdout.decode()
     return cotest.Step(_run, name='@%s:ping %s' % (node, remote))
 
 def nodePing6(node, remote):
     def _run(state):
-        rc, stdout, stderr = yield from _nodeShell(node, 'ping6 -c 1 %s' % remote)
+        rc, stdout, stderr = yield from _nodeExec(node, 'ping6 -c 1 %s' % remote)
         return rc == 0 and ' bytes from ' in stdout.decode()
     return cotest.Step(_run, name='@%s:ping6 %s' % (node, remote))
 
+def nodeTraceroute6Contains(node, remote, data):
+    # In principle this should work; however, traceroute6 does
+    # something stupid with tty and it's not compatible with mconsole
+    # exec..
+    raise NotImplementedError
+    def _run(state):
+        rc, r, stderr = yield from _nodeExec(node, 'traceroute6 %s' % remote)
+        if rc:
+            return
+        if not data in r:
+            _debug('missing %s from %s' % (data.decode(), r.decode()))
+            return
+        return True
+    return cotest.Step(_run, name='@%s:traceroute6 %s has %s' % (node, remote, data))
+
 def nodeHasPrefix(node, prefix, *, timeout=3):
     def _run(state):
-        rc, stdout, stderr = yield from _nodeShell(node, 'ifconfig | grep -q "%s" && echo found' % prefix)
-        return rc == 0 and 'found' in stdout.decode()
+        rc, stdout, stderr = yield from _nodeExec(node, 'ifconfig | grep -q "%s" && echo found' % prefix)
+        return rc == 0 and b'found' in stdout
     return cotest.Step(_run,
                        name='@%s:check for %s' % (node, prefix),
                        timeout=timeout)
@@ -165,7 +198,7 @@ def nodeHasPrefix6(node, prefix, **kwargs):
 
 def updateNodeAddresses6(node, *, minimum=1, maximum=None, timeout=5):
     def _run(state):
-        rc, stdout, stderr = yield from _nodeShell(node, 'ip -6 addr show scope global | grep -v deprecated | grep inet6')
+        rc, stdout, stderr = yield from _nodeExec(node, 'ip -6 addr show scope global | grep -v deprecated | grep inet6')
         rl = []
         state['nodes'][node]['addrs'] = rl
         for line in stdout.decode().split('\n'):
@@ -196,6 +229,16 @@ def nodePingFromAll6(node, remote):
         r = yield from s.run(state)
         return r
     return cotest.Step(_run, name='@%s:all-ping6 %s' % (node, remote))
+
+def nodeInterfaceFirewallZoneIs(node, interface, zone):
+    def _run(state):
+        cmd = 'ifstatus %s | grep "\\"zone\\": " | cut -d ":" -f 2 | grep ' % interface
+        rc, r, stderr = yield from _nodeExec(node, cmd)
+        if rc:
+            return
+        r = r.decode().strip()
+        return r == '"%s"' % zone
+    return cotest.Step(_run, name='@%s:fwzone %s=%s' % (node, interface, zone))
 
 def waitRouterPrefix(prefix, *, timeout=120):
     def _run(state):
@@ -232,6 +275,13 @@ def killTopology(timeout=60):
         return r
     return cotest.Step(_run, name='killTopology', timeout=timeout)
 
+def sleep(timeout):
+    @asyncio.coroutine
+    def _run(state):
+        yield from asyncio.sleep(timeout)
+        return True
+    return cotest.Step(_run, name='sleep %d' % timeout)
+
 # Built-in unit tests that just run through the templates once
 base_4_test = [
     waitRouterPrefix4('10.'),
@@ -258,19 +308,28 @@ base_6_test = [
     cotest.RepeatStep(nodePing6('client', 'server.v6.lab.example.com'), wait=1, timeout=5),
     updateNodeAddresses6('client'),
     cotest.RepeatStep(nodePingFromAll6('client', 'h-server'), wait=1, timeout=30),
+    #nodeTraceroute6Contains('client', 'h-server', b'cpe.')
     ] + base_6_local_test
+
+fw_test = [
+    nodeInterfaceFirewallZoneIs('cpe', 'h1', 'wan'),
+    nodeInterfaceFirewallZoneIs('cpe', 'h0', 'lan'),
+    ]
 
 base_test = [
     startTopology('bird7', 'obird'),
-    ] + base_6_test + base_4_test
+    ] + base_6_test + base_4_test + fw_test
 
 
 if __name__ == '__main__':
     import logging
     #logging.basicConfig(level=logging.INFO)
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s %(name)s %(message)s')
     al = logging.getLogger('asyncio')
     al.setLevel(logging.CRITICAL)
-    tc = cotest.TestCase(base_test)
-    cotest.run(tc)
+    l = base_test
+    l = l + [nodeStop('client'), nodeGo('client')]
+    tc = cotest.TestCase(l)
+    assert cotest.run(tc)
 
