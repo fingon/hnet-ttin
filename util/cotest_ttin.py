@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Fri Mar 28 19:13:14 2014 mstenber
-# Edit time:     239 min
+# Last modified: Fri Mar 28 19:14:54 2014 mstenber
+# Edit time:     240 min
 #
 """
 
@@ -368,7 +368,7 @@ if __name__ == '__main__':
     al = logging.getLogger('asyncio')
     al.setLevel(logging.CRITICAL)
     l = base_test
-    l = l + [nodeStop('client'), nodeGo('client')]
+    l = l + [nodeStop('client'), nodeGo('client'), sleep(1)]
     tc = cotest.TestCase(l)
     assert cotest.run(tc)
 
