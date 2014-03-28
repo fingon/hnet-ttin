@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Fri Mar 28 13:59:24 2014 mstenber
-# Edit time:     208 min
+# Last modified: Fri Mar 28 14:55:11 2014 mstenber
+# Edit time:     223 min
 #
 """
 
@@ -48,6 +48,9 @@ def _killTopology():
     return rc == 0
 
 class MConsoleDeadException(Exception):
+    pass
+
+class NodeDeadException(Exception):
     pass
 
 @asyncio.coroutine
@@ -136,18 +139,25 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
             _info('lstart succeeded but topo was running before')
             return
         state[KEY_TOPOLOGY] = topology
-        r = yield from topologyLives().run(state, depth=depth+1)
+        s = topologyLives()
+        rs = cotest.RepeatStep(s, wait=5, timeout=60)
+        r = yield from rs.run(state, depth=depth+1)
         return r
     n = 'startTopology %s/%s/%s' % (topology, routerTemplate, ispTemplate)
-    return cotest.RepeatStep(cotest.Step(_run, name=n, timeout=timeout),
+    return cotest.RepeatStep(cotest.Step(_run, name=n, timeout=timeout,
+                                         exceptionIsFailure=True),
                              wait=1,
                              timeout=timeout)
 
 def nodeLives(node):
     def _run(state):
+        cmd = 'ps ax | grep -v grep | grep -q "umid=%s" && echo found' % node
+        rc, stdout, stderr = yield from cotest.async_system(cmd)
+        if rc != 0 or b'found' not in stdout:
+            raise NodeDeadException(node)
         rc, r, err = yield from _nodeExec(node, 'echo foo')
         return rc == 0 and b'foo' in r
-    return cotest.Step(_run, name='%s lives' % node, exceptionIsFailure=True)
+    return cotest.Step(_run, name='%s lives' % node)
 
 def topologyLives():
     n = 'topology lives lives'
