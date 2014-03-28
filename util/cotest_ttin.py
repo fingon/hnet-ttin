@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Thu Mar 27 18:48:44 2014 mstenber
-# Edit time:     193 min
+# Last modified: Fri Mar 28 13:18:13 2014 mstenber
+# Edit time:     195 min
 #
 """
 
@@ -289,23 +289,25 @@ base_4_test = [
     cotest.NotStep(nodePing4('client', 'h-server')),
     nodeRun('client', 'dhclient eth0'),
     nodeHasPrefix4('client', '10.'),
-    cotest.RepeatStep(nodePing4('client', 'h-server'), wait=1, timeout=5),
-    nodePing4('client', 'server.v4.lab.example.com'),
+    # 30 seconds =~ time for routing to settle
+    cotest.RepeatStep(nodePing4('client', 'h-server'), wait=1, timeout=30),
+    cotest.RepeatStep(nodePing4('client', 'server.v4.lab.example.com'), wait=1, timeout=3),
 ]
 
 base_6_local_test = [
-    # May need to wait for routing to settle here => need long timeouts
+    # 30 seconds =~ time for routing to settle
     cotest.RepeatStep(nodePing6('client', 'bird3.eth0.bird3.home'),
-                      wait=1, timeout=60),
+                      wait=1, timeout=30),
     cotest.RepeatStep(nodePing6('client', 'cpe.eth0.cpe.home'),
-                      wait=1, timeout=60),
+                      wait=1, timeout=3),
     ]
 
 base_6_test = [
     waitRouterPrefix6('200'),
     nodeHasPrefix6('client', '200'),
+    # 30 seconds =~ time for routing to settle
     cotest.RepeatStep(nodePing6('client', 'h-server'), wait=1, timeout=30),
-    cotest.RepeatStep(nodePing6('client', 'server.v6.lab.example.com'), wait=1, timeout=5),
+    cotest.RepeatStep(nodePing6('client', 'server.v6.lab.example.com'), wait=1, timeout=3),
     updateNodeAddresses6('client'),
     cotest.RepeatStep(nodePingFromAll6('client', 'h-server'), wait=1, timeout=30),
     #nodeTraceroute6Contains('client', 'h-server', b'cpe.')
