@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Fri Mar 28 14:55:11 2014 mstenber
-# Edit time:     223 min
+# Last modified: Fri Mar 28 16:02:19 2014 mstenber
+# Edit time:     229 min
 #
 """
 
@@ -155,7 +155,10 @@ def nodeLives(node):
         rc, stdout, stderr = yield from cotest.async_system(cmd)
         if rc != 0 or b'found' not in stdout:
             raise NodeDeadException(node)
-        rc, r, err = yield from _nodeExec(node, 'echo foo')
+        try:
+            rc, r, err = yield from _nodeExec(node, 'echo foo')
+        except MConsoleDeadException:
+            return
         return rc == 0 and b'foo' in r
     return cotest.Step(_run, name='%s lives' % node)
 
