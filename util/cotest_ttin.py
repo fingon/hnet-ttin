@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Fri Mar 28 13:18:13 2014 mstenber
-# Edit time:     195 min
+# Last modified: Fri Mar 28 13:59:24 2014 mstenber
+# Edit time:     208 min
 #
 """
 
@@ -80,7 +80,7 @@ def nodeGo(node):
 # Allow for fail or two
 def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
     @asyncio.coroutine
-    def _run(state):
+    def _run(state, *, depth=0):
         # Check we're inside ttin main directory
         f = open('util/cotest.py')
         f.close()
@@ -136,15 +136,27 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
             _info('lstart succeeded but topo was running before')
             return
         state[KEY_TOPOLOGY] = topology
-        # Check that all nodes actually started
-        for node in nd.keys():
-            rc, *x = yield from _nodeExec(node, 'echo')
-            assert rc == 0
-        return True
+        r = yield from topologyLives().run(state, depth=depth+1)
+        return r
     n = 'startTopology %s/%s/%s' % (topology, routerTemplate, ispTemplate)
     return cotest.RepeatStep(cotest.Step(_run, name=n, timeout=timeout),
                              wait=1,
                              timeout=timeout)
+
+def nodeLives(node):
+    def _run(state):
+        rc, r, err = yield from _nodeExec(node, 'echo foo')
+        return rc == 0 and b'foo' in r
+    return cotest.Step(_run, name='%s lives' % node, exceptionIsFailure=True)
+
+def topologyLives():
+    n = 'topology lives lives'
+    def _run(state):
+        l = list(map(nodeLives, state['nodes'].keys()))
+        s = cotest.AndStep(*l, name=n)
+        r = yield from s.run(state)
+        return r
+    return cotest.Step(_run, name=n)
 
 def nodeRun(node, cmd):
     def _run(state):
@@ -185,7 +197,7 @@ def nodeHasPrefix(node, prefix, *, timeout=3):
         return rc == 0 and b'found' in stdout
     return cotest.Step(_run,
                        name='@%s:check for %s' % (node, prefix),
-                       timeout=timeout)
+                       timeout=timeout, exceptionIsFailure=True)
 
 IFCONFIG_V4_PREFIX='inet addr:'
 IFCONFIG_V6_PREFIX='inet6 addr: '
@@ -241,6 +253,7 @@ def nodeInterfaceFirewallZoneIs(node, interface, zone):
     return cotest.Step(_run, name='@%s:fwzone %s=%s' % (node, interface, zone))
 
 def waitRouterPrefix(prefix, *, timeout=120):
+    n = 'wait prefix %s' % prefix
     def _run(state):
         # For every router in the configuration, make sure the prefix is visible
 
@@ -249,10 +262,10 @@ def waitRouterPrefix(prefix, *, timeout=120):
                                      wait=1, timeout=timeout)
         l = list(map(_convert, state['routers']))
         assert len(l) >= 2
-        s = cotest.AndStep(*l)
+        s = cotest.AndStep(*l, name=n)
         r = yield from s.run(state)
         return r
-    return cotest.Step(_run, name='wait prefix %s' % prefix)
+    return cotest.Step(_run, name=n)
 
 def waitRouterPrefix4(prefix, **kwargs):
     return waitRouterPrefix(IFCONFIG_V4_PREFIX + prefix, **kwargs)
