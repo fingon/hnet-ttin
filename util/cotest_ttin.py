@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Fri Mar 28 16:02:19 2014 mstenber
-# Edit time:     229 min
+# Last modified: Fri Mar 28 19:13:14 2014 mstenber
+# Edit time:     239 min
 #
 """
 
@@ -31,6 +31,7 @@ Basic design:
 import cotest
 import asyncio
 import re
+import os, os.path
 
 import logging
 _logger = logging.getLogger('cotest_ttin')
@@ -116,6 +117,7 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
         isd = {}
         state['isps'] = isd
         f = open('lab/%s/lab.conf' % topology)
+        home = os.environ['HOME']
         for line in f:
             m = _template_re(line)
             if m is None: continue
@@ -127,6 +129,11 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
                 isd[node] = {}
             if 'client' in node:
                 cd[node] = {}
+            rc, *x = yield from cotest.async_system('rm -rf %s' % os.path.join(home, '.netkit', 'mconsole', node))
+            if rc:
+                _info('rm mconsole failed with exit code %d' % rc)
+                return
+
         f.close()
         cmd = '(cd lab/%s && lstart -p123 < /dev/null)' % topology
         rc, stdout, stderr = cotest.sync_system(cmd, timeout)
@@ -140,7 +147,7 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
             return
         state[KEY_TOPOLOGY] = topology
         s = topologyLives()
-        rs = cotest.RepeatStep(s, wait=5, timeout=60)
+        rs = cotest.RepeatStep(s, wait=5)
         r = yield from rs.run(state, depth=depth+1)
         return r
     n = 'startTopology %s/%s/%s' % (topology, routerTemplate, ispTemplate)
@@ -158,8 +165,12 @@ def nodeLives(node):
         try:
             rc, r, err = yield from _nodeExec(node, 'echo foo')
         except MConsoleDeadException:
+            _debug('node %s not ok - mconsole died' % node)
             return
-        return rc == 0 and b'foo' in r
+        if not (rc == 0 and b'foo' in r):
+            _debug('node %s not ok - %d' % (node, rc))
+            return False
+        return True
     return cotest.Step(_run, name='%s lives' % node)
 
 def topologyLives():
