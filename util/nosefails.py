@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Wed Mar 26 18:49:35 2014 mstenber
-# Last modified: Thu Mar 27 12:57:42 2014 mstenber
-# Edit time:     40 min
+# Last modified: Fri Mar 28 13:36:53 2014 mstenber
+# Edit time:     43 min
 #
 """
 
@@ -42,7 +42,7 @@ spam_line_re = None
 useful_line_re = re.compile('^cotest: DEBUG: async_system (.*)$').match
 #useful_line_re = None
 
-fail_re = re.compile('^FAIL: (\S+) \((\S+)\)').match
+fail_re = re.compile('^(FAIL|ERROR): (\S+) \((\S+)\)').match
 start_log_re = re.compile('^-+ >> begin captured logging << -+$').match
 end_log_re = re.compile('^-+ >> end captured logging << -+$').match
 
@@ -62,17 +62,21 @@ def parse_logs(*logs):
         state = 0
         dq = collections.deque(maxlen=LOG_LENGTH)
         c = None
+        t = None
         for line in open(log):
             if state == 0:
                 m = fail_re(line)
                 if m is None:
                     continue
-                n, c = m.groups()
+                t, n, c = m.groups()
                 n = '%s.%s' % (c, n)
                 if n not in cases:
                     cases[n] = Case()
                 c = cases[n]
-                state = 1
+                if t == 'ERROR':
+                    state = 3
+                else:
+                    state = 1
             if state == 1 and start_log_re(line) is not None:
                 state = 2
             if state == 2:
@@ -87,6 +91,12 @@ def parse_logs(*logs):
                     if m is None:
                         continue
                     line = m.group(1)
+                dq.append(line.rstrip())
+            if state == 3:
+                if start_log_re(line) is not None:
+                    c.traces.append('\n'.join(dq))
+                    state = 0
+                    continue
                 dq.append(line.rstrip())
     # Add 'successful' results to the end
     for case in cases.values():
