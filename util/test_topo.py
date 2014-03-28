@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Thu Mar 27 18:41:30 2014 mstenber
-# Edit time:     57 min
+# Last modified: Fri Mar 28 13:20:40 2014 mstenber
+# Edit time:     60 min
 #
 """
 
@@ -38,7 +38,7 @@ class Basic(unittest.TestCase):
         assert cotest.run(tc)
     def test_4only(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp4')]
-        l = l + base_4_test + fw_test
+        l = l + base_4_test + base_6_local_test + fw_test
         tc = cotest.TestCase(l)
         assert cotest.run(tc)
     def test_6only(self):
@@ -59,7 +59,7 @@ class Basic(unittest.TestCase):
              cotest.RepeatStep(updateNodeAddresses6('client', minimum=2),
                                wait=5, timeout=60),
              ]
-        l = l + base_6_test + base_4_test
+        l = l + base_6_test + base_4_test + fw_test
         l = l + [nodeHasPrefix('client', '2000:'),
                  nodeHasPrefix('client', '2001:')]
         tc = cotest.TestCase(l)
@@ -91,7 +91,7 @@ class Large(unittest.TestCase):
     router = 'obird'
     def setUp(self):
         l = [startTopology(self.topology, self.router)]
-        l = l + base_6_test + base_4_test
+        l = l + base_6_test + base_4_test + fw_test
         self.l = l
     def test(self):
         tc = cotest.TestCase(self.l)
