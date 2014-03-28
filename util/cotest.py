@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Thu Mar 27 09:34:06 2014 mstenber
-# Edit time:     269 min
+# Last modified: Fri Mar 28 19:04:38 2014 mstenber
+# Edit time:     270 min
 #
 """
 
@@ -190,7 +190,6 @@ class NotStep(StepBase):
 class RepeatStep(StepBase):
     def __init__(self, step, *, wait=None, timeout=None, times=None, **kwargs):
         StepBase.__init__(self, **kwargs)
-        assert timeout or times
         self.step = _toStep(step)
         self.times = times
         self.timeout = timeout
