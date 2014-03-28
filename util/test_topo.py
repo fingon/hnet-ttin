@@ -9,7 +9,7 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Fri Mar 28 13:20:40 2014 mstenber
+# Last modified: Fri Mar 28 19:00:05 2014 mstenber
 # Edit time:     60 min
 #
 """
@@ -33,7 +33,8 @@ class Basic(unittest.TestCase):
         assert cotest.run(tc)
     def test_ula(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp'),
-             waitRouterPrefix6('fd')] + base_6_local_test + fw_test
+             waitRouterPrefix6('fd')] + base_6_local_test
+        # + fw_test - not relevant - no outside!
         tc = cotest.TestCase(l)
         assert cotest.run(tc)
     def test_4only(self):
