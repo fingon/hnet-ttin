@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Mon Mar 31 17:29:02 2014 mstenber
-# Edit time:     70 min
+# Last modified: Mon Mar 31 17:43:42 2014 mstenber
+# Edit time:     72 min
 #
 """
 
@@ -119,13 +119,13 @@ class Large(unittest.TestCase):
         #l = l + [has_b9]
 
         # Then we kill bird9, and wait for things to work again
-        l = l + [nodeStop('bird9')] + base_6_test + base_4_test
+        l = l + [nodeStop('bird9')] + base_6_test + base_4_postsetup_test
         #l = l + [NotStep(has_b9)]
 
         # Resume bird9, and it should be there again..
         #l = l + [nodeGo('bird9'),
         #         cotest.RepeatStep(has_b9, wait=5, timeout=120)]
-        #l = l + base_6_test + base_4_test
+        #l = l + base_6_test + base_4_postsetup_test
         tc = cotest.TestCase(l)
         assert cotest.run(tc)
 
