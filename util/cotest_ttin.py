@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Fri Mar 28 19:14:54 2014 mstenber
-# Edit time:     240 min
+# Last modified: Mon Mar 31 11:16:30 2014 mstenber
+# Edit time:     241 min
 #
 """
 
@@ -333,9 +333,10 @@ base_4_test = [
 
 base_6_local_test = [
     # 30 seconds =~ time for routing to settle
-    cotest.RepeatStep(nodePing6('client', 'bird3.eth0.bird3.home'),
-                      wait=1, timeout=30),
+    # (note that we check cpe first; if cpe works, bird3 should work 'soon')
     cotest.RepeatStep(nodePing6('client', 'cpe.eth0.cpe.home'),
+                      wait=1, timeout=30),
+    cotest.RepeatStep(nodePing6('client', 'bird3.eth0.bird3.home'),
                       wait=1, timeout=3),
     ]
 
