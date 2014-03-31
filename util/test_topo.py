@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Mon Mar 31 14:30:21 2014 mstenber
-# Edit time:     69 min
+# Last modified: Mon Mar 31 17:29:02 2014 mstenber
+# Edit time:     70 min
 #
 """
 
@@ -45,17 +45,17 @@ class Basic(unittest.TestCase):
     def test_6only(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6')]
         l = l + base_6_test + fw_test
-        l = l + [nodeHasPrefix('client', '2000:')]
+        l = l + [nodeHasPrefix6('client', '2000:')]
         tc = cotest.TestCase(l)
         assert cotest.run(tc)
     def test_6only_inf_ifdown(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6-inf')]
         l = l + base_6_test + fw_test
-        l = l + [nodeHasPrefix('client', '2000:')]
+        l = l + [nodeHasPrefix6('client', '2000:')]
         # Kill ipv6 uplink -> should disappear from client's preferred addresses in a minute
         #l = l + [nodeRun('cpe', 'ifdown h1_6')]
         l = l + [nodeRun('cpe', 'ifconfig eth1 down')]
-        l = l + [cotest.RepeatStep(cotest.NotStep(nodeHasPrefix('client', '2000:')),
+        l = l + [cotest.RepeatStep(cotest.NotStep(nodeHasPrefix6('client', '2000:')),
                                    timeout=60, wait=1)]
 
         tc = cotest.TestCase(l)
@@ -64,7 +64,7 @@ class Basic(unittest.TestCase):
     def test_6rd(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp4-6rd')]
         l = l + base_6_test + base_4_test + fw_test
-        l = l + [nodeHasPrefix('client', '2001:')]
+        l = l + [nodeHasPrefix6('client', '2001:')]
         tc = cotest.TestCase(l)
         assert cotest.run(tc)
     def test_6rd_6(self):
@@ -74,8 +74,8 @@ class Basic(unittest.TestCase):
                                wait=5, timeout=60),
              ]
         l = l + base_6_test + base_4_test + fw_test
-        l = l + [nodeHasPrefix('client', '2000:'),
-                 nodeHasPrefix('client', '2001:')]
+        l = l + [nodeHasPrefix6('client', '2000:'),
+                 nodeHasPrefix6('client', '2001:')]
         tc = cotest.TestCase(l)
         assert cotest.run(tc)
 
@@ -90,9 +90,9 @@ class MH(unittest.TestCase):
                cotest.RepeatStep(updateNodeAddresses6('client', minimum=3),
                                  wait=5, timeout=60)]
         l = l + base_6_test
-        l = l + [nodeHasPrefix('client', '2000:dead:'),
-                 nodeHasPrefix('client', '2000:cafe:'),
-                 nodeHasPrefix('client', '2000:beef:')]
+        l = l + [nodeHasPrefix6('client', '2000:dead:'),
+                 nodeHasPrefix6('client', '2000:cafe:'),
+                 nodeHasPrefix6('client', '2000:beef:')]
 
         tc = cotest.TestCase(l)
         assert cotest.run(tc)
