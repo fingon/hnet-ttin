@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Mon Mar 31 11:16:30 2014 mstenber
-# Edit time:     241 min
+# Last modified: Mon Mar 31 11:24:46 2014 mstenber
+# Edit time:     246 min
 #
 """
 
@@ -232,7 +232,7 @@ def nodeHasPrefix4(node, prefix, **kwargs):
 def nodeHasPrefix6(node, prefix, **kwargs):
     return nodeHasPrefix(node, IFCONFIG_V6_PREFIX + prefix, **kwargs)
 
-def updateNodeAddresses6(node, *, minimum=1, maximum=None, timeout=5):
+def updateNodeAddresses6(node, *, minimum=1, maximum=None, timeout=5, exclude=[]):
     def _run(state):
         rc, stdout, stderr = yield from _nodeExec(node, 'ip -6 addr show scope global | grep -v deprecated | grep inet6')
         rl = []
@@ -246,7 +246,13 @@ def updateNodeAddresses6(node, *, minimum=1, maximum=None, timeout=5):
             addr = l[1]
             assert '/' in addr
             addr = addr.split('/')[0]
-            rl.append(addr)
+            found = False
+            for e in exclude:
+                if addr.startswith(e):
+                    found = True
+                    break
+            if not found:
+                rl.append(addr)
         if minimum and len(rl) < minimum:
             return
         if maximum and len(rl) > maximum:
@@ -328,7 +334,7 @@ base_4_test = [
     nodeHasPrefix4('client', '10.'),
     # 30 seconds =~ time for routing to settle
     cotest.RepeatStep(nodePing4('client', 'h-server'), wait=1, timeout=30),
-    cotest.RepeatStep(nodePing4('client', 'server.v4.lab.example.com'), wait=1, timeout=3),
+    cotest.RepeatStep(nodePing4('client', 'server.v4.lab.example.com'), wait=1, timeout=30),
 ]
 
 base_6_local_test = [
@@ -345,8 +351,8 @@ base_6_test = [
     nodeHasPrefix6('client', '200'),
     # 30 seconds =~ time for routing to settle
     cotest.RepeatStep(nodePing6('client', 'h-server'), wait=1, timeout=30),
-    cotest.RepeatStep(nodePing6('client', 'server.v6.lab.example.com'), wait=1, timeout=3),
-    updateNodeAddresses6('client'),
+    cotest.RepeatStep(nodePing6('client', 'server.v6.lab.example.com'), wait=1, timeout=30),
+    updateNodeAddresses6('client', exclude=['fd']),
     cotest.RepeatStep(nodePingFromAll6('client', 'h-server'), wait=1, timeout=30),
     #nodeTraceroute6Contains('client', 'h-server', b'cpe.')
     ] + base_6_local_test
