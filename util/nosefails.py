@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Wed Mar 26 18:49:35 2014 mstenber
-# Last modified: Fri Mar 28 13:36:53 2014 mstenber
-# Edit time:     43 min
+# Last modified: Mon Mar 31 17:47:09 2014 mstenber
+# Edit time:     45 min
 #
 """
 
@@ -45,6 +45,8 @@ useful_line_re = re.compile('^cotest: DEBUG: async_system (.*)$').match
 fail_re = re.compile('^(FAIL|ERROR): (\S+) \((\S+)\)').match
 start_log_re = re.compile('^-+ >> begin captured logging << -+$').match
 end_log_re = re.compile('^-+ >> end captured logging << -+$').match
+
+end_testcase_re = re.compile('^=======+$').match
 
 class Case:
     def __init__(self):
@@ -93,11 +95,13 @@ def parse_logs(*logs):
                     line = m.group(1)
                 dq.append(line.rstrip())
             if state == 3:
-                if start_log_re(line) is not None:
-                    c.traces.append('\n'.join(dq))
+                if start_log_re(line) is not None or end_testcase_re(line) is not None:
+                    c.traces.append('[error] ' + '\n'.join(dq))
                     state = 0
                     continue
-                dq.append(line.rstrip())
+                l = line.strip()
+                if l:
+                    dq.append(l)
     # Add 'successful' results to the end
     for case in cases.values():
         need = len(logs) - len(case.traces)
