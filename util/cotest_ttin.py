@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Mon Mar 31 13:58:40 2014 mstenber
-# Edit time:     252 min
+# Last modified: Mon Mar 31 14:05:20 2014 mstenber
+# Edit time:     253 min
 #
 """
 
@@ -341,8 +341,8 @@ base_4_test = [
     waitRouterPrefix4('10.'),
     cotest.NotStep(nodeHasPrefix4('client', '10.')),
     cotest.NotStep(nodePing4('client', 'h-server')),
-    nodeRun('client', 'dhclient eth0')] + base_4_postsetup_test,
-]
+    nodeRun('client', 'dhclient eth0'),
+    ] + base_4_postsetup_test
 
 base_6_local_test = [
     # 30 seconds =~ time for routing to settle
