@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Mon Mar 31 14:05:20 2014 mstenber
-# Edit time:     253 min
+# Last modified: Mon Mar 31 14:38:07 2014 mstenber
+# Edit time:     259 min
 #
 """
 
@@ -215,26 +215,29 @@ def nodeTraceroute6Contains(node, remote, data):
         return True
     return cotest.Step(_run, name='@%s:traceroute6 %s has %s' % (node, remote, data))
 
-def nodeHasPrefix(node, prefix, *, timeout=3):
+CMD_IP4_ADDRS='ip -4 addr | grep inet'
+CMD_IP6_ADDRS='ip -6 addr show scope global | grep -v deprecated | grep inet6'
+
+IP_V4_PREFIX='inet '
+IP_V6_PREFIX='inet6 '
+
+def nodeHasPrefix(node, cmd, prefix, *, timeout=3):
     def _run(state):
-        rc, stdout, stderr = yield from _nodeExec(node, 'ifconfig | grep -q "%s" && echo found' % prefix)
+        rc, stdout, stderr = yield from _nodeExec(node, '%s | grep -q "%s" && echo found' % (cmd, prefix))
         return rc == 0 and b'found' in stdout
     return cotest.Step(_run,
                        name='@%s:check for %s' % (node, prefix),
                        timeout=timeout, exceptionIsFailure=True)
 
-IFCONFIG_V4_PREFIX='inet addr:'
-IFCONFIG_V6_PREFIX='inet6 addr: '
-
 def nodeHasPrefix4(node, prefix, **kwargs):
-    return nodeHasPrefix(node, IFCONFIG_V4_PREFIX + prefix, **kwargs)
+    return nodeHasPrefix(node, CMD_IP4_ADDRS, IP_V4_PREFIX + prefix, **kwargs)
 
 def nodeHasPrefix6(node, prefix, **kwargs):
-    return nodeHasPrefix(node, IFCONFIG_V6_PREFIX + prefix, **kwargs)
+    return nodeHasPrefix(node, CMD_IP6_ADDRS, IP_V6_PREFIX + prefix, **kwargs)
 
 def updateNodeAddresses6(node, *, minimum=1, maximum=None, timeout=5, exclude=[]):
     def _run(state):
-        rc, stdout, stderr = yield from _nodeExec(node, 'ip -6 addr show scope global | grep -v deprecated | grep inet6')
+        rc, stdout, stderr = yield from _nodeExec(node, CMD_IP6_ADDRS)
         rl = []
         state['nodes'][node]['addrs'] = rl
         for line in stdout.decode().split('\n'):
@@ -282,13 +285,13 @@ def nodeInterfaceFirewallZoneIs(node, interface, zone):
         return r == '"%s"' % zone
     return cotest.Step(_run, name='@%s:fwzone %s=%s' % (node, interface, zone))
 
-def waitRouterPrefix(prefix, *, timeout=120):
+def waitRouterPrefix(cmd, prefix, *, timeout=120):
     n = 'wait prefix %s' % prefix
     def _run(state):
         # For every router in the configuration, make sure the prefix is visible
 
         def _convert(node):
-            return cotest.RepeatStep(nodeHasPrefix(node, prefix),
+            return cotest.RepeatStep(nodeHasPrefix(node, cmd, prefix),
                                      wait=1, timeout=timeout)
         l = list(map(_convert, state['routers']))
         assert len(l) >= 2
@@ -298,10 +301,10 @@ def waitRouterPrefix(prefix, *, timeout=120):
     return cotest.Step(_run, name=n)
 
 def waitRouterPrefix4(prefix, **kwargs):
-    return waitRouterPrefix(IFCONFIG_V4_PREFIX + prefix, **kwargs)
+    return waitRouterPrefix(CMD_IP4_ADDRS, IP_V4_PREFIX + prefix, **kwargs)
 
 def waitRouterPrefix6(prefix, **kwargs):
-    return waitRouterPrefix(IFCONFIG_V6_PREFIX + prefix, **kwargs)
+    return waitRouterPrefix(CMD_IP6_ADDRS, IP_V6_PREFIX + prefix, **kwargs)
 
 def killTopology(timeout=60):
     @asyncio.coroutine
