@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Fri Mar 28 19:00:05 2014 mstenber
-# Edit time:     60 min
+# Last modified: Mon Mar 31 13:58:59 2014 mstenber
+# Edit time:     62 min
 #
 """
 
@@ -121,7 +121,8 @@ class Large(unittest.TestCase):
         # initially, make sure stuff works as normal
         l = l + [sleep(700)] # even valid <= 600
         # then, make sure things still work
-        l = l + base_6_test + base_4_test
+        # (Can't use base_4_test, as it assumes client is not configured)
+        l = l + base_6_test + base_4_postsetup_test + fw_test
         tc = cotest.TestCase(l)
         assert cotest.run(tc)
 

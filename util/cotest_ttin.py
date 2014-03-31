@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Mon Mar 31 11:24:46 2014 mstenber
-# Edit time:     246 min
+# Last modified: Mon Mar 31 13:58:40 2014 mstenber
+# Edit time:     252 min
 #
 """
 
@@ -325,35 +325,42 @@ def sleep(timeout):
         return True
     return cotest.Step(_run, name='sleep %d' % timeout)
 
+# How long can it take for routing to settle? This varies by topology
+# actually, but in the large one, 30 seconds doesn't seem to be enough
+TIMEOUT=45
+
 # Built-in unit tests that just run through the templates once
+base_4_postsetup_test = [
+    nodeHasPrefix4('client', '10.'),
+    # 30 seconds =~ time for routing to settle
+    cotest.RepeatStep(nodePing4('client', 'h-server'), wait=1, timeout=TIMEOUT),
+    cotest.RepeatStep(nodePing4('client', 'server.v4.lab.example.com'), wait=1, timeout=TIMEOUT),
+    ]
+
 base_4_test = [
     waitRouterPrefix4('10.'),
     cotest.NotStep(nodeHasPrefix4('client', '10.')),
     cotest.NotStep(nodePing4('client', 'h-server')),
-    nodeRun('client', 'dhclient eth0'),
-    nodeHasPrefix4('client', '10.'),
-    # 30 seconds =~ time for routing to settle
-    cotest.RepeatStep(nodePing4('client', 'h-server'), wait=1, timeout=30),
-    cotest.RepeatStep(nodePing4('client', 'server.v4.lab.example.com'), wait=1, timeout=30),
+    nodeRun('client', 'dhclient eth0')] + base_4_postsetup_test,
 ]
 
 base_6_local_test = [
     # 30 seconds =~ time for routing to settle
-    # (note that we check cpe first; if cpe works, bird3 should work 'soon')
     cotest.RepeatStep(nodePing6('client', 'cpe.eth0.cpe.home'),
-                      wait=1, timeout=30),
+                      wait=1, timeout=TIMEOUT),
+    # If it's not first-hop, availability of cpe doesn't imply bird3
     cotest.RepeatStep(nodePing6('client', 'bird3.eth0.bird3.home'),
-                      wait=1, timeout=3),
+                      wait=1, timeout=TIMEOUT),
     ]
 
 base_6_test = [
     waitRouterPrefix6('200'),
     nodeHasPrefix6('client', '200'),
     # 30 seconds =~ time for routing to settle
-    cotest.RepeatStep(nodePing6('client', 'h-server'), wait=1, timeout=30),
-    cotest.RepeatStep(nodePing6('client', 'server.v6.lab.example.com'), wait=1, timeout=30),
+    cotest.RepeatStep(nodePing6('client', 'h-server'), wait=1, timeout=TIMEOUT),
+    cotest.RepeatStep(nodePing6('client', 'server.v6.lab.example.com'), wait=1, timeout=TIMEOUT),
     updateNodeAddresses6('client', exclude=['fd']),
-    cotest.RepeatStep(nodePingFromAll6('client', 'h-server'), wait=1, timeout=30),
+    cotest.RepeatStep(nodePingFromAll6('client', 'h-server'), wait=1, timeout=TIMEOUT),
     #nodeTraceroute6Contains('client', 'h-server', b'cpe.')
     ] + base_6_local_test
 
