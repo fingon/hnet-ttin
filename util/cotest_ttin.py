@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Mon Mar 31 17:36:51 2014 mstenber
-# Edit time:     263 min
+# Last modified: Tue Apr  1 00:05:54 2014 mstenber
+# Edit time:     269 min
 #
 """
 
@@ -362,8 +362,8 @@ base_6_test = [
     # 30 seconds =~ time for routing to settle
     cotest.RepeatStep(nodePing6('client', 'h-server'), wait=1, timeout=TIMEOUT),
     cotest.RepeatStep(nodePing6('client', 'server.v6.lab.example.com'), wait=1, timeout=TIMEOUT),
-    updateNodeAddresses6('client', exclude=['fd']),
-    cotest.RepeatStep(nodePingFromAll6('client', 'h-server'), wait=1, timeout=TIMEOUT),
+    cotest.RepeatStep([updateNodeAddresses6('client', exclude=['fd']),
+                       nodePingFromAll6('client', 'h-server')], wait=1, timeout=TIMEOUT),
     #nodeTraceroute6Contains('client', 'h-server', b'cpe.')
     ] + base_6_local_test
 

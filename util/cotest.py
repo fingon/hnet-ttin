@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Fri Mar 28 19:04:38 2014 mstenber
-# Edit time:     270 min
+# Last modified: Tue Apr  1 00:29:11 2014 mstenber
+# Edit time:     280 min
 #
 """
 
@@ -102,11 +102,7 @@ class Named:
     def reprValues(self):
         return {}
 
-class Runnable:
-    def run(self, state=None, *, depth=0):
-        raise NotImplementedError
-
-class StepBase(Named, Runnable):
+class StepBase(Named):
     def __init__(self,
                  *,
                  name=None,
@@ -125,6 +121,8 @@ class StepBase(Named, Runnable):
                                                            repr(o)))
                     return True
         return False
+    def run(self, state=None, *, depth=0):
+        raise NotImplementedError
 
 class Step(StepBase):
     def __init__(self,
@@ -172,11 +170,18 @@ class Step(StepBase):
                 return
         return
 
-def _toStep(x):
+# noneOk=True case is mostly usable as input to StepSequence..
+def _toStep(x, noneOk=False):
+    if x is None and noneOk:
+        return
     assert x
-    if not isinstance(x, StepBase):
-        x = Step(x)
-    return x
+    if isinstance(x, StepBase):
+        return x
+    try:
+        iter(x)
+        return StepSequence(x)
+    except:
+        return Step(x)
 
 class NotStep(StepBase):
     def __init__(self, step, **kwargs):
@@ -280,9 +285,9 @@ class AndStep(MultiStepBase):
         return not failed
 
 
-class StepSequence(Named, Runnable):
-    def __init__(self, steps, *, name=None, stopFail=True):
-        Named.__init__(self, name)
+class StepSequence(StepBase):
+    def __init__(self, steps, *, stopFail=True, **kwargs):
+        StepBase.__init__(self, **kwargs)
         try:
             iter(steps)
         except:
@@ -294,7 +299,7 @@ class StepSequence(Named, Runnable):
         if state is None: state = {}
         r = True
         for i, o in enumerate(self.steps):
-            if not isinstance(o, Runnable):
+            if not isinstance(o, StepBase):
                 o = _toStep(o)
             _debug('[%d] %s running step #%d: %s' % (depth,
                                                      repr(self), i, repr(o)))
@@ -306,19 +311,12 @@ class StepSequence(Named, Runnable):
                 r = False
         return r
 
-def _toStepSequence(x):
-    if isinstance(x, StepSequence):
-        return x
-    if not x:
-        return None
-    return StepSequence(x)
-
 class TestCase(StepSequence):
     def __init__(self, main, *,
                  setup=None, tearDown=None, tearDownAlways=True, **kwargs):
-        setup = _toStepSequence(setup)
-        main = _toStepSequence(main)
-        tearDown = _toStepSequence(tearDown)
+        setup = _toStep(setup, True)
+        main = _toStep(main, True)
+        tearDown = _toStep(tearDown, True)
         if tearDownAlways:
             StepSequence.__init__(self,
                                   [StepSequence([setup, main]), tearDown],
@@ -339,7 +337,7 @@ def run(*args):
     r = True
     for i, arg in enumerate(args):
         _debug('run() running #%d:%s' % (i, repr(arg)))
-        if isinstance(arg, Runnable):
+        if isinstance(arg, StepBase):
             arg = arg.run
         t = asyncio.async(arg())
         loop.run_until_complete(t)
