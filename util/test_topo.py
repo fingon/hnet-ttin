@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Mon Mar 31 13:58:59 2014 mstenber
-# Edit time:     62 min
+# Last modified: Mon Mar 31 14:30:21 2014 mstenber
+# Edit time:     69 min
 #
 """
 
@@ -48,6 +48,19 @@ class Basic(unittest.TestCase):
         l = l + [nodeHasPrefix('client', '2000:')]
         tc = cotest.TestCase(l)
         assert cotest.run(tc)
+    def test_6only_inf_ifdown(self):
+        l = [startTopology(self.topology, self.router, ispTemplate='isp6-inf')]
+        l = l + base_6_test + fw_test
+        l = l + [nodeHasPrefix('client', '2000:')]
+        # Kill ipv6 uplink -> should disappear from client's preferred addresses in a minute
+        #l = l + [nodeRun('cpe', 'ifdown h1_6')]
+        l = l + [nodeRun('cpe', 'ifconfig eth1 down')]
+        l = l + [cotest.RepeatStep(cotest.NotStep(nodeHasPrefix('client', '2000:')),
+                                   timeout=60, wait=1)]
+
+        tc = cotest.TestCase(l)
+        assert cotest.run(tc)
+
     def test_6rd(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp4-6rd')]
         l = l + base_6_test + base_4_test + fw_test
