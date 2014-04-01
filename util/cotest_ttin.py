@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Apr  1 00:05:54 2014 mstenber
-# Edit time:     269 min
+# Last modified: Tue Apr  1 15:03:21 2014 mstenber
+# Edit time:     292 min
 #
 """
 
@@ -109,6 +109,7 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
             _info('case2lab failed with exit code %d' % rc)
             return
         nd = {}
+        state['topology'] = topology
         state['nodes'] = nd
         rd = {}
         state['routers'] = rd
@@ -135,6 +136,7 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
                 return
 
         f.close()
+        assert rd, 'have to have routers present'
         cmd = '(cd lab/%s && lstart -p123 < /dev/null)' % topology
         rc, stdout, stderr = cotest.sync_system(cmd, timeout)
         # wish this wasn't broken
@@ -146,7 +148,7 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
             _info('lstart succeeded but topo was running before')
             return
         state[KEY_TOPOLOGY] = topology
-        s = topologyLives()
+        s = [topologyLives(), routersReady()]
         rs = cotest.RepeatStep(s, wait=5)
         r = yield from rs.run(state, depth=depth+1)
         return r
@@ -155,6 +157,27 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
                                          exceptionIsFailure=True),
                              wait=1,
                              timeout=timeout)
+
+def routerReady(router):
+    n = 'router %s ready' % router
+    def _run(state):
+        try:
+            f = open('lab/%s/logs/%s/state' % (state['topology'], router))
+            d = f.read()
+            f.close()
+            return b'done' in d
+        except:
+            return
+    return cotest.Step(_run, name=n)
+
+def routersReady():
+    n = 'routers ready'
+    def _run(state):
+        l = list(map(routerReady, state['routers'].keys()))
+        s = cotest.AndStep(*l, name=n)
+        r = yield from s.run(state)
+        return r
+    return cotest.Step(_run, name=n)
 
 def nodeLives(node):
     def _run(state):
@@ -174,7 +197,7 @@ def nodeLives(node):
     return cotest.Step(_run, name='%s lives' % node)
 
 def topologyLives():
-    n = 'topology lives lives'
+    n = 'topology lives'
     def _run(state):
         l = list(map(nodeLives, state['nodes'].keys()))
         s = cotest.AndStep(*l, name=n)
@@ -285,7 +308,7 @@ def nodeInterfaceFirewallZoneIs(node, interface, zone):
         return r == '"%s"' % zone
     return cotest.Step(_run, name='@%s:fwzone %s=%s' % (node, interface, zone))
 
-def _waitRouterPrefix(cmd, prefix, *, timeout=120):
+def _waitRouterPrefix(cmd, prefix, *, timeout=60):
     n = 'wait prefix %s' % prefix
     def _run(state):
         # For every router in the configuration, make sure the prefix is visible
@@ -328,9 +351,9 @@ def sleep(timeout):
         return True
     return cotest.Step(_run, name='sleep %d' % timeout)
 
-# How long can it take for routing to settle? This varies by topology
-# actually, but in the large one, 30 seconds doesn't seem to be enough
-TIMEOUT=45
+# How long can it take for routing to settle? Given how slowly UML
+# works, 60 seconds might be pushing it in the bigger topology.. :p
+TIMEOUT=60
 
 # Built-in unit tests that just run through the templates once
 base_4_postsetup_test = [
@@ -341,14 +364,13 @@ base_4_postsetup_test = [
     ]
 
 base_4_test = [
-    waitRouterPrefix4('10.'),
+    waitRouterPrefix4('10.', timeout=TIMEOUT),
     cotest.NotStep(nodeHasPrefix4('client', '10.')),
     cotest.NotStep(nodePing4('client', 'h-server')),
     nodeRun('client', 'dhclient eth0'),
     ] + base_4_postsetup_test
 
 base_6_local_test = [
-    # 30 seconds =~ time for routing to settle
     cotest.RepeatStep(nodePing6('client', 'cpe.eth0.cpe.home'),
                       wait=1, timeout=TIMEOUT),
     # If it's not first-hop, availability of cpe doesn't imply bird3
@@ -357,9 +379,8 @@ base_6_local_test = [
     ]
 
 base_6_test = [
-    waitRouterPrefix6('200'),
+    waitRouterPrefix6('200', timeout=TIMEOUT),
     nodeHasPrefix6('client', '200'),
-    # 30 seconds =~ time for routing to settle
     cotest.RepeatStep(nodePing6('client', 'h-server'), wait=1, timeout=TIMEOUT),
     cotest.RepeatStep(nodePing6('client', 'server.v6.lab.example.com'), wait=1, timeout=TIMEOUT),
     cotest.RepeatStep([updateNodeAddresses6('client', exclude=['fd']),
