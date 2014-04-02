@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Apr  1 15:03:21 2014 mstenber
-# Edit time:     292 min
+# Last modified: Wed Apr  2 12:39:28 2014 mstenber
+# Edit time:     295 min
 #
 """
 
@@ -353,7 +353,12 @@ def sleep(timeout):
 
 # How long can it take for routing to settle? Given how slowly UML
 # works, 60 seconds might be pushing it in the bigger topology.. :p
-TIMEOUT=60
+#
+# ~15 seconds for hnetd to commit + it seems it can take minute-ish
+# for prefixes to propagate in the Large topology. using 120 for
+# now. (This represents highest upper bound for test case, we can look
+# at test logs by hand to detect anomalies.)
+TIMEOUT=120
 
 # Built-in unit tests that just run through the templates once
 base_4_postsetup_test = [
