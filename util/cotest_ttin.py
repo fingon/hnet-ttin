@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Wed Apr  2 12:39:28 2014 mstenber
-# Edit time:     295 min
+# Last modified: Wed Apr  2 12:57:58 2014 mstenber
+# Edit time:     298 min
 #
 """
 
@@ -358,10 +358,15 @@ def sleep(timeout):
 # for prefixes to propagate in the Large topology. using 120 for
 # now. (This represents highest upper bound for test case, we can look
 # at test logs by hand to detect anomalies.)
-TIMEOUT=120
+TIMEOUT_INITIAL=120
+
+# This is acceptable timeout after the 'initial' case, when we already
+# assume we have e.g. all prefixes visible on the network
+TIMEOUT=60
 
 # Built-in unit tests that just run through the templates once
 base_4_postsetup_test = [
+    # this is never first -> no need for TIMEOUT_INITIALs
     nodeHasPrefix4('client', '10.'),
     # 30 seconds =~ time for routing to settle
     cotest.RepeatStep(nodePing4('client', 'h-server'), wait=1, timeout=TIMEOUT),
@@ -369,7 +374,7 @@ base_4_postsetup_test = [
     ]
 
 base_4_test = [
-    waitRouterPrefix4('10.', timeout=TIMEOUT),
+    waitRouterPrefix4('10.', timeout=TIMEOUT_INITIAL),
     cotest.NotStep(nodeHasPrefix4('client', '10.')),
     cotest.NotStep(nodePing4('client', 'h-server')),
     nodeRun('client', 'dhclient eth0'),
@@ -377,14 +382,14 @@ base_4_test = [
 
 base_6_local_test = [
     cotest.RepeatStep(nodePing6('client', 'cpe.eth0.cpe.home'),
-                      wait=1, timeout=TIMEOUT),
+                      wait=1, timeout=TIMEOUT_INITIAL),
     # If it's not first-hop, availability of cpe doesn't imply bird3
     cotest.RepeatStep(nodePing6('client', 'bird3.eth0.bird3.home'),
                       wait=1, timeout=TIMEOUT),
     ]
 
 base_6_test = [
-    waitRouterPrefix6('200', timeout=TIMEOUT),
+    waitRouterPrefix6('200', timeout=TIMEOUT_INITIAL),
     nodeHasPrefix6('client', '200'),
     cotest.RepeatStep(nodePing6('client', 'h-server'), wait=1, timeout=TIMEOUT),
     cotest.RepeatStep(nodePing6('client', 'server.v6.lab.example.com'), wait=1, timeout=TIMEOUT),
