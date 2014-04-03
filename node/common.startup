@@ -1,0 +1,16 @@
+# Allow for shortcuts to configure services
+
+# This feature enables templates to provide services, and
+# sub-templates to override their configuration directly without
+# providing whole configuration file.
+
+# (May not be applicable always, of course.)
+
+if [ -d /etc/netkit.d ]
+then
+        for SCRIPT in `find /etc/netkit.d -type f -name '*.sh' -print `
+        do
+                echo "* Running $SCRIPT"
+                sh $SCRIPT
+        done
+fi

@@ -1,3 +1,5 @@
+inherit=common
+
 # Basically, the only interface is tied to network called 'HOMENET' for now,
 # and DHCP is used to configure IPv4
 

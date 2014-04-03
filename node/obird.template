@@ -1,5 +1,5 @@
 # Combination of BIRD + dhclient-based configuration, with dhclient 'on all interfaces', 
-inherit=openwrt
+inherit=common,openwrt
 #,dhclient-6rd,dhclient-pd,skv-6rd-pd
 # not needed, should be part of hnet OpenWRT build
 mem=64

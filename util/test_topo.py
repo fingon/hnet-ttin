@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Mon Mar 31 17:43:42 2014 mstenber
-# Edit time:     72 min
+# Last modified: Thu Apr  3 13:46:23 2014 mstenber
+# Edit time:     83 min
 #
 """
 
@@ -24,12 +24,13 @@ import cotest
 from cotest_ttin import *
 
 # XXX - validate address lifetimes at client
-
 class Basic(unittest.TestCase):
     topology = 'bird7'
     router = 'obird'
-    def test_base(self):
-        tc = cotest.TestCase(base_test)
+    def test(self):
+        l = base_test[:]
+        l[0] = startTopology(self.topology, self.router)
+        tc = cotest.TestCase(l)
         assert cotest.run(tc)
     def test_ula(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp'),
@@ -100,37 +101,9 @@ class MH(unittest.TestCase):
 class MHFallback(MH):
     router = 'obird-debug'
 
-class Large(unittest.TestCase):
-    topology = 'bird14'
-    router = 'obird'
-    def setUp(self):
-        l = [startTopology(self.topology, self.router)]
-        l = l + base_6_test + base_4_test + fw_test
-        self.l = l
+class Lease(unittest.TestCase):
     def test(self):
-        tc = cotest.TestCase(self.l)
-        assert cotest.run(tc)
-    def test_mutation(self):
-        # Initial route should include bird9
-        l = self.l[:]
-
-        # without traceroute6, this is somewhat ardurous to test..
-        #has_b9 = nodeTraceroute6Contains('client', 'h-server', b'bird9.')
-        #l = l + [has_b9]
-
-        # Then we kill bird9, and wait for things to work again
-        l = l + [nodeStop('bird9')] + base_6_test + base_4_postsetup_test
-        #l = l + [NotStep(has_b9)]
-
-        # Resume bird9, and it should be there again..
-        #l = l + [nodeGo('bird9'),
-        #         cotest.RepeatStep(has_b9, wait=5, timeout=120)]
-        #l = l + base_6_test + base_4_postsetup_test
-        tc = cotest.TestCase(l)
-        assert cotest.run(tc)
-
-    def test_lease(self):
-        l = self.l[:]
+        l = base_test[:]
         # initially, make sure stuff works as normal
         l = l + [sleep(700)] # even valid <= 600
         # then, make sure things still work
@@ -138,6 +111,40 @@ class Large(unittest.TestCase):
         l = l + base_6_test + base_4_postsetup_test + fw_test
         tc = cotest.TestCase(l)
         assert cotest.run(tc)
+
+class LeaseFallback(Lease):
+    router = 'obird-debug'
+
+class Large(unittest.TestCase):
+    topology = 'bird14'
+    router = 'obird'
+    def setUp(self):
+        l = base_test[:]
+        l[0] = startTopology(self.topology, self.router)
+        self.l = l
+    def test(self):
+        tc = cotest.TestCase(self.l)
+        assert cotest.run(tc)
+    def test_mutation(self):
+        # Initial route should include bird9
+        l = self.l
+
+        # without traceroute6, this is somewhat ardurous to test..
+        #has_b9 = nodeTraceroute6Contains('client', 'h-server', b'bird9.')
+        #l = l + [has_b9]
+
+        # Then we kill bird9, and wait for things to work again
+        # (HNCP has built-in 4 minute delay currently it seems)
+        l = l + [nodeStop('bird9')] + [sleep(180)]
+        l = l + base_6_test + base_4_postsetup_test
+
+        # Resume bird9, kill two other routes, and should go up
+        # 'faster' because routes are better (no waiting 180 seconds)
+        l = l + [nodeGo('bird9'), nodeStop('bird4'), nodeStop('bird6')]
+        l = l + base_6_test + base_4_postsetup_test
+        tc = cotest.TestCase(l)
+        assert cotest.run(tc)
+
 
 class LargeFallback(Large):
     router = 'obird-debug'
