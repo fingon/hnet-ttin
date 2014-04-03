@@ -358,6 +358,7 @@ case "$reason" in
     BOUND6|RENEW6|REBIND6)
         if [ "${new_ip6_address}" ] && [ "${new_ip6_prefixlen}" ]; then
             # set leased IP
+            new_ip6_prefixlen=128 # we're given /64, blah
             if [ "${new_dhcp6_prefix_class}" ]; then
  		ip -6 addr add ${new_ip6_address}/${new_ip6_prefixlen} \
  		    dev ${interface} valid_lft ${new_max_life} \

@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Thu Apr  3 13:46:23 2014 mstenber
-# Edit time:     83 min
+# Last modified: Thu Apr  3 14:27:19 2014 mstenber
+# Edit time:     89 min
 #
 """
 
@@ -47,6 +47,14 @@ class Basic(unittest.TestCase):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6')]
         l = l + base_6_test + fw_test
         l = l + [nodeHasPrefix6('client', '2000:')]
+        tc = cotest.TestCase(l)
+        assert cotest.run(tc)
+    def test_6only_64(self):
+        l = [startTopology(self.topology, self.router, ispTemplate='isp6-64')]
+        l = l + [cotest.NotStep(nodeHasPrefix6('client', '2000:'))]
+        l = l + [nodeRun('client', 'dhclient -6 eth0')]
+        l = l + [nodeHasPrefix6('client', '2000:')]
+        l = l + base_6_test + fw_test
         tc = cotest.TestCase(l)
         assert cotest.run(tc)
     def test_6only_inf_ifdown(self):
