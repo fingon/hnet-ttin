@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Mon Apr  7 10:16:05 2014 mstenber
-# Edit time:     99 min
+# Last modified: Mon Apr  7 11:02:50 2014 mstenber
+# Edit time:     101 min
 #
 """
 
@@ -170,6 +170,18 @@ class Large(unittest.TestCase):
 
 class LargeFallback(Large):
     router = 'obird-debug'
+
+# Specific ~test cases with unique topology
+
+class DownPD(unittest.TestCase):
+    topology = 'bird8'
+    router = 'obird-debug'
+    def test(self):
+        " Make sure downstream PD works - client should work even with openwrt node in the middle. "
+        l = base_test[:]
+        l[0] = startTopology(self.topology, self.router)
+        tc = TestCase(l)
+        assert cotest.run(tc)
 
 
 if __name__ == '__main__':
