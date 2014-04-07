@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Mon Apr  7 14:07:06 2014 mstenber
-# Edit time:     282 min
+# Last modified: Mon Apr  7 17:23:56 2014 mstenber
+# Edit time:     294 min
 #
 """
 
@@ -122,6 +122,16 @@ class StepBase(Named):
                     return True
         return False
     def run(self, state=None, *, depth=0):
+        _debug('[%d] %s run()' % (depth, repr(self)))
+        if state is None:
+            assert not depth
+            state = {}
+            _debug(' initializing fresh state')
+        r = yield from self.reallyRun(state, depth=depth)
+        if not r:
+            _info('[%d] %s run() failed' % (depth, repr(self)))
+        return r
+    def reallyRun(self, state, depth):
         raise NotImplementedError
 
 class Step(StepBase):
@@ -133,12 +143,9 @@ class Step(StepBase):
         StepBase.__init__(self, **kwargs)
         self.fun = fun
         self.failIf = failIf
-    def run(self, state=None, *, depth=0):
-        _debug('[%d] %s run()' % (depth, repr(self)))
-        if state is None: state = {}
+    def reallyRun(self, state, depth):
         r = yield from self.runAsync(state, self.fun, self.failIf)
         if r != 0:
-            _info('[%d] %s failed: %s' % (depth, repr(self), repr(self.fun)))
             return False
         return True
     def runAsync(self, state, *args):
@@ -187,8 +194,7 @@ class NotStep(StepBase):
     def __init__(self, step, **kwargs):
         StepBase.__init__(self, **kwargs)
         self.step = _toStep(step)
-    def run(self, state=None, *, depth=0):
-        if state is None: state = {}
+    def reallyRun(self, state, depth):
         r = yield from self.step.run(state, depth=depth+1)
         return not r
 
@@ -199,8 +205,7 @@ class RepeatStep(StepBase):
         self.times = times
         self.timeout = timeout
         self.wait = wait
-    def run(self, state=None, *, depth=0):
-        if state is None: state = {}
+    def reallyRun(self, state, depth):
         i = 0
         if self.timeout:
             st = time.monotonic()
@@ -229,9 +234,7 @@ class MultiStepBase(StepBase):
         StepBase.__init__(self, **kwargs)
         assert len(steps) >= 1, 'multistep with 0 arguments is not useful'
         self.steps = map(_toStep, steps)
-    def run(self, state=None, *, depth=0):
-        _debug('%s run()' % repr(self))
-        if state is None: state = {}
+    def reallyRun(self, state, depth):
         def _convert(x):
             r = x.run(state, depth=depth+1)
             _debug('starting %s => %s' % (repr(x), repr(r)))
@@ -260,7 +263,7 @@ class OrStep(MultiStepBase):
                                                     return_when=concurrent.futures.FIRST_COMPLETED)
             _debug('%s asyncio.wait got %s,%s' % (repr(self), done, pending))
             if not done:
-                _debug('%s failed due to timeout')
+                _debug('timeout')
                 return False
             if self.doneErrors(done):
                 return False
@@ -295,8 +298,7 @@ class StepSequence(StepBase):
         steps = filter(None, steps)
         self.steps = steps
         self.stopFail = stopFail
-    def run(self, state=None, *, depth=0):
-        if state is None: state = {}
+    def reallyRun(self, state, depth):
         r = True
         for i, o in enumerate(self.steps):
             if not isinstance(o, StepBase):
