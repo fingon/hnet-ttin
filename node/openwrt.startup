@@ -1,0 +1,10 @@
+# XXX SUPER HACK XXX
+
+# Detect if the procd is fucked up, and in that case, just reboot the
+# UML
+if [ ! -e /dev/urandom ]
+then
+   reboot
+fi
+# XXX SUPER HACK XXX
+

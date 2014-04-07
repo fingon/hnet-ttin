@@ -6,16 +6,6 @@
 # Make sure shell scripts are executable (sigh)
 chmod a+x /usr/share/hnet/*.sh
 
-# XXX SUPER HACK XXX
-
-# Detect if the procd is fucked up, and in that case, just reboot the
-# UML
-if [ ! -e /dev/urandom ]
-then
-   reboot
-fi
-# XXX SUPER HACK XXX
-
 # Start hnet (it is initially disabled)
 # No longer needed once we moved the START to beginning of file.. grumble
 #/etc/init.d/hnet start
