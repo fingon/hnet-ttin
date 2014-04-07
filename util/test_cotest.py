@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.4
 # -*- coding: utf-8 -*-
 # -*- Python -*-
 #
@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:27:35 2014 mstenber
-# Last modified: Tue Mar 25 14:44:44 2014 mstenber
-# Edit time:     23 min
+# Last modified: Mon Apr  7 14:20:52 2014 mstenber
+# Edit time:     33 min
 #
 """
 
@@ -55,6 +55,16 @@ def sleeperFail2(cmds):
 def immediateOk(cmds):
     return 1
 
+class DummyCallable:
+    def __init__(self, rv):
+        self.rv = rv
+        self.calls = 0
+    def __call__(self):
+        self.calls = self.calls + 1
+        return self.rv
+    def assertCalls(self, x):
+        assert self.calls == x
+        self.calls = 0
 
 class CoTestTest(unittest.TestCase):
     def test_base(self):
@@ -184,6 +194,46 @@ class CoTestTest(unittest.TestCase):
             assert not r
             return True
         assert run(_t)
+    def test_setup_teardown(self):
+        failSetup = DummyCallable(False)
+        okSetup = DummyCallable(True)
+        failMain = DummyCallable(False)
+        okMain = DummyCallable(True)
+        failTearDown = DummyCallable(False)
+        okTearDown = DummyCallable(True)
+        # setup && (main || !main) => tearDown
+        s = cotest.TestCase(okMain, setup=okSetup, tearDown=okTearDown);
+        r = yield from s.run()
+        okSetup.assertCalls(1)
+        okMain.assertCalls(1)
+        okTearDown.assertCalls(1)
+        assert r
+
+        s = cotest.TestCase(failMain, setup=okSetup, tearDown=okTearDown);
+        r = yield from s.run()
+        okSetup.assertCalls(1)
+        failMain.assertCalls(1)
+        okTearDown.assertCalls(1)
+        assert not r
+
+        # !setup => nop
+        s = cotest.TestCase(okMain, setup=failSetup, tearDown=okTearDown);
+        r = yield from s.run()
+        failSetup.assertCalls(1)
+        okMain.assertCalls(0)
+        okTearDown.assertCalls(0)
+        assert not r
+
+        # !setup && tearDownAlways => tearDown
+        s = cotest.TestCase(okMain, setup=failSetup, tearDown=okTearDown, tearDownAlways=True);
+        r = yield from s.run()
+        failSetup.assertCalls(1)
+        okMain.assertCalls(0)
+        okTearDown.assertCalls(1)
+        assert not r
+
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     unittest.main()

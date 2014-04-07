@@ -9,7 +9,7 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Mon Apr  7 10:14:34 2014 mstenber
+# Last modified: Mon Apr  7 14:07:06 2014 mstenber
 # Edit time:     282 min
 #
 """
@@ -333,8 +333,7 @@ class TestCase(StepSequence):
                                   **kwargs)
         else:
             StepSequence.__init__(self,
-                                  [setup, StepSequence([main, tearDown],
-                                                       stopFail=False)],
+                                  [setup, main, tearDown],
                                   **kwargs)
 
 class TestSuite(StepSequence):
