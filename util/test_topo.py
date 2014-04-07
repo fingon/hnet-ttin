@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Mon Apr  7 11:02:50 2014 mstenber
-# Edit time:     101 min
+# Last modified: Mon Apr  7 13:58:59 2014 mstenber
+# Edit time:     104 min
 #
 """
 
@@ -58,11 +58,14 @@ class Basic(unittest.TestCase):
         tc = TestCase(l)
         assert cotest.run(tc)
     def test_6only_inf_cpe_isp_down(self):
-        " Basic idea: when uplink disappears even with infinite lifetime, it should disappear from the client. "
+        # Basic idea: when uplink disappears even with infinite
+        # lifetime, it should disappear from the client.
         l = [startTopology(self.topology, self.router, ispTemplate='isp6-inf')]
         l = l + base_6_test + fw_test
         l = l + [nodeHasPrefix6('client', '2000:')]
-        # Kill ipv6 uplink -> should disappear from client's preferred addresses in a minute
+
+        # Kill ipv6 uplink -> should disappear from client's preferred
+        # addresses in a minute
         #l = l + [nodeRun('cpe', 'ifdown h1_6')]
         l = l + [nodeRun('cpe', 'ifconfig eth1 down')]
         l = l + [cotest.RepeatStep(cotest.NotStep(nodeHasPrefix6('client', '2000:')),
@@ -71,7 +74,10 @@ class Basic(unittest.TestCase):
         tc = TestCase(l)
         assert cotest.run(tc)
     def test_6only_link_down_up(self):
-        " Make sure if we ifdown client facing interface, it gets up with same address. We test that by NOT updating the client addresses after ifdown + ifup, but instead rely on it getting same prefix (and routing works). "
+        # Make sure if we ifdown client facing interface, it gets up
+        # with same address. We test that by NOT updating the client
+        # addresses after ifdown + ifup, but instead rely on it
+        # getting same prefix (and routing works).
         l = [startTopology(self.topology, self.router, ispTemplate='isp6')]
         l = l + base_6_test + fw_test
         l = l + [nodeRun('bird3', 'ifdown h1')]
@@ -177,7 +183,8 @@ class DownPD(unittest.TestCase):
     topology = 'bird8'
     router = 'obird-debug'
     def test(self):
-        " Make sure downstream PD works - client should work even with openwrt node in the middle. "
+        # Make sure downstream PD works - client should work even with
+        # openwrt node in the middle.
         l = base_test[:]
         l[0] = startTopology(self.topology, self.router)
         tc = TestCase(l)
