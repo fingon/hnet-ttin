@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Tue Apr  1 00:29:11 2014 mstenber
-# Edit time:     280 min
+# Last modified: Mon Apr  7 10:14:34 2014 mstenber
+# Edit time:     282 min
 #
 """
 
@@ -312,8 +312,17 @@ class StepSequence(StepBase):
         return r
 
 class TestCase(StepSequence):
+    setup = None
+    tearDown = None
+    tearDownAlways = None
     def __init__(self, main, *,
                  setup=None, tearDown=None, tearDownAlways=True, **kwargs):
+        if setup is None:
+            setup = self.setup
+        if tearDown is None:
+            tearDown = self.tearDown
+        if tearDownAlways is None:
+            tearDownAlways = self.tearDownAlways
         setup = _toStep(setup, True)
         main = _toStep(main, True)
         tearDown = _toStep(tearDown, True)

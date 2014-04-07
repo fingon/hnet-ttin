@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Wed Apr  2 12:57:58 2014 mstenber
-# Edit time:     298 min
+# Last modified: Mon Apr  7 10:18:05 2014 mstenber
+# Edit time:     313 min
 #
 """
 
@@ -52,6 +52,9 @@ class MConsoleDeadException(Exception):
     pass
 
 class NodeDeadException(Exception):
+    pass
+
+class ProcessCrashedException(Exception):
     pass
 
 @asyncio.coroutine
@@ -170,14 +173,36 @@ def routerReady(router):
             return
     return cotest.Step(_run, name=n)
 
-def routersReady():
-    n = 'routers ready'
+crash_re = re.compile('\s(\S+)\[\d+\]: segfault').search
+
+def routerNoCrashes(router):
+    n = 'no crashes at router %s' % router
     def _run(state):
-        l = list(map(routerReady, state['routers'].keys()))
+        try:
+            f = open('lab/%s/logs/%s/syslog.log' % (state['topology'], router))
+        except IOError:
+            return True
+        for line in f:
+            m = crash_re(line)
+            if m is not None:
+                raise ProcessCrashedException(m.group(1))
+        return True
+    return cotest.Step(_run, name=n)
+
+def _forAllRouters(f, n):
+    def _run(state):
+        l = list(map(f, state['routers'].keys()))
         s = cotest.AndStep(*l, name=n)
         r = yield from s.run(state)
         return r
     return cotest.Step(_run, name=n)
+
+
+def routersNoCrashes():
+    return _forAllRouters(routerNoCrashes, 'routers did not crash')
+
+def routersReady():
+    return _forAllRouters(routerReady, 'routers ready')
 
 def nodeLives(node):
     def _run(state):
@@ -407,6 +432,8 @@ base_test = [
     startTopology('bird7', 'obird'),
     ] + base_6_test + base_4_test + fw_test
 
+class TestCase(cotest.TestCase):
+    tearDown = routersNoCrashes()
 
 if __name__ == '__main__':
     import logging
@@ -417,6 +444,6 @@ if __name__ == '__main__':
     al.setLevel(logging.CRITICAL)
     l = base_test
     l = l + [nodeStop('client'), nodeGo('client'), sleep(1)]
-    tc = cotest.TestCase(l)
+    tc = TestCase(l)
     assert cotest.run(tc)
 

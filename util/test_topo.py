@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Thu Apr  3 14:27:19 2014 mstenber
-# Edit time:     89 min
+# Last modified: Mon Apr  7 10:16:05 2014 mstenber
+# Edit time:     99 min
 #
 """
 
@@ -30,24 +30,24 @@ class Basic(unittest.TestCase):
     def test(self):
         l = base_test[:]
         l[0] = startTopology(self.topology, self.router)
-        tc = cotest.TestCase(l)
+        tc = TestCase(l)
         assert cotest.run(tc)
     def test_ula(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp'),
              waitRouterPrefix6('fd')] + base_6_local_test
         # + fw_test - not relevant - no outside!
-        tc = cotest.TestCase(l)
+        tc = TestCase(l)
         assert cotest.run(tc)
     def test_4only(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp4')]
         l = l + base_4_test + base_6_local_test + fw_test
-        tc = cotest.TestCase(l)
+        tc = TestCase(l)
         assert cotest.run(tc)
     def test_6only(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6')]
         l = l + base_6_test + fw_test
         l = l + [nodeHasPrefix6('client', '2000:')]
-        tc = cotest.TestCase(l)
+        tc = TestCase(l)
         assert cotest.run(tc)
     def test_6only_64(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6-64')]
@@ -55,9 +55,10 @@ class Basic(unittest.TestCase):
         l = l + [nodeRun('client', 'dhclient -6 eth0')]
         l = l + [nodeHasPrefix6('client', '2000:')]
         l = l + base_6_test + fw_test
-        tc = cotest.TestCase(l)
+        tc = TestCase(l)
         assert cotest.run(tc)
-    def test_6only_inf_ifdown(self):
+    def test_6only_inf_cpe_isp_down(self):
+        " Basic idea: when uplink disappears even with infinite lifetime, it should disappear from the client. "
         l = [startTopology(self.topology, self.router, ispTemplate='isp6-inf')]
         l = l + base_6_test + fw_test
         l = l + [nodeHasPrefix6('client', '2000:')]
@@ -67,14 +68,27 @@ class Basic(unittest.TestCase):
         l = l + [cotest.RepeatStep(cotest.NotStep(nodeHasPrefix6('client', '2000:')),
                                    timeout=60, wait=1)]
 
-        tc = cotest.TestCase(l)
+        tc = TestCase(l)
         assert cotest.run(tc)
+    def test_6only_link_down_up(self):
+        " Make sure if we ifdown client facing interface, it gets up with same address. We test that by NOT updating the client addresses after ifdown + ifup, but instead rely on it getting same prefix (and routing works). "
+        l = [startTopology(self.topology, self.router, ispTemplate='isp6')]
+        l = l + base_6_test + fw_test
+        l = l + [nodeRun('bird3', 'ifdown h1')]
+        l = l + [sleep(5)]
+        l = l + [nodeRun('bird3', 'ifup h1')]
 
+        # This timeout is sadly long; 15 doesn't seem to be enough as
+        # of 2014-04-17..
+        l = l + [cotest.RepeatStep(nodePingFromAll6('client', 'h-server'),
+                                   wait=1, timeout=30)]
+        tc = TestCase(l)
+        assert cotest.run(tc)
     def test_6rd(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp4-6rd')]
         l = l + base_6_test + base_4_test + fw_test
         l = l + [nodeHasPrefix6('client', '2001:')]
-        tc = cotest.TestCase(l)
+        tc = TestCase(l)
         assert cotest.run(tc)
     def test_6rd_6(self):
         l = [startTopology(self.topology, self.router,
@@ -85,7 +99,7 @@ class Basic(unittest.TestCase):
         l = l + base_6_test + base_4_test + fw_test
         l = l + [nodeHasPrefix6('client', '2000:'),
                  nodeHasPrefix6('client', '2001:')]
-        tc = cotest.TestCase(l)
+        tc = TestCase(l)
         assert cotest.run(tc)
 
 class BasicFallback(Basic):
@@ -103,7 +117,7 @@ class MH(unittest.TestCase):
                  nodeHasPrefix6('client', '2000:cafe:'),
                  nodeHasPrefix6('client', '2000:beef:')]
 
-        tc = cotest.TestCase(l)
+        tc = TestCase(l)
         assert cotest.run(tc)
 
 class MHFallback(MH):
@@ -117,7 +131,7 @@ class Lease(unittest.TestCase):
         # then, make sure things still work
         # (Can't use base_4_test, as it assumes client is not configured)
         l = l + base_6_test + base_4_postsetup_test + fw_test
-        tc = cotest.TestCase(l)
+        tc = TestCase(l)
         assert cotest.run(tc)
 
 class LeaseFallback(Lease):
@@ -131,7 +145,7 @@ class Large(unittest.TestCase):
         l[0] = startTopology(self.topology, self.router)
         self.l = l
     def test(self):
-        tc = cotest.TestCase(self.l)
+        tc = TestCase(self.l)
         assert cotest.run(tc)
     def test_mutation(self):
         # Initial route should include bird9
@@ -150,7 +164,7 @@ class Large(unittest.TestCase):
         # 'faster' because routes are better (no waiting 180 seconds)
         l = l + [nodeGo('bird9'), nodeStop('bird4'), nodeStop('bird6')]
         l = l + base_6_test + base_4_postsetup_test
-        tc = cotest.TestCase(l)
+        tc = TestCase(l)
         assert cotest.run(tc)
 
 
