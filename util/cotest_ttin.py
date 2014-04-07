@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Mon Apr  7 10:18:05 2014 mstenber
-# Edit time:     313 min
+# Last modified: Mon Apr  7 17:30:14 2014 mstenber
+# Edit time:     326 min
 #
 """
 
@@ -190,10 +190,10 @@ def routerNoCrashes(router):
     return cotest.Step(_run, name=n)
 
 def _forAllRouters(f, n):
-    def _run(state):
+    def _run(state, *, depth=0):
         l = list(map(f, state['routers'].keys()))
         s = cotest.AndStep(*l, name=n)
-        r = yield from s.run(state)
+        r = yield from s.run(state, depth=depth+1)
         return r
     return cotest.Step(_run, name=n)
 
@@ -223,10 +223,10 @@ def nodeLives(node):
 
 def topologyLives():
     n = 'topology lives'
-    def _run(state):
+    def _run(state, *, depth=0):
         l = list(map(nodeLives, state['nodes'].keys()))
         s = cotest.AndStep(*l, name=n)
-        r = yield from s.run(state)
+        r = yield from s.run(state, depth=depth+1)
         return r
     return cotest.Step(_run, name=n)
 
@@ -314,12 +314,12 @@ def updateNodeAddresses6(node, *, minimum=1, maximum=None, timeout=5, exclude=[]
                        timeout=timeout)
 
 def nodePingFromAll6(node, remote):
-    def _run(state):
+    def _run(state, *, depth=0):
         def _convert(a):
             return nodePing6(node, '-I %s %s' % (a, remote))
         l = list(map(_convert, state['nodes'][node]['addrs']))
         s = cotest.AndStep(*l)
-        r = yield from s.run(state)
+        r = yield from s.run(state, depth=depth+1)
         return r
     return cotest.Step(_run, name='@%s:all-ping6 %s' % (node, remote))
 
@@ -335,7 +335,7 @@ def nodeInterfaceFirewallZoneIs(node, interface, zone):
 
 def _waitRouterPrefix(cmd, prefix, *, timeout=60):
     n = 'wait prefix %s' % prefix
-    def _run(state):
+    def _run(state, *, depth=0):
         # For every router in the configuration, make sure the prefix is visible
 
         def _convert(node):
@@ -344,7 +344,7 @@ def _waitRouterPrefix(cmd, prefix, *, timeout=60):
         l = list(map(_convert, state['routers']))
         assert len(l) >= 2
         s = cotest.AndStep(*l, name=n)
-        r = yield from s.run(state)
+        r = yield from s.run(state, depth=depth+1)
         return r
     return cotest.Step(_run, name=n)
 
