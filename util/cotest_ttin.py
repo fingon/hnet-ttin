@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Apr  8 15:23:50 2014 mstenber
-# Edit time:     337 min
+# Last modified: Tue Apr  8 18:01:07 2014 mstenber
+# Edit time:     355 min
 #
 """
 
@@ -89,8 +89,8 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
     @asyncio.coroutine
     def _run(state):
         # Check we're inside ttin main directory
-        f = open('util/cotest.py')
-        f.close()
+        with open('util/cotest.py') as f:
+            pass
         args = []
         if routerTemplate:
             args.append('--replace-template')
@@ -120,25 +120,23 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
         state['clients'] = cd
         isd = {}
         state['isps'] = isd
-        f = open('lab/%s/lab.conf' % topology)
-        home = os.environ['HOME']
-        for line in f:
-            m = _template_re(line)
-            if m is None: continue
-            (node, template) = m.groups()
-            nd[node] = {'template': template}
-            if template == routerTemplate:
-                rd[node] = {}
-            if 'isp' in node:
-                isd[node] = {}
-            if 'client' in node:
-                cd[node] = {}
-            rc, *x = yield from cotest.async_system('rm -rf %s' % os.path.join(home, '.netkit', 'mconsole', node))
-            if rc:
-                _info('rm mconsole failed with exit code %d' % rc)
-                return
-
-        f.close()
+        with open('lab/%s/lab.conf' % topology) as f:
+            home = os.environ['HOME']
+            for line in f:
+                m = _template_re(line)
+                if m is None: continue
+                (node, template) = m.groups()
+                nd[node] = {'template': template}
+                if template == routerTemplate:
+                    rd[node] = {}
+                if 'isp' in node:
+                    isd[node] = {}
+                if 'client' in node:
+                    cd[node] = {}
+                rc, *x = yield from cotest.async_system('rm -rf %s' % os.path.join(home, '.netkit', 'mconsole', node))
+                if rc:
+                    _info('rm mconsole failed with exit code %d' % rc)
+                    return
         assert rd, 'have to have routers present'
         cmd = '(cd lab/%s && lstart -p123 < /dev/null)' % topology
         rc, stdout, stderr = cotest.sync_system(cmd, timeout)
@@ -164,12 +162,12 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
 def routerReady(router):
     n = 'router %s ready' % router
     def _run(state):
+        fn = 'lab/%s/logs/%s/status' % (state['topology'], router)
         try:
-            f = open('lab/%s/logs/%s/state' % (state['topology'], router))
-            d = f.read()
-            f.close()
-            return b'done' in d
-        except:
+            with open(fn) as f:
+                d = f.read()
+            return 'done' in d
+        except IOError:
             return
     return cotest.Step(_run, name=n)
 
@@ -178,20 +176,21 @@ crash_re = re.compile('\s(\S+)\[\d+\]: segfault').search
 def routerNoCrashes(router):
     n = 'no crashes at router %s' % router
     def _run(state):
+        fn = 'lab/%s/logs/%s/syslog.log' % (state['topology'], router)
         try:
-            f = open('lab/%s/logs/%s/syslog.log' % (state['topology'], router))
+            with open(fn) as f:
+                for line in f:
+                    m = crash_re(line)
+                    if m is not None:
+                        raise ProcessCrashedException(m.group(1))
         except IOError:
             return True
-        for line in f:
-            m = crash_re(line)
-            if m is not None:
-                raise ProcessCrashedException(m.group(1))
         return True
     return cotest.Step(_run, name=n)
 
 def _forAllRouters(f, n):
     def _run(state):
-        l = list(map(f, state['routers'].keys()))
+        l = map(f, state['routers'].keys())
         s = cotest.AndStep(*l, name=n)
         r = yield from s.run(state)
         return r
@@ -224,7 +223,7 @@ def nodeLives(node):
 def topologyLives():
     n = 'topology lives'
     def _run(state):
-        l = list(map(nodeLives, state['nodes'].keys()))
+        l = map(nodeLives, state['nodes'].keys())
         s = cotest.AndStep(*l, name=n)
         r = yield from s.run(state)
         return r
@@ -317,7 +316,7 @@ def nodePingFromAll6(node, remote):
     def _run(state):
         def _convert(a):
             return nodePing6(node, '-I %s %s' % (a, remote))
-        l = list(map(_convert, state['nodes'][node]['addrs']))
+        l = map(_convert, state['nodes'][node]['addrs'])
         s = cotest.AndStep(*l)
         r = yield from s.run(state)
         return r
@@ -341,8 +340,7 @@ def _waitRouterPrefix(cmd, prefix, *, timeout=60):
         def _convert(node):
             return cotest.RepeatStep(_nodeHasPrefix(node, cmd, prefix),
                                      wait=1, timeout=timeout)
-        l = list(map(_convert, state['routers']))
-        assert len(l) >= 2
+        l = map(_convert, state['routers'])
         s = cotest.AndStep(*l, name=n)
         r = yield from s.run(state)
         return r

@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Tue Apr  8 15:29:11 2014 mstenber
-# Edit time:     342 min
+# Last modified: Tue Apr  8 17:48:15 2014 mstenber
+# Edit time:     352 min
 #
 """
 
@@ -132,8 +132,8 @@ class StepBase(Named):
             state = {'ets': []}
             _debug(' initializing fresh state')
         elif type(state) != type({}):
-            state = {'ets': [], 'wstate': state}
             _debug(' wrapping state %s' % state)
+            state = {'ets': [], 'wstate': state}
         depth = state.get('depth', 0)
         ours = False
         if self.timeout:
@@ -142,12 +142,14 @@ class StepBase(Named):
             if not ets or ets[-1] > et:
                 ets.append(et)
                 ours = True
+        _debug('[%d] %s run()' % (depth, repr(self)))
+        state['depth'] = depth + 1
         try:
-            state['depth'] = depth + 1
-            _debug('[%d] %s run()' % (depth, repr(self)))
             r = yield from self.reallyRun(state)
             if not r:
                 _info('[%d] %s run() failed' % (depth, repr(self)))
+            else:
+                _debug('[%d] %s run() ok' % (depth, repr(self)))
         finally:
             state['depth'] = depth
             if ours:
@@ -261,7 +263,7 @@ class MultiStepBase(StepBase):
     def __init__(self, *steps, **kwargs):
         StepBase.__init__(self, **kwargs)
         assert len(steps) >= 1, 'multistep with 0 arguments is not useful'
-        self.steps = map(_toStep, steps)
+        self.steps = list(map(_toStep, steps))
     def reallyRun(self, state):
         def _convert(x):
             lstate = copy.deepcopy(state)
@@ -269,7 +271,7 @@ class MultiStepBase(StepBase):
             _debug('starting %s => %s' % (repr(x), repr(r)))
             assert r and asyncio.iscoroutine(r)
             return asyncio.Task(r)
-        l = map(_convert, self.steps)
+        l = list(map(_convert, self.steps))
         return self.waitResult(state, l)
     def waitResult(self, l):
         # Child responsibility
@@ -278,7 +280,6 @@ class MultiStepBase(StepBase):
 class OrStep(MultiStepBase):
     def waitResult(self, state, l):
         # This has bit more .. magical.. handling
-        l = list(l)
         et = _state_et(state)
         nto = None
         while l:
@@ -324,7 +325,7 @@ class StepSequence(StepBase):
         except:
             steps = [steps]
         steps = filter(None, steps)
-        self.steps = steps
+        self.steps = list(steps)
         self.stopFail = stopFail
     def reallyRun(self, state):
         depth = state['depth']
