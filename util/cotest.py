@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Mon Apr  7 17:23:56 2014 mstenber
-# Edit time:     294 min
+# Last modified: Tue Apr  8 11:44:38 2014 mstenber
+# Edit time:     306 min
 #
 """
 
@@ -121,17 +121,21 @@ class StepBase(Named):
                                                            repr(o)))
                     return True
         return False
-    def run(self, state=None, *, depth=0):
-        _debug('[%d] %s run()' % (depth, repr(self)))
+    def run(self, state=None):
         if state is None:
-            assert not depth
             state = {}
             _debug(' initializing fresh state')
-        r = yield from self.reallyRun(state, depth=depth)
-        if not r:
-            _info('[%d] %s run() failed' % (depth, repr(self)))
+        depth = state.get('depth', 0)
+        try:
+            state['depth'] = depth + 1
+            _debug('[%d] %s run()' % (depth, repr(self)))
+            r = yield from self.reallyRun(state)
+            if not r:
+                _info('[%d] %s run() failed' % (depth, repr(self)))
+        finally:
+            state['depth'] = depth
         return r
-    def reallyRun(self, state, depth):
+    def reallyRun(self, state):
         raise NotImplementedError
 
 class Step(StepBase):
@@ -143,7 +147,7 @@ class Step(StepBase):
         StepBase.__init__(self, **kwargs)
         self.fun = fun
         self.failIf = failIf
-    def reallyRun(self, state, depth):
+    def reallyRun(self, state):
         r = yield from self.runAsync(state, self.fun, self.failIf)
         if r != 0:
             return False
@@ -194,8 +198,8 @@ class NotStep(StepBase):
     def __init__(self, step, **kwargs):
         StepBase.__init__(self, **kwargs)
         self.step = _toStep(step)
-    def reallyRun(self, state, depth):
-        r = yield from self.step.run(state, depth=depth+1)
+    def reallyRun(self, state):
+        r = yield from self.step.run(state)
         return not r
 
 class RepeatStep(StepBase):
@@ -205,7 +209,7 @@ class RepeatStep(StepBase):
         self.times = times
         self.timeout = timeout
         self.wait = wait
-    def reallyRun(self, state, depth):
+    def reallyRun(self, state):
         i = 0
         if self.timeout:
             st = time.monotonic()
@@ -217,7 +221,7 @@ class RepeatStep(StepBase):
                 self.step.timeout = et - time.monotonic()
                 if self.step.timeout <= 0:
                     break
-            r = yield from self.step.run(state, depth=depth+1)
+            r = yield from self.step.run(state)
             if r:
                 r = True
                 break
@@ -234,9 +238,9 @@ class MultiStepBase(StepBase):
         StepBase.__init__(self, **kwargs)
         assert len(steps) >= 1, 'multistep with 0 arguments is not useful'
         self.steps = map(_toStep, steps)
-    def reallyRun(self, state, depth):
+    def reallyRun(self, state):
         def _convert(x):
-            r = x.run(state, depth=depth+1)
+            r = x.run(state)
             _debug('starting %s => %s' % (repr(x), repr(r)))
             assert r and asyncio.iscoroutine(r)
             return asyncio.Task(r)
@@ -298,14 +302,15 @@ class StepSequence(StepBase):
         steps = filter(None, steps)
         self.steps = steps
         self.stopFail = stopFail
-    def reallyRun(self, state, depth):
+    def reallyRun(self, state):
+        depth = state['depth']
         r = True
         for i, o in enumerate(self.steps):
             if not isinstance(o, StepBase):
                 o = _toStep(o)
             _debug('[%d] %s running step #%d: %s' % (depth,
                                                      repr(self), i, repr(o)))
-            cr = yield from o.run(state, depth=depth+1)
+            cr = yield from o.run(state)
             if not cr:
                 _info("[%d] %s step #%d failed" % (depth, repr(self), i))
                 if self.stopFail:

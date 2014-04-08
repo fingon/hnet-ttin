@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Mon Apr  7 17:30:14 2014 mstenber
-# Edit time:     326 min
+# Last modified: Tue Apr  8 11:40:15 2014 mstenber
+# Edit time:     334 min
 #
 """
 
@@ -87,7 +87,7 @@ def nodeGo(node):
 # Allow for fail or two
 def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
     @asyncio.coroutine
-    def _run(state, *, depth=0):
+    def _run(state):
         # Check we're inside ttin main directory
         f = open('util/cotest.py')
         f.close()
@@ -153,7 +153,7 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
         state[KEY_TOPOLOGY] = topology
         s = [topologyLives(), routersReady()]
         rs = cotest.RepeatStep(s, wait=5)
-        r = yield from rs.run(state, depth=depth+1)
+        r = yield from rs.run(state)
         return r
     n = 'startTopology %s/%s/%s' % (topology, routerTemplate, ispTemplate)
     return cotest.RepeatStep(cotest.Step(_run, name=n, timeout=timeout,
@@ -190,10 +190,10 @@ def routerNoCrashes(router):
     return cotest.Step(_run, name=n)
 
 def _forAllRouters(f, n):
-    def _run(state, *, depth=0):
+    def _run(state):
         l = list(map(f, state['routers'].keys()))
         s = cotest.AndStep(*l, name=n)
-        r = yield from s.run(state, depth=depth+1)
+        r = yield from s.run(state)
         return r
     return cotest.Step(_run, name=n)
 
@@ -223,10 +223,10 @@ def nodeLives(node):
 
 def topologyLives():
     n = 'topology lives'
-    def _run(state, *, depth=0):
+    def _run(state):
         l = list(map(nodeLives, state['nodes'].keys()))
         s = cotest.AndStep(*l, name=n)
-        r = yield from s.run(state, depth=depth+1)
+        r = yield from s.run(state)
         return r
     return cotest.Step(_run, name=n)
 
@@ -314,12 +314,12 @@ def updateNodeAddresses6(node, *, minimum=1, maximum=None, timeout=5, exclude=[]
                        timeout=timeout)
 
 def nodePingFromAll6(node, remote):
-    def _run(state, *, depth=0):
+    def _run(state):
         def _convert(a):
             return nodePing6(node, '-I %s %s' % (a, remote))
         l = list(map(_convert, state['nodes'][node]['addrs']))
         s = cotest.AndStep(*l)
-        r = yield from s.run(state, depth=depth+1)
+        r = yield from s.run(state)
         return r
     return cotest.Step(_run, name='@%s:all-ping6 %s' % (node, remote))
 
@@ -335,7 +335,7 @@ def nodeInterfaceFirewallZoneIs(node, interface, zone):
 
 def _waitRouterPrefix(cmd, prefix, *, timeout=60):
     n = 'wait prefix %s' % prefix
-    def _run(state, *, depth=0):
+    def _run(state):
         # For every router in the configuration, make sure the prefix is visible
 
         def _convert(node):
@@ -344,7 +344,7 @@ def _waitRouterPrefix(cmd, prefix, *, timeout=60):
         l = list(map(_convert, state['routers']))
         assert len(l) >= 2
         s = cotest.AndStep(*l, name=n)
-        r = yield from s.run(state, depth=depth+1)
+        r = yield from s.run(state)
         return r
     return cotest.Step(_run, name=n)
 
@@ -416,10 +416,13 @@ base_6_local_test = [
 base_6_test = [
     waitRouterPrefix6('200', timeout=TIMEOUT_INITIAL),
     nodeHasPrefix6('client', '200'),
-    cotest.RepeatStep(nodePing6('client', 'h-server'), wait=1, timeout=TIMEOUT),
-    cotest.RepeatStep(nodePing6('client', 'server.v6.lab.example.com'), wait=1, timeout=TIMEOUT),
+    cotest.RepeatStep(nodePing6('client', 'h-server'),
+                      wait=1, timeout=TIMEOUT),
+    cotest.RepeatStep(nodePing6('client', 'server.v6.lab.example.com'),
+                      wait=1, timeout=TIMEOUT),
     cotest.RepeatStep([updateNodeAddresses6('client', exclude=['fd']),
-                       nodePingFromAll6('client', 'h-server')], wait=1, timeout=TIMEOUT),
+                       nodePingFromAll6('client', 'h-server')],
+                      wait=1, timeout=TIMEOUT),
     #nodeTraceroute6Contains('client', 'h-server', b'cpe.')
     ] + base_6_local_test
 
