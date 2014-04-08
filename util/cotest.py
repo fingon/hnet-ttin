@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Tue Apr  8 15:09:58 2014 mstenber
-# Edit time:     338 min
+# Last modified: Tue Apr  8 15:29:11 2014 mstenber
+# Edit time:     342 min
 #
 """
 
@@ -344,9 +344,9 @@ class StepSequence(StepBase):
 class TestCase(StepSequence):
     setup = None
     tearDown = None
-    tearDownAlways = None
+    tearDownAlways = True
     def __init__(self, main, *,
-                 setup=None, tearDown=None, tearDownAlways=True, **kwargs):
+                 setup=None, tearDown=None, tearDownAlways=None, **kwargs):
         if setup is None:
             setup = self.setup
         if tearDown is None:

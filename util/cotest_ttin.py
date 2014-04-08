@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Apr  8 11:40:15 2014 mstenber
-# Edit time:     334 min
+# Last modified: Tue Apr  8 15:23:50 2014 mstenber
+# Edit time:     337 min
 #
 """
 
@@ -437,6 +437,7 @@ base_test = [
 
 class TestCase(cotest.TestCase):
     tearDown = routersNoCrashes()
+    tearDownAlways = False
 
 if __name__ == '__main__':
     import logging
