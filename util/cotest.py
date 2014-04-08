@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Tue Apr  8 11:44:38 2014 mstenber
-# Edit time:     306 min
+# Last modified: Tue Apr  8 15:09:58 2014 mstenber
+# Edit time:     338 min
 #
 """
 
@@ -28,8 +28,9 @@ Basic idea:
 practise, the amount of glue code is small, and the asyncio magic
 involved is the hairy part).
 
-The datastructures are defined to be highly composable, with access to
-the shared 'state' object. The test runner is just responsible for
+The datastructures that the testcases and their individual test steps
+consist of are immutable and therefore highly composable, with access
+to the shared 'state' object. The test runner is just responsible for
 firing up the root level objects, and ultimately execution is up to
 set of test steps.
 
@@ -40,8 +41,9 @@ import asyncio
 import concurrent.futures
 import subprocess
 from asyncio.subprocess import PIPE
-
 import logging
+import copy
+
 _logger = logging.getLogger('cotest')
 _debug = _logger.debug
 _info = _logger.info
@@ -122,10 +124,24 @@ class StepBase(Named):
                     return True
         return False
     def run(self, state=None):
+        """ This routine is wrapper which is responsible for making
+        sure that a) consistent state is available to subcalls, b) it
+        has depth, and c) timeout information about when the run ends
+        if any; the most recent one being in 'ets'[-1]."""
         if state is None:
-            state = {}
+            state = {'ets': []}
             _debug(' initializing fresh state')
+        elif type(state) != type({}):
+            state = {'ets': [], 'wstate': state}
+            _debug(' wrapping state %s' % state)
         depth = state.get('depth', 0)
+        ours = False
+        if self.timeout:
+            et = time.monotonic() + self.timeout
+            ets = state['ets']
+            if not ets or ets[-1] > et:
+                ets.append(et)
+                ours = True
         try:
             state['depth'] = depth + 1
             _debug('[%d] %s run()' % (depth, repr(self)))
@@ -134,9 +150,22 @@ class StepBase(Named):
                 _info('[%d] %s run() failed' % (depth, repr(self)))
         finally:
             state['depth'] = depth
+            if ours:
+                del ets[-1]
         return r
     def reallyRun(self, state):
         raise NotImplementedError
+
+def _state_et(state):
+    ets = state['ets']
+    timeout = None
+    if ets:
+        return ets[-1]
+
+def _state_timeout(state):
+    et = _state_et(state)
+    if et:
+        return et - time.monotonic()
 
 class Step(StepBase):
     def __init__(self,
@@ -155,7 +184,8 @@ class Step(StepBase):
     def runAsync(self, state, *args):
         assert args, 'must have at least one job'
         def _convert(x):
-            r = x(state)
+            wstate = state.get('wstate', state)
+            r = x(wstate)
             _debug('starting %s => %s' % (repr(x), repr(r)))
             if r and asyncio.iscoroutine(r):
                 return asyncio.Task(r)
@@ -168,7 +198,8 @@ class Step(StepBase):
                 if o:
                     return i
                 return
-        done, pending = yield from asyncio.wait(l, timeout=self.timeout,
+        timeout = _state_timeout(state)
+        done, pending = yield from asyncio.wait(l, timeout=timeout,
                                                 return_when=concurrent.futures.FIRST_COMPLETED)
         _debug('runAsync => %s' % repr(done))
         if self.doneErrors(done):
@@ -181,10 +212,7 @@ class Step(StepBase):
                 return
         return
 
-# noneOk=True case is mostly usable as input to StepSequence..
-def _toStep(x, noneOk=False):
-    if x is None and noneOk:
-        return
+def _toStep(x):
     assert x
     if isinstance(x, StepBase):
         return x
@@ -193,6 +221,11 @@ def _toStep(x, noneOk=False):
         return StepSequence(x)
     except:
         return Step(x)
+
+def _toStepOrNone(x):
+    if x is None:
+        return None
+    return _toStep(x)
 
 class NotStep(StepBase):
     def __init__(self, step, **kwargs):
@@ -204,23 +237,15 @@ class NotStep(StepBase):
 
 class RepeatStep(StepBase):
     def __init__(self, step, *, wait=None, timeout=None, times=None, **kwargs):
-        StepBase.__init__(self, **kwargs)
+        StepBase.__init__(self, timeout=timeout, **kwargs)
         self.step = _toStep(step)
         self.times = times
-        self.timeout = timeout
         self.wait = wait
     def reallyRun(self, state):
         i = 0
-        if self.timeout:
-            st = time.monotonic()
-            et = st + self.timeout
+        et = _state_et(state)
         r = False
-        ot = self.step.timeout
-        while (self.times is None or i < self.times) and (self.timeout is None or time.monotonic() <= et):
-            if self.timeout:
-                self.step.timeout = et - time.monotonic()
-                if self.step.timeout <= 0:
-                    break
+        while (self.times is None or i < self.times) and (not et or time.monotonic() <= et):
             r = yield from self.step.run(state)
             if r:
                 r = True
@@ -228,7 +253,6 @@ class RepeatStep(StepBase):
             if self.wait:
                 yield from asyncio.sleep(self.wait)
             i += 1
-        self.step.timeout = ot
         return r
 
 # Abstract base class for multiple step bandling
@@ -240,27 +264,26 @@ class MultiStepBase(StepBase):
         self.steps = map(_toStep, steps)
     def reallyRun(self, state):
         def _convert(x):
-            r = x.run(state)
+            lstate = copy.deepcopy(state)
+            r = x.run(lstate)
             _debug('starting %s => %s' % (repr(x), repr(r)))
             assert r and asyncio.iscoroutine(r)
             return asyncio.Task(r)
         l = map(_convert, self.steps)
-        return self.waitResult(l)
+        return self.waitResult(state, l)
     def waitResult(self, l):
         # Child responsibility
         raise NotImplementedError
 
 class OrStep(MultiStepBase):
-    def waitResult(self, l):
+    def waitResult(self, state, l):
         # This has bit more .. magical.. handling
         l = list(l)
+        et = _state_et(state)
         nto = None
-        to = self.timeout
-        if to:
-            st = time.monotonic()
         while l:
-            if to:
-                nto = to - (time.monotonic() - st)
+            if et:
+                nto = et - time.monotonic()
                 if nto <= 0:
                     return
             done, pending = yield from asyncio.wait(l, timeout=nto,
@@ -279,8 +302,9 @@ class OrStep(MultiStepBase):
         return
 
 class AndStep(MultiStepBase):
-    def waitResult(self, l):
-        done, pending = yield from asyncio.wait(l, timeout=self.timeout)
+    def waitResult(self, state, l):
+        to = _state_timeout(state)
+        done, pending = yield from asyncio.wait(l, timeout=to)
         _debug('%s asyncio.wait got %s,%s' % (repr(self), done, pending))
         if pending:
             _debug('%s failed due to pending %s' % (repr(self), repr(pending)))
@@ -306,8 +330,7 @@ class StepSequence(StepBase):
         depth = state['depth']
         r = True
         for i, o in enumerate(self.steps):
-            if not isinstance(o, StepBase):
-                o = _toStep(o)
+            o = _toStep(o)
             _debug('[%d] %s running step #%d: %s' % (depth,
                                                      repr(self), i, repr(o)))
             cr = yield from o.run(state)
@@ -330,9 +353,9 @@ class TestCase(StepSequence):
             tearDown = self.tearDown
         if tearDownAlways is None:
             tearDownAlways = self.tearDownAlways
-        setup = _toStep(setup, True)
-        main = _toStep(main, True)
-        tearDown = _toStep(tearDown, True)
+        setup = _toStepOrNone(setup)
+        main = _toStepOrNone(main)
+        tearDown = _toStepOrNone(tearDown)
         if tearDownAlways:
             StepSequence.__init__(self,
                                   [StepSequence([setup, main]), tearDown],
