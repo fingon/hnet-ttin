@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Wed Apr  9 09:48:05 2014 mstenber
-# Edit time:     359 min
+# Last modified: Wed Apr  9 11:40:04 2014 mstenber
+# Edit time:     364 min
 #
 """
 
@@ -149,7 +149,7 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
             _info('lstart succeeded but topo was running before')
             return
         state[KEY_TOPOLOGY] = topology
-        s = [topologyLives(), routersReady()]
+        s = [routersReady(), topologyLives()]
         rs = cotest.RepeatStep(s, wait=5)
         r = yield from rs.run(state)
         return r
