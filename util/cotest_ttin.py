@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Apr  8 18:01:07 2014 mstenber
-# Edit time:     355 min
+# Last modified: Wed Apr  9 09:48:05 2014 mstenber
+# Edit time:     359 min
 #
 """
 
@@ -390,7 +390,7 @@ TIMEOUT=60
 # Built-in unit tests that just run through the templates once
 base_4_postsetup_test = [
     # this is never first -> no need for TIMEOUT_INITIALs
-    nodeHasPrefix4('client', '10.'),
+    #nodeHasPrefix4('client', '10.'), # in nested pd, we do 192.*
     # 30 seconds =~ time for routing to settle
     cotest.RepeatStep(nodePing4('client', 'h-server'), wait=1, timeout=TIMEOUT),
     cotest.RepeatStep(nodePing4('client', 'server.v4.lab.example.com'), wait=1, timeout=TIMEOUT),
@@ -398,7 +398,7 @@ base_4_postsetup_test = [
 
 base_4_test = [
     waitRouterPrefix4('10.', timeout=TIMEOUT_INITIAL),
-    cotest.NotStep(nodeHasPrefix4('client', '10.')),
+    #cotest.NotStep(nodeHasPrefix4('client', '10.')), # in nested pd, 192.*
     cotest.NotStep(nodePing4('client', 'h-server')),
     nodeRun('client', 'dhclient eth0'),
     ] + base_4_postsetup_test
@@ -413,7 +413,9 @@ base_6_local_test = [
 
 base_6_test = [
     waitRouterPrefix6('200', timeout=TIMEOUT_INITIAL),
-    nodeHasPrefix6('client', '200'),
+    # slight delay acceptable after first-hop router gets address
+    cotest.RepeatStep(nodeHasPrefix6('client', '200'),
+                      wait=1, timeout=5),
     cotest.RepeatStep(nodePing6('client', 'h-server'),
                       wait=1, timeout=TIMEOUT),
     cotest.RepeatStep(nodePing6('client', 'server.v6.lab.example.com'),

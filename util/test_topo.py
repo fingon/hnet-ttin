@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Mon Apr  7 13:58:59 2014 mstenber
-# Edit time:     104 min
+# Last modified: Wed Apr  9 09:44:17 2014 mstenber
+# Edit time:     119 min
 #
 """
 
@@ -187,6 +187,10 @@ class DownPD(unittest.TestCase):
         # openwrt node in the middle.
         l = base_test[:]
         l[0] = startTopology(self.topology, self.router)
+        # Beyond the router nodes, have to wait for openwrt to get the
+        # PD too before running onwards..
+        l[2:2] = [cotest.RepeatStep(nodeHasPrefix6('openwrt', '2000'),
+                                    wait=1, timeout=TIMEOUT)]
         tc = TestCase(l)
         assert cotest.run(tc)
 
