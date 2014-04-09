@@ -8,3 +8,6 @@ then
 fi
 # XXX SUPER HACK XXX
 
+# Make sure dnsmasq does not filter RFC1918 responses
+uci set dhcp.@dnsmasq[0].rebind_protection=0
+uci commit dhcp
