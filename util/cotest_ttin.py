@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Wed Apr  9 11:40:04 2014 mstenber
-# Edit time:     364 min
+# Last modified: Thu Apr 10 11:26:53 2014 mstenber
+# Edit time:     374 min
 #
 """
 
@@ -73,15 +73,24 @@ def _nodeExec(node, cmd):
 def nodeStop(node):
     @asyncio.coroutine
     def _run(state):
+        if 'stopped' in state['nodes'][node]:
+            return True
         rc, *x = yield from _node(node, 'stop')
-        return rc == 0
+        if rc == 0:
+            state['nodes'][node]['stopped'] = True
+            return True
     return cotest.Step(_run, name='stop %s' % node)
 
 def nodeGo(node):
     @asyncio.coroutine
     def _run(state):
+        if 'stopped' not in state['nodes'][node]:
+            return True
         rc, *x = yield from _node(node, 'go')
-        return rc == 0
+        if rc == 0:
+            del state['nodes'][node]['stopped']
+            return True
+
     return cotest.Step(_run, name='go %s' % node)
 
 # Allow for fail or two
@@ -188,9 +197,13 @@ def routerNoCrashes(router):
         return True
     return cotest.Step(_run, name=n)
 
+def _runningRouterNames(state):
+    return filter(lambda x:'stopped' not in state['nodes'][x],
+                  state['routers'].keys())
+
 def _forAllRouters(f, n):
     def _run(state):
-        l = map(f, state['routers'].keys())
+        l = map(f, _runningRouterNames(state))
         s = cotest.AndStep(*l, name=n)
         r = yield from s.run(state)
         return r
@@ -340,7 +353,7 @@ def _waitRouterPrefix(cmd, prefix, *, timeout=60):
         def _convert(node):
             return cotest.RepeatStep(_nodeHasPrefix(node, cmd, prefix),
                                      wait=1, timeout=timeout)
-        l = map(_convert, state['routers'])
+        l = map(_convert, _runningRouterNames(state))
         s = cotest.AndStep(*l, name=n)
         r = yield from s.run(state)
         return r
