@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Thu Apr 10 11:26:53 2014 mstenber
-# Edit time:     374 min
+# Last modified: Wed Apr 16 15:41:17 2014 mstenber
+# Edit time:     375 min
 #
 """
 
@@ -401,7 +401,15 @@ TIMEOUT_INITIAL=120
 TIMEOUT=60
 
 # Built-in unit tests that just run through the templates once
-base_4_postsetup_test = [
+
+base_4_setup_test = [
+    waitRouterPrefix4('10.', timeout=TIMEOUT_INITIAL),
+    #cotest.NotStep(nodeHasPrefix4('client', '10.')), # in nested pd, 192.*
+    cotest.NotStep(nodePing4('client', 'h-server')),
+    nodeRun('client', 'dhclient eth0'),
+    ]
+
+base_4_remote_test = [
     # this is never first -> no need for TIMEOUT_INITIALs
     #nodeHasPrefix4('client', '10.'), # in nested pd, we do 192.*
     # 30 seconds =~ time for routing to settle
@@ -409,12 +417,16 @@ base_4_postsetup_test = [
     cotest.RepeatStep(nodePing4('client', 'server.v4.lab.example.com'), wait=1, timeout=TIMEOUT),
     ]
 
-base_4_test = [
-    waitRouterPrefix4('10.', timeout=TIMEOUT_INITIAL),
-    #cotest.NotStep(nodeHasPrefix4('client', '10.')), # in nested pd, 192.*
-    cotest.NotStep(nodePing4('client', 'h-server')),
-    nodeRun('client', 'dhclient eth0'),
-    ] + base_4_postsetup_test
+base_4_local_test = [
+    cotest.RepeatStep(nodePing4('client', 'cpe.eth0.cpe.home'),
+                      wait=1, timeout=TIMEOUT_INITIAL),
+    # If it's not first-hop, availability of cpe doesn't imply bird3
+    cotest.RepeatStep(nodePing4('client', 'bird3.eth0.bird3.home'),
+                      wait=1, timeout=TIMEOUT),
+
+    ]
+
+base_4_test = base_4_setup_test + base_4_remote_test + base_4_local_test
 
 base_6_local_test = [
     cotest.RepeatStep(nodePing6('client', 'cpe.eth0.cpe.home'),
@@ -424,7 +436,7 @@ base_6_local_test = [
                       wait=1, timeout=TIMEOUT),
     ]
 
-base_6_test = [
+base_6_remote_test = [
     waitRouterPrefix6('200', timeout=TIMEOUT_INITIAL),
     # slight delay acceptable after first-hop router gets address
     cotest.RepeatStep(nodeHasPrefix6('client', '200'),
@@ -437,7 +449,9 @@ base_6_test = [
                        nodePingFromAll6('client', 'h-server')],
                       wait=1, timeout=TIMEOUT),
     #nodeTraceroute6Contains('client', 'h-server', b'cpe.')
-    ] + base_6_local_test
+    ]
+
+base_6_test = base_6_remote_test + base_6_local_test
 
 fw_test = [
     nodeInterfaceFirewallZoneIs('cpe', 'h1', 'wan'),

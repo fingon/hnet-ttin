@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Wed Apr  9 09:44:17 2014 mstenber
-# Edit time:     119 min
+# Last modified: Wed Apr 16 15:45:42 2014 mstenber
+# Edit time:     126 min
 #
 """
 
@@ -136,7 +136,7 @@ class Lease(unittest.TestCase):
         l = l + [sleep(700)] # even valid <= 600
         # then, make sure things still work
         # (Can't use base_4_test, as it assumes client is not configured)
-        l = l + base_6_test + base_4_postsetup_test + fw_test
+        l = l + base_6_test + base_4_remote_test + fw_test
         tc = TestCase(l)
         assert cotest.run(tc)
 
@@ -164,12 +164,12 @@ class Large(unittest.TestCase):
         # Then we kill bird9, and wait for things to work again
         # (HNCP has built-in 4 minute delay currently it seems)
         l = l + [nodeStop('bird9')] + [sleep(180)]
-        l = l + base_6_test + base_4_postsetup_test
+        l = l + base_6_test + base_4_remote_test
 
         # Resume bird9, kill two other routes, and should go up
         # 'faster' because routes are better (no waiting 180 seconds)
         l = l + [nodeGo('bird9'), nodeStop('bird4'), nodeStop('bird6')]
-        l = l + base_6_test + base_4_postsetup_test
+        l = l + base_6_test + base_4_remote_test
         tc = TestCase(l)
         assert cotest.run(tc)
 
@@ -194,6 +194,17 @@ class DownPD(unittest.TestCase):
         tc = TestCase(l)
         assert cotest.run(tc)
 
+class Guest(unittest.TestCase):
+    topology = 'obird7-guest'
+    router = 'obird-debug'
+    def test(self):
+        # Make sure guest stuff works with remote
+        l = [startTopology(self.topology, self.router)] + base_6_remote_test + base_4_setup_test + base_4_remote_test
+        # Local stuff shouldn't; however, whether this test really is conclusive about it is another matter
+        l = l + [cotest.NotStep(base_6_local_test)] + [cotest.NotStep(base_4_local_test)]
+        # XXX - make sure no HNCP and TCP traffic in tcpdump
+        tc = TestCase(l)
+        assert cotest.run(tc)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
