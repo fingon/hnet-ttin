@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 # -*- Python -*-
 #
-# $Id: summarize_bird_neigh_changes.py $
+# $Id: bird_neigh_changes.py $
 #
 # Author: Markus Stenberg <mstenber@cisco.com>
 #
 # Copyright (c) 2013 cisco Systems, Inc.
 #
 # Created:       Thu Feb 28 12:39:13 2013 mstenber
-# Last modified: Thu Oct 31 11:24:40 2013 mstenber
+# Last modified: Mon Apr 14 14:47:39 2014 mstenber
 # Edit time:     94 min
 #
 """

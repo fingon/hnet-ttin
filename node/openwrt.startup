@@ -11,3 +11,9 @@ fi
 # Make sure dnsmasq does not filter RFC1918 responses
 uci set dhcp.@dnsmasq[0].rebind_protection=0
 uci commit dhcp
+
+# default is 256kb.. we don't really care though
+#uci set system.@system[0].log_size=256
+uci set system.@system[0].log_size=10000
+uci commit system
+
