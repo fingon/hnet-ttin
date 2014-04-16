@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Wed Apr 16 15:45:42 2014 mstenber
-# Edit time:     126 min
+# Last modified: Wed Apr 16 16:33:54 2014 mstenber
+# Edit time:     130 min
 #
 """
 
@@ -201,7 +201,9 @@ class Guest(unittest.TestCase):
         # Make sure guest stuff works with remote
         l = [startTopology(self.topology, self.router)] + base_6_remote_test + base_4_setup_test + base_4_remote_test
         # Local stuff shouldn't; however, whether this test really is conclusive about it is another matter
-        l = l + [cotest.NotStep(base_6_local_test)] + [cotest.NotStep(base_4_local_test)]
+        l = l + [cotest.NotStep(base_6_local_ip_test, timeout=10)]
+        l = l + [cotest.NotStep(base_6_local_sd_test, timeout=10)]
+        l = l + [cotest.NotStep(base_4_local_test, timeout=10)]
         # XXX - make sure no HNCP and TCP traffic in tcpdump
         tc = TestCase(l)
         assert cotest.run(tc)

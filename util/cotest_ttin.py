@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Wed Apr 16 15:41:17 2014 mstenber
-# Edit time:     375 min
+# Last modified: Wed Apr 16 16:30:43 2014 mstenber
+# Edit time:     391 min
 #
 """
 
@@ -254,9 +254,15 @@ def nodePing4(node, remote):
         return rc == 0 and ' bytes from ' in stdout.decode()
     return cotest.Step(_run, name='@%s:ping %s' % (node, remote))
 
-def nodePing6(node, remote):
+def nodePing6(node, remote, args='', source='', c=1, n=True):
+    if source:
+        args = args + ' -I %s' % source
+    if n:
+        args = args + ' -n'
+    if c:
+        args = args + ' -c %d' % c
     def _run(state):
-        rc, stdout, stderr = yield from _nodeExec(node, 'ping6 -c 1 %s' % remote)
+        rc, stdout, stderr = yield from _nodeExec(node, 'ping6 %s %s' % (args, remote))
         return rc == 0 and ' bytes from ' in stdout.decode()
     return cotest.Step(_run, name='@%s:ping6 %s' % (node, remote))
 
@@ -325,11 +331,21 @@ def updateNodeAddresses6(node, *, minimum=1, maximum=None, timeout=5, exclude=[]
                        name='@%s get IPv6 addresses' % node,
                        timeout=timeout)
 
-def nodePingFromAll6(node, remote):
+def nodePingFromAll6(node, remote, **kwargs):
     def _run(state):
         def _convert(a):
-            return nodePing6(node, '-I %s %s' % (a, remote))
+            return nodePing6(node, remote, source=a, **kwargs)
         l = map(_convert, state['nodes'][node]['addrs'])
+        s = cotest.AndStep(*l)
+        r = yield from s.run(state)
+        return r
+    return cotest.Step(_run, name='@%s:all-ping6 %s' % (node, remote))
+
+def nodePingToAll6(node, remote, **kwargs):
+    def _run(state):
+        def _convert(a):
+            return nodePing6(node, a, **kwargs)
+        l = map(_convert, state['nodes'][remote]['addrs'])
         s = cotest.AndStep(*l)
         r = yield from s.run(state)
         return r
@@ -418,6 +434,7 @@ base_4_remote_test = [
     ]
 
 base_4_local_test = [
+    # Service discovery
     cotest.RepeatStep(nodePing4('client', 'cpe.eth0.cpe.home'),
                       wait=1, timeout=TIMEOUT_INITIAL),
     # If it's not first-hop, availability of cpe doesn't imply bird3
@@ -428,7 +445,15 @@ base_4_local_test = [
 
 base_4_test = base_4_setup_test + base_4_remote_test + base_4_local_test
 
-base_6_local_test = [
+# Just ping
+base_6_local_ip_test = [
+    cotest.RepeatStep([updateNodeAddresses6('cpe', exclude=['fd']),
+                       nodePingToAll6('client', 'cpe')],
+                      wait=1, timeout=TIMEOUT),
+    ]
+
+# Service discovery
+base_6_local_sd_test = [
     cotest.RepeatStep(nodePing6('client', 'cpe.eth0.cpe.home'),
                       wait=1, timeout=TIMEOUT_INITIAL),
     # If it's not first-hop, availability of cpe doesn't imply bird3
@@ -450,6 +475,8 @@ base_6_remote_test = [
                       wait=1, timeout=TIMEOUT),
     #nodeTraceroute6Contains('client', 'h-server', b'cpe.')
     ]
+
+base_6_local_test = base_6_local_ip_test + base_6_local_sd_test
 
 base_6_test = base_6_remote_test + base_6_local_test
 
