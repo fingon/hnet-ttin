@@ -1,0 +1,3 @@
+# Debug so that hnetd is started after we update network config
+inherit=obird-debug
+
