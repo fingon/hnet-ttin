@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Wed Apr 16 16:33:54 2014 mstenber
-# Edit time:     130 min
+# Last modified: Thu Apr 17 08:31:03 2014 mstenber
+# Edit time:     137 min
 #
 """
 
@@ -34,13 +34,15 @@ class Basic(unittest.TestCase):
         assert cotest.run(tc)
     def test_ula(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp'),
-             waitRouterPrefix6('fd')] + base_6_local_test
+             waitRouterPrefix6('fd')] + base_6_local_sd_test
+        # local_ip isn't applicable as no GUA and it checks for non-fd::/8
         # + fw_test - not relevant - no outside!
         tc = TestCase(l)
         assert cotest.run(tc)
     def test_4only(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp4')]
         l = l + base_4_test + base_6_local_test + fw_test
+        l.remove(base_6_local_ip_step) # We won't have GUA
         tc = TestCase(l)
         assert cotest.run(tc)
     def test_6only(self):
@@ -201,7 +203,7 @@ class Guest(unittest.TestCase):
         # Make sure guest stuff works with remote
         l = [startTopology(self.topology, self.router)] + base_6_remote_test + base_4_setup_test + base_4_remote_test
         # Local stuff shouldn't; however, whether this test really is conclusive about it is another matter
-        l = l + [cotest.NotStep(base_6_local_ip_test, timeout=10)]
+        l = l + [cotest.NotStep(base_6_local_ip_step, timeout=10)]
         l = l + [cotest.NotStep(base_6_local_sd_test, timeout=10)]
         l = l + [cotest.NotStep(base_4_local_test, timeout=10)]
         # XXX - make sure no HNCP and TCP traffic in tcpdump

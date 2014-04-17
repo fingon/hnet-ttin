@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Wed Apr 16 16:30:43 2014 mstenber
-# Edit time:     391 min
+# Last modified: Thu Apr 17 08:27:33 2014 mstenber
+# Edit time:     394 min
 #
 """
 
@@ -446,11 +446,7 @@ base_4_local_test = [
 base_4_test = base_4_setup_test + base_4_remote_test + base_4_local_test
 
 # Just ping
-base_6_local_ip_test = [
-    cotest.RepeatStep([updateNodeAddresses6('cpe', exclude=['fd']),
-                       nodePingToAll6('client', 'cpe')],
-                      wait=1, timeout=TIMEOUT),
-    ]
+base_6_local_ip_step = cotest.RepeatStep([updateNodeAddresses6('cpe', exclude=['fd']), nodePingToAll6('client', 'cpe')], wait=1, timeout=TIMEOUT)
 
 # Service discovery
 base_6_local_sd_test = [
@@ -476,7 +472,7 @@ base_6_remote_test = [
     #nodeTraceroute6Contains('client', 'h-server', b'cpe.')
     ]
 
-base_6_local_test = base_6_local_ip_test + base_6_local_sd_test
+base_6_local_test = [base_6_local_ip_step] + base_6_local_sd_test
 
 base_6_test = base_6_remote_test + base_6_local_test
 
