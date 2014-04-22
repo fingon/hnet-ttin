@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Thu Apr 17 08:27:33 2014 mstenber
-# Edit time:     394 min
+# Last modified: Tue Apr 22 14:43:44 2014 mstenber
+# Edit time:     395 min
 #
 """
 
@@ -103,7 +103,7 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
         args = []
         if routerTemplate:
             args.append('--replace-template')
-            args.append('bird=%s' % routerTemplate)
+            args.append('router=%s' % routerTemplate)
         if ispTemplate:
             args.append('--replace-template')
             args.append('isp4-6=%s' % ispTemplate)
@@ -111,7 +111,10 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
         args = ' '.join(args)
         r = yield from _killTopology()
 
-        rc, *x = yield from cotest.async_system('rm -rf lab/%s' % topology)
+        #cmd = 'rm -rf lab/%s' % topology
+        cmd = 'rm -rf lab'
+
+        rc, *x = yield from cotest.async_system(cmd)
         if rc:
             _info('rm topology failed with exit code %d' % rc)
             return
@@ -437,8 +440,8 @@ base_4_local_test = [
     # Service discovery
     cotest.RepeatStep(nodePing4('client', 'cpe.eth0.cpe.home'),
                       wait=1, timeout=TIMEOUT_INITIAL),
-    # If it's not first-hop, availability of cpe doesn't imply bird3
-    cotest.RepeatStep(nodePing4('client', 'bird3.eth0.bird3.home'),
+    # If it's not first-hop, availability of cpe doesn't imply ir3
+    cotest.RepeatStep(nodePing4('client', 'ir3.eth0.ir3.home'),
                       wait=1, timeout=TIMEOUT),
 
     ]
@@ -452,8 +455,8 @@ base_6_local_ip_step = cotest.RepeatStep([updateNodeAddresses6('cpe', exclude=['
 base_6_local_sd_test = [
     cotest.RepeatStep(nodePing6('client', 'cpe.eth0.cpe.home'),
                       wait=1, timeout=TIMEOUT_INITIAL),
-    # If it's not first-hop, availability of cpe doesn't imply bird3
-    cotest.RepeatStep(nodePing6('client', 'bird3.eth0.bird3.home'),
+    # If it's not first-hop, availability of cpe doesn't imply ir3
+    cotest.RepeatStep(nodePing6('client', 'ir3.eth0.ir3.home'),
                       wait=1, timeout=TIMEOUT),
     ]
 
@@ -482,7 +485,7 @@ fw_test = [
     ]
 
 base_test = [
-    startTopology('bird7', 'obird'),
+    startTopology('home7', 'owrt-router'),
     ] + base_6_test + base_4_test + fw_test
 
 class TestCase(cotest.TestCase):

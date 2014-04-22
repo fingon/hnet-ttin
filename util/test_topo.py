@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Thu Apr 17 08:31:03 2014 mstenber
-# Edit time:     137 min
+# Last modified: Tue Apr 22 14:41:34 2014 mstenber
+# Edit time:     141 min
 #
 """
 
@@ -25,8 +25,8 @@ from cotest_ttin import *
 
 # XXX - validate address lifetimes at client
 class Basic(unittest.TestCase):
-    topology = 'bird7'
-    router = 'obird'
+    topology = 'router7'
+    router = 'owrt-router'
     def test(self):
         l = base_test[:]
         l[0] = startTopology(self.topology, self.router)
@@ -82,9 +82,9 @@ class Basic(unittest.TestCase):
         # getting same prefix (and routing works).
         l = [startTopology(self.topology, self.router, ispTemplate='isp6')]
         l = l + base_6_test + fw_test
-        l = l + [nodeRun('bird3', 'ifdown h1')]
+        l = l + [nodeRun('ir3', 'ifdown h1')]
         l = l + [sleep(5)]
-        l = l + [nodeRun('bird3', 'ifup h1')]
+        l = l + [nodeRun('ir3', 'ifup h1')]
 
         # This timeout is sadly long; 15 doesn't seem to be enough as
         # of 2014-04-17..
@@ -111,11 +111,11 @@ class Basic(unittest.TestCase):
         assert cotest.run(tc)
 
 class BasicFallback(Basic):
-    router = 'obird-debug'
+    router = 'owrt-router-debug'
 
 class MH(unittest.TestCase):
-    topology = 'mhbird10'
-    router = 'obird'
+    topology = 'home10-3isp'
+    router = 'owrt-router'
     def test(self):
         l = [startTopology(self.topology, self.router),
                cotest.RepeatStep(updateNodeAddresses6('client', minimum=3),
@@ -129,7 +129,7 @@ class MH(unittest.TestCase):
         assert cotest.run(tc)
 
 class MHFallback(MH):
-    router = 'obird-debug'
+    router = 'owrt-router-debug'
 
 class Lease(unittest.TestCase):
     def test(self):
@@ -143,11 +143,11 @@ class Lease(unittest.TestCase):
         assert cotest.run(tc)
 
 class LeaseFallback(Lease):
-    router = 'obird-debug'
+    router = 'owrt-router-debug'
 
 class Large(unittest.TestCase):
-    topology = 'bird14'
-    router = 'obird'
+    topology = 'home14'
+    router = 'owrt-router'
     def setUp(self):
         l = base_test[:]
         l[0] = startTopology(self.topology, self.router)
@@ -156,34 +156,34 @@ class Large(unittest.TestCase):
         tc = TestCase(self.l)
         assert cotest.run(tc)
     def test_mutation(self):
-        # Initial route should include bird9
+        # Initial route should include router9
         l = self.l
 
         # without traceroute6, this is somewhat ardurous to test..
-        #has_b9 = nodeTraceroute6Contains('client', 'h-server', b'bird9.')
+        #has_b9 = nodeTraceroute6Contains('client', 'h-server', b'router9.')
         #l = l + [has_b9]
 
-        # Then we kill bird9, and wait for things to work again
+        # Then we kill router9, and wait for things to work again
         # (HNCP has built-in 4 minute delay currently it seems)
-        l = l + [nodeStop('bird9')] + [sleep(180)]
+        l = l + [nodeStop('router9')] + [sleep(180)]
         l = l + base_6_test + base_4_remote_test
 
-        # Resume bird9, kill two other routes, and should go up
+        # Resume router9, kill two other routes, and should go up
         # 'faster' because routes are better (no waiting 180 seconds)
-        l = l + [nodeGo('bird9'), nodeStop('bird4'), nodeStop('bird6')]
+        l = l + [nodeGo('router9'), nodeStop('router4'), nodeStop('router6')]
         l = l + base_6_test + base_4_remote_test
         tc = TestCase(l)
         assert cotest.run(tc)
 
 
 class LargeFallback(Large):
-    router = 'obird-debug'
+    router = 'owrt-router-debug'
 
 # Specific ~test cases with unique topology
 
 class DownPD(unittest.TestCase):
-    topology = 'bird8'
-    router = 'obird-debug'
+    topology = 'home8'
+    router = 'owrt-router-debug'
     def test(self):
         # Make sure downstream PD works - client should work even with
         # openwrt node in the middle.
@@ -197,8 +197,8 @@ class DownPD(unittest.TestCase):
         assert cotest.run(tc)
 
 class Guest(unittest.TestCase):
-    topology = 'obird7-guest'
-    router = 'obird-debug'
+    topology = 'home7-owrt-guest'
+    router = 'owrt-router-debug'
     def test(self):
         # Make sure guest stuff works with remote
         l = [startTopology(self.topology, self.router)] + base_6_remote_test + base_4_setup_test + base_4_remote_test

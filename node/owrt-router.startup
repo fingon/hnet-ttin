@@ -1,8 +1,3 @@
-# ~adapted from bird.startup
-
-# (the big difference is that oabird uses the built-in bird6 binary in
-# OpenWRT image)
-
 # Make sure shell scripts are executable (sigh)
 chmod a+x /usr/share/hnet/*.sh
 

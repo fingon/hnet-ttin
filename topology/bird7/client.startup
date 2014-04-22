@@ -1,2 +1,0 @@
-# Make sure eth0 is up - after that, we should get radvd at some point!
-ifconfig eth0 up

@@ -1,4 +1,4 @@
-inherit=obird
+inherit=owrt-router
 mem=256
 # two valgrinds = lots of RAM?
 
