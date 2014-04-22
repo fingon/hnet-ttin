@@ -7,8 +7,8 @@
 # Author: Markus Stenberg <fingon@iki.fi>
 #
 # Created:       Wed Jul  4 11:28:46 2012 mstenber
-# Last modified: Tue Mar 25 16:25:53 2014 mstenber
-# Edit time:     493 min
+# Last modified: Tue Apr 22 15:03:06 2014 mstenber
+# Edit time:     500 min
 #
 """
 
@@ -390,6 +390,10 @@ class Configuration(ReCollectionProcessor, HKVStore):
         self.path = os.path.abspath(path)
         HKVStore.__init__(self)
         ReCollectionProcessor.__init__(self)
+    def _addHKV(self, h, k, v):
+        if k == KEY_TEMPLATE:
+            v = self.cdb.replace_template.get(v, v)
+        HKVStore._addHKV(self, h, k, v)
     def __repr__(self):
         return '<Configuration "%s">' % (self.name)
     def getParent(self):
@@ -546,7 +550,7 @@ class Configuration(ReCollectionProcessor, HKVStore):
                 continue
             t = d.get(KEY_TEMPLATE, None)
             if t:
-                pp('# %s[%s] = %s' % (k,KEY_TEMPLATE, self.cdb.replace_template.get(t, t)))
+                pp('# %s[%s] = %s' % (k,KEY_TEMPLATE, t))
 
         addresses = self.toPP(pp)
 
@@ -961,7 +965,9 @@ class ConfigurationDatabase:
     def getCase(self, name):
         return self.c[name]
     def getTemplate(self, name):
-        name = self.replace_template.get(name, name)
+        # This is not good idea, may lead to inheritance loops
+        # if replacing with child template
+        #name = self.replace_template.get(name, name)
         return self.t[name]
 
 if __name__ == '__main__':
