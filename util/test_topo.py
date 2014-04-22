@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Tue Apr 22 14:41:34 2014 mstenber
-# Edit time:     141 min
+# Last modified: Tue Apr 22 17:13:12 2014 mstenber
+# Edit time:     148 min
 #
 """
 
@@ -209,6 +209,21 @@ class Guest(unittest.TestCase):
         # XXX - make sure no HNCP and TCP traffic in tcpdump
         tc = TestCase(l)
         assert cotest.run(tc)
+
+class Home4(unittest.TestCase):
+    topology = 'ow4'
+    router = 'owrt-router-debug'
+    def test(self):
+        l = [startTopology(self.topology, self.router, originalRouterTemplate='openwrt')]
+        l = l + base_6_remote_test
+        l = l + [nodeRun('client', 'dhclient eth0')] + base_4_remote_test
+        l = l + [cotest.RepeatStep(nodePing6('client', 'openwrt.eth0.openwrt.home'), wait=1, timeout=10),
+                 cotest.RepeatStep(nodePing4('client', 'openwrt.eth0.openwrt.home'), wait=1, timeout=10),
+                 ]
+
+        tc = TestCase(l)
+        assert cotest.run(tc)
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,

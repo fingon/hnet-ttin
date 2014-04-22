@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Apr 22 14:43:44 2014 mstenber
-# Edit time:     395 min
+# Last modified: Tue Apr 22 14:53:19 2014 mstenber
+# Edit time:     398 min
 #
 """
 
@@ -94,7 +94,7 @@ def nodeGo(node):
     return cotest.Step(_run, name='go %s' % node)
 
 # Allow for fail or two
-def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
+def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300, originalRouterTemplate="router"):
     @asyncio.coroutine
     def _run(state):
         # Check we're inside ttin main directory
@@ -103,7 +103,7 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300):
         args = []
         if routerTemplate:
             args.append('--replace-template')
-            args.append('router=%s' % routerTemplate)
+            args.append('%s=%s' % (originalRouterTemplate, routerTemplate))
         if ispTemplate:
             args.append('--replace-template')
             args.append('isp4-6=%s' % ispTemplate)
