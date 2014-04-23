@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Tue Apr 22 17:13:12 2014 mstenber
-# Edit time:     148 min
+# Last modified: Wed Apr 23 11:23:03 2014 mstenber
+# Edit time:     156 min
 #
 """
 
@@ -25,7 +25,7 @@ from cotest_ttin import *
 
 # XXX - validate address lifetimes at client
 class Basic(unittest.TestCase):
-    topology = 'router7'
+    topology = 'home7'
     router = 'owrt-router'
     def test(self):
         l = base_test[:]
@@ -156,21 +156,21 @@ class Large(unittest.TestCase):
         tc = TestCase(self.l)
         assert cotest.run(tc)
     def test_mutation(self):
-        # Initial route should include router9
+        # Initial route should include ir9
         l = self.l
 
         # without traceroute6, this is somewhat ardurous to test..
-        #has_b9 = nodeTraceroute6Contains('client', 'h-server', b'router9.')
+        #has_b9 = nodeTraceroute6Contains('client', 'h-server', b'ir9.')
         #l = l + [has_b9]
 
-        # Then we kill router9, and wait for things to work again
+        # Then we kill ir9, and wait for things to work again
         # (HNCP has built-in 4 minute delay currently it seems)
-        l = l + [nodeStop('router9')] + [sleep(180)]
+        l = l + [nodeStop('ir9')] + [sleep(180)]
         l = l + base_6_test + base_4_remote_test
 
-        # Resume router9, kill two other routes, and should go up
+        # Resume ir9, kill two other routes, and should go up
         # 'faster' because routes are better (no waiting 180 seconds)
-        l = l + [nodeGo('router9'), nodeStop('router4'), nodeStop('router6')]
+        l = l + [nodeGo('ir9'), nodeStop('ir4'), nodeStop('ir6')]
         l = l + base_6_test + base_4_remote_test
         tc = TestCase(l)
         assert cotest.run(tc)
@@ -215,6 +215,13 @@ class Home4(unittest.TestCase):
     router = 'owrt-router-debug'
     def test(self):
         l = [startTopology(self.topology, self.router, originalRouterTemplate='openwrt')]
+
+        # Due to prefix assignment delay, on first-hop router we
+        # actually get 200* much before we do here. So add extra wait
+        # here. Prefix assignment delay is ~10s-ish
+        l = l + [cotest.RepeatStep(nodeHasPrefix6('client', '200'),
+                                   wait=1, timeout=25)]
+
         l = l + base_6_remote_test
         l = l + [nodeRun('client', 'dhclient eth0')] + base_4_remote_test
         l = l + [cotest.RepeatStep(nodePing6('client', 'openwrt.eth0.openwrt.home'), wait=1, timeout=10),
