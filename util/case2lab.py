@@ -7,8 +7,8 @@
 # Author: Markus Stenberg <fingon@iki.fi>
 #
 # Created:       Wed Jul  4 11:28:46 2012 mstenber
-# Last modified: Tue Apr 22 15:03:06 2014 mstenber
-# Edit time:     500 min
+# Last modified: Wed Apr 23 11:17:27 2014 mstenber
+# Edit time:     514 min
 #
 """
 
@@ -604,21 +604,19 @@ class Configuration(ReCollectionProcessor, HKVStore):
         # Start with interface configuration stuff (so .startup's can
         # override it)
         for h in nodes:
+            pp = startups.getPP(h)
             d = ihkv[h]
             for k, v in d.items():
                 if len(k) == 1 and k.isdigit():
                     l = v.split(',')
                     if len(l) > 1 and l[0] != 'tap':
                         # interface specification
-                        pp = startups.getPP(h)
                         iface = 'eth%s' % k
                         pp('# autoconfigure %s' % iface)
                         pp('ifconfig %s up' % iface)
                         dhcp = False
                         for e in l[1:]:
                             if e == KEY_DHCP:
-                                pp('# remove default gw to admin host by default (if netkit somehow makes it) - it may hinder dhclient')
-                                pp('route delete default gw 192.168.7.1 2>/dev/null')
 
                                 pp('# fire up dhclient to configure interface')
                                 pp('dhclient %s' % iface)
@@ -660,8 +658,9 @@ class Configuration(ReCollectionProcessor, HKVStore):
                     elif l[0] == 'tap':
                         assert len(l) == 3
                         addresses[h, k, KEY_IPV4] = [l[2]]
+                        pp('# remove default gw to admin host by default (if netkit somehow makes it) - it may hinder dhclient')
+                        pp('route delete default gw 192.168.7.1 2>/dev/null')
                 elif k == KEY_IPV6ROUTE:
-                    pp = startups.getPP(h)
                     for s in v.split(','):
                         if s:
                             l = s.split(' ')
