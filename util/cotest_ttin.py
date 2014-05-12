@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Apr 22 14:53:19 2014 mstenber
-# Edit time:     398 min
+# Last modified: Tue Apr 29 11:13:47 2014 mstenber
+# Edit time:     400 min
 #
 """
 
@@ -364,14 +364,14 @@ def nodeInterfaceFirewallZoneIs(node, interface, zone):
         return r == '"%s"' % zone
     return cotest.Step(_run, name='@%s:fwzone %s=%s' % (node, interface, zone))
 
-def _waitRouterPrefix(cmd, prefix, *, timeout=60):
+def _waitRouterPrefix(cmd, prefix, *, wait=1, timeout=60):
     n = 'wait prefix %s' % prefix
     def _run(state):
         # For every router in the configuration, make sure the prefix is visible
 
         def _convert(node):
             return cotest.RepeatStep(_nodeHasPrefix(node, cmd, prefix),
-                                     wait=1, timeout=timeout)
+                                     wait=wait, timeout=timeout)
         l = map(_convert, _runningRouterNames(state))
         s = cotest.AndStep(*l, name=n)
         r = yield from s.run(state)
@@ -409,11 +409,7 @@ def sleep(timeout):
 # How long can it take for routing to settle? Given how slowly UML
 # works, 60 seconds might be pushing it in the bigger topology.. :p
 #
-# ~15 seconds for hnetd to commit + it seems it can take minute-ish
-# for prefixes to propagate in the Large topology. using 120 for
-# now. (This represents highest upper bound for test case, we can look
-# at test logs by hand to detect anomalies.)
-TIMEOUT_INITIAL=120
+TIMEOUT_INITIAL=60
 
 # This is acceptable timeout after the 'initial' case, when we already
 # assume we have e.g. all prefixes visible on the network

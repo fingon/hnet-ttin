@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Wed Apr 23 11:23:03 2014 mstenber
-# Edit time:     156 min
+# Last modified: Tue Apr 29 11:13:01 2014 mstenber
+# Edit time:     159 min
 #
 """
 
@@ -150,7 +150,10 @@ class Large(unittest.TestCase):
     router = 'owrt-router'
     def setUp(self):
         l = base_test[:]
-        l[0] = startTopology(self.topology, self.router)
+        del l[0]
+        # Large topology seems to take long time to start, sometimes
+        l[0:0] = [startTopology(self.topology, self.router),
+                  waitRouterPrefix6('200', wait=5, timeout=300)]
         self.l = l
     def test(self):
         tc = TestCase(self.l)
