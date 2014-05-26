@@ -17,3 +17,5 @@ uci commit dhcp
 uci set system.@system[0].log_size=10000
 uci commit system
 
+# If dynamic debug is enabled we can do something like this:
+#echo 'format kobject: +p' > /sys/kernel/debug/dynamic_debug/control
