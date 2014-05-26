@@ -9,7 +9,7 @@ model-fs=../../openwrt-uml-bin/openwrt-uml-ext4.img
 #append_con3=con0=null,fd:2
 #append_con4=console=tty1
 
-# .. doesn't seem to work ..
+# works given patches
 #append_procd_debug=init_debug=9
 
 # override preinit
