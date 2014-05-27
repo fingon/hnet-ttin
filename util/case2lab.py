@@ -7,7 +7,7 @@
 # Author: Markus Stenberg <fingon@iki.fi>
 #
 # Created:       Wed Jul  4 11:28:46 2012 mstenber
-# Last modified: Wed Apr 23 11:17:27 2014 mstenber
+# Last modified: Tue May 27 11:42:57 2014 mstenber
 # Edit time:     514 min
 #
 """
@@ -659,7 +659,7 @@ class Configuration(ReCollectionProcessor, HKVStore):
                         assert len(l) == 3
                         addresses[h, k, KEY_IPV4] = [l[2]]
                         pp('# remove default gw to admin host by default (if netkit somehow makes it) - it may hinder dhclient')
-                        pp('route delete default gw 192.168.7.1 2>/dev/null')
+                        pp('route delete default gw %s 2>/dev/null' % l[1])
                 elif k == KEY_IPV6ROUTE:
                     for s in v.split(','):
                         if s:
