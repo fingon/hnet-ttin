@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Tue Apr 29 11:13:01 2014 mstenber
-# Edit time:     159 min
+# Last modified: Mon May 26 17:35:49 2014 mstenber
+# Edit time:     162 min
 #
 """
 
@@ -71,7 +71,7 @@ class Basic(unittest.TestCase):
         #l = l + [nodeRun('cpe', 'ifdown h1_6')]
         l = l + [nodeRun('cpe', 'ifconfig eth1 down')]
         l = l + [cotest.RepeatStep(cotest.NotStep(nodeHasPrefix6('client', '2000:')),
-                                   timeout=60, wait=1)]
+                                   timeout=TIMEOUT, wait=1)]
 
         tc = TestCase(l)
         assert cotest.run(tc)
@@ -89,7 +89,7 @@ class Basic(unittest.TestCase):
         # This timeout is sadly long; 15 doesn't seem to be enough as
         # of 2014-04-17..
         l = l + [cotest.RepeatStep(nodePingFromAll6('client', 'h-server'),
-                                   wait=1, timeout=30)]
+                                   wait=1, timeout=TIMEOUT)]
         tc = TestCase(l)
         assert cotest.run(tc)
     def test_6rd(self):
@@ -102,7 +102,7 @@ class Basic(unittest.TestCase):
         l = [startTopology(self.topology, self.router,
                            ispTemplate='isp4-6rd-6'),
              cotest.RepeatStep(updateNodeAddresses6('client', minimum=2),
-                               wait=5, timeout=60),
+                               wait=5, timeout=TIMEOUT),
              ]
         l = l + base_6_test + base_4_test + fw_test
         l = l + [nodeHasPrefix6('client', '2000:'),
@@ -119,7 +119,7 @@ class MH(unittest.TestCase):
     def test(self):
         l = [startTopology(self.topology, self.router),
                cotest.RepeatStep(updateNodeAddresses6('client', minimum=3),
-                                 wait=5, timeout=60)]
+                                 wait=5, timeout=TIMEOUT)]
         l = l + base_6_test
         l = l + [nodeHasPrefix6('client', '2000:dead:'),
                  nodeHasPrefix6('client', '2000:cafe:'),
@@ -206,9 +206,9 @@ class Guest(unittest.TestCase):
         # Make sure guest stuff works with remote
         l = [startTopology(self.topology, self.router)] + base_6_remote_test + base_4_setup_test + base_4_remote_test
         # Local stuff shouldn't; however, whether this test really is conclusive about it is another matter
-        l = l + [cotest.NotStep(base_6_local_ip_step, timeout=10)]
-        l = l + [cotest.NotStep(base_6_local_sd_test, timeout=10)]
-        l = l + [cotest.NotStep(base_4_local_test, timeout=10)]
+        l = l + [cotest.NotStep(base_6_local_ip_step, timeout=TIMEOUT_SHORT)]
+        l = l + [cotest.NotStep(base_6_local_sd_test, timeout=TIMEOUT_SHORT)]
+        l = l + [cotest.NotStep(base_4_local_test, timeout=TIMEOUT_SHORT)]
         # XXX - make sure no HNCP and TCP traffic in tcpdump
         tc = TestCase(l)
         assert cotest.run(tc)
@@ -223,12 +223,12 @@ class Home4(unittest.TestCase):
         # actually get 200* much before we do here. So add extra wait
         # here. Prefix assignment delay is ~10s-ish
         l = l + [cotest.RepeatStep(nodeHasPrefix6('client', '200'),
-                                   wait=1, timeout=25)]
+                                   wait=1, timeout=TIMEOUT)]
 
         l = l + base_6_remote_test
         l = l + [nodeRun('client', 'dhclient eth0')] + base_4_remote_test
-        l = l + [cotest.RepeatStep(nodePing6('client', 'openwrt.eth0.openwrt.home'), wait=1, timeout=10),
-                 cotest.RepeatStep(nodePing4('client', 'openwrt.eth0.openwrt.home'), wait=1, timeout=10),
+        l = l + [cotest.RepeatStep(nodePing6('client', 'openwrt.eth0.openwrt.home'), wait=1, timeout=TIMEOUT_SHORT),
+                 cotest.RepeatStep(nodePing4('client', 'openwrt.eth0.openwrt.home'), wait=1, timeout=TIMEOUT_SHORT),
                  ]
 
         tc = TestCase(l)

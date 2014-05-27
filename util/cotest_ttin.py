@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Apr 29 11:13:47 2014 mstenber
-# Edit time:     400 min
+# Last modified: Mon May 26 17:35:21 2014 mstenber
+# Edit time:     402 min
 #
 """
 
@@ -408,12 +408,15 @@ def sleep(timeout):
 
 # How long can it take for routing to settle? Given how slowly UML
 # works, 60 seconds might be pushing it in the bigger topology.. :p
-#
-TIMEOUT_INITIAL=60
+# Using thrice that, because _typically_ this stuff should not fail as such.
+TIMEOUT_INITIAL=180
 
 # This is acceptable timeout after the 'initial' case, when we already
 # assume we have e.g. all prefixes visible on the network
 TIMEOUT=60
+
+# This is acceptable delay for something that should be ~instant-ish
+TIMEOUT_SHORT=10
 
 # Built-in unit tests that just run through the templates once
 
