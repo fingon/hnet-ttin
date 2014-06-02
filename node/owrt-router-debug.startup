@@ -18,11 +18,19 @@ ip monitor >& $LOGDIR/ip_monitor.txt &
 
 mkdir -p /tmp/dnsmasq.d
 VALGRIND=
+
+# Default valgrind mode
+#VALGRIND="valgrind --suppressions=/valgrind-suppressions.txt"
+
+# If lacking faith in the current suppression list
 #VALGRIND=valgrind
 
-$VALGRIND /usr/sbin/hnetd `echo $HNETD_ARGS` >& $LOGDIR/hnetd.log &
+# If adding new suppression targets..
+#VALGRIND="valgrind --suppressions=/valgrind-suppressions.txt --gen-suppressions=all"
 
-$VALGRIND /usr/sbin/odhcpd >& $LOGDIR/odhcpd.log &
+`echo $VALGRIND` /usr/sbin/hnetd `echo $HNETD_ARGS` >& $LOGDIR/hnetd.log &
+
+`echo $VALGRIND` /usr/sbin/odhcpd >& $LOGDIR/odhcpd.log &
 
 mdnsd -debug >& $LOGDIR/mdnsd.log &
 

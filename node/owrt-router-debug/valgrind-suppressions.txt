@@ -1,0 +1,28 @@
+{
+   start
+   Memcheck:Cond
+   obj:/lib/ld64-uClibc-0.9.33.2.so
+   fun:_start
+}
+{
+   getifaddrs-broken-sendto
+   Memcheck:Param
+   socketcall.sendto(msg)
+   fun:sendto
+   obj:/lib/libuClibc-0.9.33.2.so
+   obj:/lib/libuClibc-0.9.33.2.so
+   fun:getifaddrs
+}
+{
+   ntop-broken-strcpy
+   Memcheck:Cond
+   fun:strcpy
+   fun:inet_ntop
+}
+{
+   ntop-broken-strcpy2
+   Memcheck:Cond
+   fun:strcpy
+   obj:/lib/libuClibc-0.9.33.2.so
+   fun:inet_ntop
+}
