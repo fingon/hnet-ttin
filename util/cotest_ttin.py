@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Mon May 26 17:35:21 2014 mstenber
-# Edit time:     402 min
+# Last modified: Tue Jun  3 10:22:58 2014 mstenber
+# Edit time:     464 min
 #
 """
 
@@ -251,6 +251,18 @@ def nodeRun(node, cmd):
         return rc == 0
     return cotest.Step(_run, name='@%s:%s' % (node, cmd))
 
+def nodeStart(node, cmd):
+    def _run(state):
+        rc, *x = yield from _nodeExec(node, "start-stop-daemon -S -b -x %s" % cmd)
+        return rc == 0
+    return cotest.Step(_run, name='start @%s:%s' % (node, cmd))
+
+def nodeKill(node, cmd):
+    def _run(state):
+        rc, *x = yield from _nodeExec(node, "start-stop-daemon -K -x %s" % cmd)
+        return rc == 0
+    return cotest.Step(_run, name='kill @%s:%s' % (node, cmd))
+
 def nodePing4(node, remote):
     def _run(state):
         rc, stdout, stderr = yield from _nodeExec(node, 'ping -c 1 %s' % remote)
@@ -406,6 +418,41 @@ def sleep(timeout):
         return True
     return cotest.Step(_run, name='sleep %d' % timeout)
 
+_got_pcp = re.compile('^got (\S+) (\d+)$').match
+
+def nodePCPMap(node, args, timeout=5):
+    @asyncio.coroutine
+    def _run(state):
+        rc, stdout, stderr = yield from _nodeExec(node, 'pcp_map.py %s | egrep ^got' % args)
+        found = []
+        for line in stdout.decode().split('\n'):
+            m = _got_pcp(line)
+            if m is not None:
+                found.append(m.groups())
+        state['nodes'][node]['pcp'] = found
+        return rc == 0 and len(found)>0
+    return cotest.Step(_run, name='PCPMap @%s %s' % (node, args),
+                       timeout=timeout)
+
+def nodePCPPing(src, dst, af, timeout=10):
+    @asyncio.coroutine
+    def _run(state):
+        rv = False
+        for host, port in state['nodes'][dst].get('pcp', []):
+            if af[-1] == '6':
+                host = '[%s]' % host
+            else:
+                # get rid of the IPv4-mapped address
+                host = host.replace('::ffff:', '')
+            port = int(port) # sanity check
+            rc, stdout, stderr = yield from _nodeExec(src, 'echo foo | socat - "%s:%s:%d"' % (af, host, port))
+            if not (rc == 0 and b'foo' in stdout):
+                return False
+            rv = True
+        return rv
+    return cotest.Step(_run, name='PCPPing @%s->%s %s' % (src, dst, af),
+                       timeout=timeout)
+
 # How long can it take for routing to settle? Given how slowly UML
 # works, 60 seconds might be pushing it in the bigger topology.. :p
 # Using thrice that, because _typically_ this stuff should not fail as such.
@@ -433,6 +480,17 @@ base_4_remote_test = [
     # 30 seconds =~ time for routing to settle
     cotest.RepeatStep(nodePing4('client', 'h-server'), wait=1, timeout=TIMEOUT),
     cotest.RepeatStep(nodePing4('client', 'server.v4.lab.example.com'), wait=1, timeout=TIMEOUT),
+
+    nodeStart('client', '/usr/bin/socat -v tcp4-l:10000,fork exec:"/bin/cat"'),
+    nodePCPMap('client', '-4 -p 10000 -T'),
+    nodePCPPing('server', 'client', 'tcp4'),
+    nodeKill('client', '/usr/bin/socat'),
+
+    nodeStart('client', '/usr/bin/socat -v udp4-l:10001,fork exec:"/bin/cat"'),
+    nodePCPMap('client', '-4 -p 10001 -U'),
+    nodePCPPing('server', 'client', 'udp4'),
+    nodeKill('client', '/usr/bin/socat'),
+
     ]
 
 base_4_local_test = [
@@ -448,7 +506,7 @@ base_4_local_test = [
 base_4_test = base_4_setup_test + base_4_remote_test + base_4_local_test
 
 # Just ping
-base_6_local_ip_step = cotest.RepeatStep([updateNodeAddresses6('cpe', exclude=['fd']), nodePingToAll6('client', 'cpe')], wait=1, timeout=TIMEOUT)
+base_6_local_ip_step = cotest.RepeatStep([updateNodeAddresses6('cpe', exclude=['fd', '::192.168', ]), nodePingToAll6('client', 'cpe')], wait=1, timeout=TIMEOUT)
 
 # Service discovery
 base_6_local_sd_test = [
@@ -472,6 +530,20 @@ base_6_remote_test = [
                        nodePingFromAll6('client', 'h-server')],
                       wait=1, timeout=TIMEOUT),
     #nodeTraceroute6Contains('client', 'h-server', b'cpe.')
+
+
+    nodeStart('client', '/usr/bin/socat -v tcp6-l:10002,fork exec:"/bin/cat"'),
+    nodePCPMap('client', '-6 -p 10002 -T'),
+    nodePCPPing('server', 'client', 'tcp6'),
+    nodeKill('client', '/usr/bin/socat'),
+
+    # N/A due to breakage with multiple ISPs; oh well
+    # (it doesn't enforce SA == previous packet's dst so would have to start one per IP. blah.)
+    #nodeStart('client', '/usr/bin/socat -v udp6-recvfrom:10003,fork exec:"/bin/cat"'),
+    #nodePCPMap('client', '-6 -p 10003 -U'),
+    #nodePCPPing('server', 'client', 'udp6'),
+    #nodeKill('client', '/usr/bin/socat'),
+
     ]
 
 base_6_local_test = [base_6_local_ip_step] + base_6_local_sd_test
