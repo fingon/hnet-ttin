@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Jun  3 13:20:50 2014 mstenber
-# Edit time:     470 min
+# Last modified: Tue Jun  3 13:39:12 2014 mstenber
+# Edit time:     472 min
 #
 """
 
@@ -507,7 +507,12 @@ base_4_local_test = [
 base_4_test = base_4_setup_test + base_4_remote_test + base_4_local_test
 
 # Just ping
-base_6_local_ip_step = cotest.RepeatStep([updateNodeAddresses6('cpe', exclude=['fd', '::192.168', ]), nodePingToAll6('client', 'cpe')], wait=1, timeout=TIMEOUT)
+ignored_address_prefixes = [
+    'fd', # ULA
+    '::192.168', # IPv6/6rd
+    '2001:6400:', # IPv6/6rd
+    ]
+base_6_local_ip_step = cotest.RepeatStep([updateNodeAddresses6('cpe', exclude=ignored_address_prefixes), nodePingToAll6('client', 'cpe')], wait=1, timeout=TIMEOUT)
 
 # Service discovery
 base_6_local_sd_test = [
