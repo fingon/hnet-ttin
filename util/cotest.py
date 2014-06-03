@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 24 13:44:24 2014 mstenber
-# Last modified: Tue Apr  8 17:48:15 2014 mstenber
-# Edit time:     352 min
+# Last modified: Tue Jun  3 13:14:11 2014 mstenber
+# Edit time:     353 min
 #
 """
 
@@ -76,7 +76,7 @@ def async_system(cmd):
 def sync_system(cmd, timeout):
     assert timeout
     _debug('!!! sync_system %s' % cmd)
-    cmd = cmd + '2>/dev/null >/dev/null'
+    cmd = cmd + ' 2>/dev/null >/dev/null'
     try:
         return subprocess.call(cmd, shell=True, timeout=timeout), b'', b''
     except subprocess.TimeoutExpired:
