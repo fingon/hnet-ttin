@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Jun  3 10:22:58 2014 mstenber
-# Edit time:     464 min
+# Last modified: Tue Jun  3 13:20:50 2014 mstenber
+# Edit time:     470 min
 #
 """
 
@@ -44,6 +44,7 @@ KEY_TOPOLOGY='topology'
 
 @asyncio.coroutine
 def _killTopology():
+    cotest.sync_system('killall -9q uml_mconsole', 10) # ignore return value
     cmd = 'vclean --clean-all'
     rc, *x = yield from cotest.async_system(cmd)
     return rc == 0
@@ -482,7 +483,7 @@ base_4_remote_test = [
     cotest.RepeatStep(nodePing4('client', 'server.v4.lab.example.com'), wait=1, timeout=TIMEOUT),
 
     nodeStart('client', '/usr/bin/socat -v tcp4-l:10000,fork exec:"/bin/cat"'),
-    nodePCPMap('client', '-4 -p 10000 -T'),
+    cotest.RepeatStep(nodePCPMap('client', '-4 -p 10000 -T'), wait=1, times=3),
     nodePCPPing('server', 'client', 'tcp4'),
     nodeKill('client', '/usr/bin/socat'),
 
@@ -533,7 +534,7 @@ base_6_remote_test = [
 
 
     nodeStart('client', '/usr/bin/socat -v tcp6-l:10002,fork exec:"/bin/cat"'),
-    nodePCPMap('client', '-6 -p 10002 -T'),
+    cotest.RepeatStep(nodePCPMap('client', '-6 -p 10002 -T'), wait=1, times=3),
     nodePCPPing('server', 'client', 'tcp6'),
     nodeKill('client', '/usr/bin/socat'),
 
