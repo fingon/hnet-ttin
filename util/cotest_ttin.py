@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Wed Jun  4 11:43:17 2014 mstenber
-# Edit time:     481 min
+# Last modified: Wed Jun  4 13:01:29 2014 mstenber
+# Edit time:     485 min
 #
 """
 
@@ -484,13 +484,15 @@ base_4_remote_ping_test = [
 
     ]
 
+SOCAT_LISTEN_FORMAT='/usr/bin/socat -v %s,reuseaddr,fork exec:"/bin/cat"'
+
 base_4_remote_pcp_test = [
-    nodeStart('client', '/usr/bin/socat -v tcp4-l:10000,fork exec:"/bin/cat"'),
+    nodeStart('client', SOCAT_LISTEN_FORMAT % 'tcp4-l:10000'),
     cotest.RepeatStep(nodePCPMap('client', '-4 -p 10000 -T'), wait=1, times=3),
     nodePCPPing('server', 'client', 'tcp4'),
     nodeKill('client', '/usr/bin/socat'),
 
-    nodeStart('client', '/usr/bin/socat -v udp4-l:10001,fork exec:"/bin/cat"'),
+    nodeStart('client', SOCAT_LISTEN_FORMAT % 'udp4-l:10001'),
     nodePCPMap('client', '-4 -p 10001 -U'),
     nodePCPPing('server', 'client', 'udp4'),
     nodeKill('client', '/usr/bin/socat'),
@@ -543,14 +545,14 @@ base_6_remote_ping_test = [
     ]
 
 base_6_remote_pcp_test = [
-    nodeStart('client', '/usr/bin/socat -v tcp6-l:10002,fork exec:"/bin/cat"'),
+    nodeStart('client', SOCAT_LISTEN_FORMAT % 'tcp6-l:10002'),
     cotest.RepeatStep(nodePCPMap('client', '-6 -p 10002 -T'), wait=1, times=3),
     nodePCPPing('server', 'client', 'tcp6'),
     nodeKill('client', '/usr/bin/socat'),
 
     # N/A due to breakage with multiple ISPs; oh well
     # (it doesn't enforce SA == previous packet's dst so would have to start one per IP. blah.)
-    #nodeStart('client', '/usr/bin/socat -v udp6-recvfrom:10003,fork exec:"/bin/cat"'),
+    #nodeStart('client', '/usr/bin/socat -v udp6-recvfrom:10003,reuseaddr,fork exec:"/bin/cat"'),
     #nodePCPMap('client', '-6 -p 10003 -U'),
     #nodePCPPing('server', 'client', 'udp6'),
     #nodeKill('client', '/usr/bin/socat'),
