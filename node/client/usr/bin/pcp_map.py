@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Jun  2 17:05:05 2014 mstenber
-# Last modified: Tue Jun  3 07:06:33 2014 mstenber
-# Edit time:     62 min
+# Last modified: Wed Jun  4 12:46:18 2014 mstenber
+# Edit time:     63 min
 #
 """
 
@@ -99,6 +99,9 @@ if __name__ == '__main__':
                 l = r[-1]
             for h in l:
                 h = str(h)
+                # Ignore ULA
+                if h.startswith('fd'):
+                    continue
                 #dst = r[2] + ' %' + r[3]
                 dst = r[2]
                 iface = r[3]
