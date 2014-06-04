@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Jun  3 13:39:12 2014 mstenber
-# Edit time:     472 min
+# Last modified: Wed Jun  4 11:43:17 2014 mstenber
+# Edit time:     481 min
 #
 """
 
@@ -475,13 +475,16 @@ base_4_setup_test = [
     nodeRun('client', 'dhclient eth0'),
     ]
 
-base_4_remote_test = [
+base_4_remote_ping_test = [
     # this is never first -> no need for TIMEOUT_INITIALs
     #nodeHasPrefix4('client', '10.'), # in nested pd, we do 192.*
     # 30 seconds =~ time for routing to settle
     cotest.RepeatStep(nodePing4('client', 'h-server'), wait=1, timeout=TIMEOUT),
     cotest.RepeatStep(nodePing4('client', 'server.v4.lab.example.com'), wait=1, timeout=TIMEOUT),
 
+    ]
+
+base_4_remote_pcp_test = [
     nodeStart('client', '/usr/bin/socat -v tcp4-l:10000,fork exec:"/bin/cat"'),
     cotest.RepeatStep(nodePCPMap('client', '-4 -p 10000 -T'), wait=1, times=3),
     nodePCPPing('server', 'client', 'tcp4'),
@@ -491,8 +494,9 @@ base_4_remote_test = [
     nodePCPMap('client', '-4 -p 10001 -U'),
     nodePCPPing('server', 'client', 'udp4'),
     nodeKill('client', '/usr/bin/socat'),
-
     ]
+
+base_4_remote_tests = [base_4_remote_ping_test] + [base_4_remote_pcp_test]
 
 base_4_local_test = [
     # Service discovery
@@ -504,7 +508,7 @@ base_4_local_test = [
 
     ]
 
-base_4_test = base_4_setup_test + base_4_remote_test + base_4_local_test
+base_4_tests = [base_4_setup_test] + base_4_remote_tests + [base_4_local_test]
 
 # Just ping
 ignored_address_prefixes = [
@@ -523,7 +527,7 @@ base_6_local_sd_test = [
                       wait=1, timeout=TIMEOUT),
     ]
 
-base_6_remote_test = [
+base_6_remote_ping_test = [
     waitRouterPrefix6('200', timeout=TIMEOUT_INITIAL),
     # slight delay acceptable after first-hop router gets address
     cotest.RepeatStep(nodeHasPrefix6('client', '200'),
@@ -536,8 +540,9 @@ base_6_remote_test = [
                        nodePingFromAll6('client', 'h-server')],
                       wait=1, timeout=TIMEOUT),
     #nodeTraceroute6Contains('client', 'h-server', b'cpe.')
+    ]
 
-
+base_6_remote_pcp_test = [
     nodeStart('client', '/usr/bin/socat -v tcp6-l:10002,fork exec:"/bin/cat"'),
     cotest.RepeatStep(nodePCPMap('client', '-6 -p 10002 -T'), wait=1, times=3),
     nodePCPPing('server', 'client', 'tcp6'),
@@ -549,21 +554,22 @@ base_6_remote_test = [
     #nodePCPMap('client', '-6 -p 10003 -U'),
     #nodePCPPing('server', 'client', 'udp6'),
     #nodeKill('client', '/usr/bin/socat'),
-
     ]
 
-base_6_local_test = [base_6_local_ip_step] + base_6_local_sd_test
+base_6_remote_tests = [base_6_remote_ping_test] + [base_6_remote_pcp_test]
 
-base_6_test = base_6_remote_test + base_6_local_test
+base_6_local_tests = [base_6_local_ip_step] + [base_6_local_sd_test]
+
+base_6_tests = base_6_remote_tests + base_6_local_tests
 
 fw_test = [
     nodeInterfaceFirewallZoneIs('cpe', 'h1', 'wan'),
     nodeInterfaceFirewallZoneIs('cpe', 'h0', 'lan'),
     ]
 
-base_test = [
+base_tests = [
     startTopology('home7', 'owrt-router'),
-    ] + base_6_test + base_4_test + fw_test
+    ] + base_6_tests + base_4_tests + fw_test
 
 class TestCase(cotest.TestCase):
     tearDown = routersNoCrashes()
@@ -576,7 +582,7 @@ if __name__ == '__main__':
                         format='%(asctime)s %(name)s %(message)s')
     al = logging.getLogger('asyncio')
     al.setLevel(logging.CRITICAL)
-    l = base_test
+    l = base_tests
     l = l + [nodeStop('client'), nodeGo('client'), sleep(1)]
     tc = TestCase(l)
     assert cotest.run(tc)

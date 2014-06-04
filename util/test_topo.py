@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Mon May 26 17:35:49 2014 mstenber
-# Edit time:     162 min
+# Last modified: Wed Jun  4 11:44:56 2014 mstenber
+# Edit time:     173 min
 #
 """
 
@@ -28,7 +28,7 @@ class Basic(unittest.TestCase):
     topology = 'home7'
     router = 'owrt-router'
     def test(self):
-        l = base_test[:]
+        l = base_tests[:]
         l[0] = startTopology(self.topology, self.router)
         tc = TestCase(l)
         assert cotest.run(tc)
@@ -41,13 +41,13 @@ class Basic(unittest.TestCase):
         assert cotest.run(tc)
     def test_4only(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp4')]
-        l = l + base_4_test + base_6_local_test + fw_test
+        l = l + base_4_tests + base_6_local_tests + fw_test
         l.remove(base_6_local_ip_step) # We won't have GUA
         tc = TestCase(l)
         assert cotest.run(tc)
     def test_6only(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6')]
-        l = l + base_6_test + fw_test
+        l = l + base_6_tests + fw_test
         l = l + [nodeHasPrefix6('client', '2000:')]
         tc = TestCase(l)
         assert cotest.run(tc)
@@ -56,14 +56,14 @@ class Basic(unittest.TestCase):
         l = l + [cotest.NotStep(nodeHasPrefix6('client', '2000:'))]
         l = l + [nodeRun('client', 'dhclient -6 eth0')]
         l = l + [nodeHasPrefix6('client', '2000:')]
-        l = l + base_6_test + fw_test
+        l = l + base_6_tests + fw_test
         tc = TestCase(l)
         assert cotest.run(tc)
     def test_6only_inf_cpe_isp_down(self):
         # Basic idea: when uplink disappears even with infinite
         # lifetime, it should disappear from the client.
         l = [startTopology(self.topology, self.router, ispTemplate='isp6-inf')]
-        l = l + base_6_test + fw_test
+        l = l + base_6_tests + fw_test
         l = l + [nodeHasPrefix6('client', '2000:')]
 
         # Kill ipv6 uplink -> should disappear from client's preferred
@@ -81,7 +81,7 @@ class Basic(unittest.TestCase):
         # addresses after ifdown + ifup, but instead rely on it
         # getting same prefix (and routing works).
         l = [startTopology(self.topology, self.router, ispTemplate='isp6')]
-        l = l + base_6_test + fw_test
+        l = l + base_6_tests + fw_test
         l = l + [nodeRun('ir3', 'ifdown h1')]
         l = l + [sleep(5)]
         l = l + [nodeRun('ir3', 'ifup h1')]
@@ -94,7 +94,7 @@ class Basic(unittest.TestCase):
         assert cotest.run(tc)
     def test_6rd(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp4-6rd')]
-        l = l + base_6_test + base_4_test + fw_test
+        l = l + base_6_tests + base_4_tests + fw_test
         l = l + [nodeHasPrefix6('client', '2001:')]
         tc = TestCase(l)
         assert cotest.run(tc)
@@ -104,7 +104,7 @@ class Basic(unittest.TestCase):
              cotest.RepeatStep(updateNodeAddresses6('client', minimum=2),
                                wait=5, timeout=TIMEOUT),
              ]
-        l = l + base_6_test + base_4_test + fw_test
+        l = l + base_6_tests + base_4_tests + fw_test
         l = l + [nodeHasPrefix6('client', '2000:'),
                  nodeHasPrefix6('client', '2001:')]
         tc = TestCase(l)
@@ -120,7 +120,7 @@ class MH(unittest.TestCase):
         l = [startTopology(self.topology, self.router),
                cotest.RepeatStep(updateNodeAddresses6('client', minimum=3),
                                  wait=5, timeout=TIMEOUT)]
-        l = l + base_6_test
+        l = l + base_6_tests
         l = l + [nodeHasPrefix6('client', '2000:dead:'),
                  nodeHasPrefix6('client', '2000:cafe:'),
                  nodeHasPrefix6('client', '2000:beef:')]
@@ -133,12 +133,14 @@ class MHFallback(MH):
 
 class Lease(unittest.TestCase):
     def test(self):
-        l = base_test[:]
+        l = base_tests[:]
         # initially, make sure stuff works as normal
         l = l + [sleep(700)] # even valid <= 600
         # then, make sure things still work
-        # (Can't use base_4_test, as it assumes client is not configured)
-        l = l + base_6_test + base_4_remote_test + fw_test
+        # (Can't use base_4_tests as is, as it assumes client is not configured)
+        tl = base_4_tests[:]
+        tl.remove(base_4_setup_test)
+        l = l + base_6_tests + tl + fw_test
         tc = TestCase(l)
         assert cotest.run(tc)
 
@@ -149,11 +151,10 @@ class Large(unittest.TestCase):
     topology = 'home14'
     router = 'owrt-router'
     def setUp(self):
-        l = base_test[:]
-        del l[0]
+        l = base_tests[:]
         # Large topology seems to take long time to start, sometimes
-        l[0:0] = [startTopology(self.topology, self.router),
-                  waitRouterPrefix6('200', wait=5, timeout=300)]
+        l[0] = [startTopology(self.topology, self.router),
+                waitRouterPrefix6('200', wait=5, timeout=300)]
         self.l = l
     def test(self):
         tc = TestCase(self.l)
@@ -169,12 +170,12 @@ class Large(unittest.TestCase):
         # Then we kill ir9, and wait for things to work again
         # (HNCP has built-in 4 minute delay currently it seems)
         l = l + [nodeStop('ir9')] + [sleep(180)]
-        l = l + base_6_test + base_4_remote_test
+        l = l + base_6_tests + base_4_remote_tests
 
         # Resume ir9, kill two other routes, and should go up
         # 'faster' because routes are better (no waiting 180 seconds)
         l = l + [nodeGo('ir9'), nodeStop('ir4'), nodeStop('ir6')]
-        l = l + base_6_test + base_4_remote_test
+        l = l + base_6_tests + base_4_remote_tests
         tc = TestCase(l)
         assert cotest.run(tc)
 
@@ -190,12 +191,16 @@ class DownPD(unittest.TestCase):
     def test(self):
         # Make sure downstream PD works - client should work even with
         # openwrt node in the middle.
-        l = base_test[:]
+        l = base_tests[:]
         l[0] = startTopology(self.topology, self.router)
         # Beyond the router nodes, have to wait for openwrt to get the
         # PD too before running onwards..
-        l[2:2] = [cotest.RepeatStep(nodeHasPrefix6('openwrt', '2000'),
+        l[1:1] = [cotest.RepeatStep(nodeHasPrefix6('openwrt', '2000'),
                                     wait=1, timeout=TIMEOUT)]
+        # PCP tests are not relevant in this case; quite the opposite,
+        # they _are_ bound to fail.
+        l.remove(base_6_remote_pcp_test)
+        l.remove(base_4_remote_pcp_test)
         tc = TestCase(l)
         assert cotest.run(tc)
 
@@ -204,7 +209,7 @@ class Guest(unittest.TestCase):
     router = 'owrt-router-debug'
     def test(self):
         # Make sure guest stuff works with remote
-        l = [startTopology(self.topology, self.router)] + base_6_remote_test + base_4_setup_test + base_4_remote_test
+        l = [startTopology(self.topology, self.router)] + base_6_remote_tests + base_4_setup_test + base_4_remote_tests
         # Local stuff shouldn't; however, whether this test really is conclusive about it is another matter
         l = l + [cotest.NotStep(base_6_local_ip_step, timeout=TIMEOUT_SHORT)]
         l = l + [cotest.NotStep(base_6_local_sd_test, timeout=TIMEOUT_SHORT)]
@@ -225,8 +230,8 @@ class Home4(unittest.TestCase):
         l = l + [cotest.RepeatStep(nodeHasPrefix6('client', '200'),
                                    wait=1, timeout=TIMEOUT)]
 
-        l = l + base_6_remote_test
-        l = l + [nodeRun('client', 'dhclient eth0')] + base_4_remote_test
+        l = l + base_6_remote_tests
+        l = l + [nodeRun('client', 'dhclient eth0')] + base_4_remote_tests
         l = l + [cotest.RepeatStep(nodePing6('client', 'openwrt.eth0.openwrt.home'), wait=1, timeout=TIMEOUT_SHORT),
                  cotest.RepeatStep(nodePing4('client', 'openwrt.eth0.openwrt.home'), wait=1, timeout=TIMEOUT_SHORT),
                  ]
