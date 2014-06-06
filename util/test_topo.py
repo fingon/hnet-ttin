@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Wed Jun  4 11:44:56 2014 mstenber
-# Edit time:     173 min
+# Last modified: Fri Jun  6 09:05:37 2014 mstenber
+# Edit time:     179 min
 #
 """
 
@@ -169,7 +169,9 @@ class Large(unittest.TestCase):
 
         # Then we kill ir9, and wait for things to work again
         # (HNCP has built-in 4 minute delay currently it seems)
-        l = l + [nodeStop('ir9')] + [sleep(180)]
+        l = l + [nodeStop('ir9')] #+ [sleep(180)]
+        # after adding ping_interval 10, the route should die in ~10 seconds
+        # => should fit well within normal failure parameters
         l = l + base_6_tests + base_4_remote_tests
 
         # Resume ir9, kill two other routes, and should go up
@@ -215,6 +217,15 @@ class Guest(unittest.TestCase):
         l = l + [cotest.NotStep(base_6_local_sd_test, timeout=TIMEOUT_SHORT)]
         l = l + [cotest.NotStep(base_4_local_test, timeout=TIMEOUT_SHORT)]
         # XXX - make sure no HNCP and TCP traffic in tcpdump
+        tc = TestCase(l)
+        assert cotest.run(tc)
+
+class Adhoc(unittest.TestCase):
+    topology = 'home7'
+    router = 'owrt-router-adhoc'
+    def test(self):
+        l = base_tests[:]
+        l[0] = startTopology(self.topology, self.router)
         tc = TestCase(l)
         assert cotest.run(tc)
 
