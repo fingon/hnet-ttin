@@ -9,19 +9,19 @@ config interface loopback
 config interface 'h0'
        option ifname 'eth0'
        option proto  hnet
-       option ping_interval 10
+       option ping_interval 10000
 
 config interface 'h1'
        option ifname 'eth1'
        option proto  hnet
-       option ping_interval 10
+       option ping_interval 10000
 
 config interface 'h2'
        option ifname 'eth2'
        option proto  hnet
-       option ping_interval 10
+       option ping_interval 10000
 
 config interface 'h3'
        option ifname 'eth3'
        option proto  hnet
-       option ping_interval 10
+       option ping_interval 10000
