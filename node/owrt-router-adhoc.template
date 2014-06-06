@@ -1,3 +1,2 @@
-# Debug so that hnetd is started after we update network config
-inherit=owrt-router-debug
+inherit=owrt-router,owrt-adhoc
 

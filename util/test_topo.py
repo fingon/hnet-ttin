@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Fri Jun  6 09:05:37 2014 mstenber
-# Edit time:     179 min
+# Last modified: Fri Jun  6 09:59:59 2014 mstenber
+# Edit time:     181 min
 #
 """
 
@@ -228,6 +228,10 @@ class Adhoc(unittest.TestCase):
         l[0] = startTopology(self.topology, self.router)
         tc = TestCase(l)
         assert cotest.run(tc)
+
+class AdhocFallback(Adhoc):
+    topology = 'home7'
+    router = 'owrt-router-debug-adhoc'
 
 class Home4(unittest.TestCase):
     topology = 'ow4'
