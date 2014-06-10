@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Tue Jun 10 18:49:11 2014 mstenber
-# Edit time:     190 min
+# Last modified: Tue Jun 10 18:52:04 2014 mstenber
+# Edit time:     191 min
 #
 """
 
@@ -243,7 +243,7 @@ class Custom(unittest.TestCase):
 
         l = l + base_6_remote_tests
         l = l + [nodeRun('client', 'dhclient eth0')]
-        l = l + [waitRouterPrefix4('172.16.', timeout=TIMEOUT_INITIAL)]
+        l = l + [waitRouterPrefix4('172.', timeout=TIMEOUT_INITIAL)]
         l = l + base_4_remote_tests
         l = l + [cotest.RepeatStep(nodePing6('client', 'cpe.h0.test'), wait=1, timeout=TIMEOUT_SHORT),
                  cotest.RepeatStep(nodePing4('client', 'cpe.h0.test'), wait=1, timeout=TIMEOUT_SHORT),
