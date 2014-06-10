@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Wed Jun  4 13:01:29 2014 mstenber
-# Edit time:     485 min
+# Last modified: Tue Jun 10 16:37:08 2014 mstenber
+# Edit time:     486 min
 #
 """
 
@@ -502,10 +502,10 @@ base_4_remote_tests = [base_4_remote_ping_test] + [base_4_remote_pcp_test]
 
 base_4_local_test = [
     # Service discovery
-    cotest.RepeatStep(nodePing4('client', 'cpe.eth0.cpe.home'),
+    cotest.RepeatStep(nodePing4('client', 'cpe.h0.cpe.home'),
                       wait=1, timeout=TIMEOUT_INITIAL),
     # If it's not first-hop, availability of cpe doesn't imply ir3
-    cotest.RepeatStep(nodePing4('client', 'ir3.eth0.ir3.home'),
+    cotest.RepeatStep(nodePing4('client', 'ir3.h0.ir3.home'),
                       wait=1, timeout=TIMEOUT),
 
     ]
@@ -522,10 +522,10 @@ base_6_local_ip_step = cotest.RepeatStep([updateNodeAddresses6('cpe', exclude=ig
 
 # Service discovery
 base_6_local_sd_test = [
-    cotest.RepeatStep(nodePing6('client', 'cpe.eth0.cpe.home'),
+    cotest.RepeatStep(nodePing6('client', 'cpe.h0.cpe.home'),
                       wait=1, timeout=TIMEOUT_INITIAL),
     # If it's not first-hop, availability of cpe doesn't imply ir3
-    cotest.RepeatStep(nodePing6('client', 'ir3.eth0.ir3.home'),
+    cotest.RepeatStep(nodePing6('client', 'ir3.h0.ir3.home'),
                       wait=1, timeout=TIMEOUT),
     ]
 

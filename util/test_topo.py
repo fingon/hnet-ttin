@@ -9,7 +9,7 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Fri Jun  6 09:59:59 2014 mstenber
+# Last modified: Tue Jun 10 16:36:22 2014 mstenber
 # Edit time:     181 min
 #
 """
@@ -247,8 +247,8 @@ class Home4(unittest.TestCase):
 
         l = l + base_6_remote_tests
         l = l + [nodeRun('client', 'dhclient eth0')] + base_4_remote_tests
-        l = l + [cotest.RepeatStep(nodePing6('client', 'openwrt.eth0.openwrt.home'), wait=1, timeout=TIMEOUT_SHORT),
-                 cotest.RepeatStep(nodePing4('client', 'openwrt.eth0.openwrt.home'), wait=1, timeout=TIMEOUT_SHORT),
+        l = l + [cotest.RepeatStep(nodePing6('client', 'openwrt.h0.openwrt.home'), wait=1, timeout=TIMEOUT_SHORT),
+                 cotest.RepeatStep(nodePing4('client', 'openwrt.h0.openwrt.home'), wait=1, timeout=TIMEOUT_SHORT),
                  ]
 
         tc = TestCase(l)
