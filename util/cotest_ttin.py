@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Jun 10 16:37:08 2014 mstenber
-# Edit time:     486 min
+# Last modified: Tue Jun 10 17:57:54 2014 mstenber
+# Edit time:     488 min
 #
 """
 
@@ -504,6 +504,9 @@ base_4_local_test = [
     # Service discovery
     cotest.RepeatStep(nodePing4('client', 'cpe.h0.cpe.home'),
                       wait=1, timeout=TIMEOUT_INITIAL),
+    # Almost SD (should be hardcoded in first-hop dnsmasq)
+    cotest.RepeatStep(nodePing4('client', 'cpe.home'),
+                      wait=1, timeout=TIMEOUT_SHORT),
     # If it's not first-hop, availability of cpe doesn't imply ir3
     cotest.RepeatStep(nodePing4('client', 'ir3.h0.ir3.home'),
                       wait=1, timeout=TIMEOUT),
@@ -520,10 +523,13 @@ ignored_address_prefixes = [
     ]
 base_6_local_ip_step = cotest.RepeatStep([updateNodeAddresses6('cpe', exclude=ignored_address_prefixes), nodePingToAll6('client', 'cpe')], wait=1, timeout=TIMEOUT)
 
-# Service discovery
 base_6_local_sd_test = [
+    # Service discovery
     cotest.RepeatStep(nodePing6('client', 'cpe.h0.cpe.home'),
                       wait=1, timeout=TIMEOUT_INITIAL),
+    # Almost SD ;) (hardcoded dnsmasq host-address on first hop)
+    cotest.RepeatStep(nodePing6('client', 'cpe.home'),
+                      wait=1, timeout=TIMEOUT_SHORT),
     # If it's not first-hop, availability of cpe doesn't imply ir3
     cotest.RepeatStep(nodePing6('client', 'ir3.h0.ir3.home'),
                       wait=1, timeout=TIMEOUT),
