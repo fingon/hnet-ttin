@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Tue Jun 10 16:36:22 2014 mstenber
-# Edit time:     181 min
+# Last modified: Tue Jun 10 17:58:39 2014 mstenber
+# Edit time:     187 min
 #
 """
 
@@ -233,6 +233,25 @@ class AdhocFallback(Adhoc):
     topology = 'home7'
     router = 'owrt-router-debug-adhoc'
 
+class Custom(unittest.TestCase):
+    topology = 'home7-owrt-custom'
+    router = 'owrt-router-debug'
+    def test(self):
+        l = [startTopology(self.topology, self.router)]
+        l = l + [cotest.RepeatStep(nodeHasPrefix6('client', '200'),
+                                   wait=1, timeout=TIMEOUT)]
+
+        l = l + base_6_remote_tests
+        l = l + [nodeRun('client', 'dhclient eth0')]
+        l = l + [waitRouterPrefix4('172.16.', timeout=TIMEOUT_INITIAL)]
+        l = l + base_4_remote_tests
+        l = l + [cotest.RepeatStep(nodePing6('client', 'cpe.h0.test'), wait=1, timeout=TIMEOUT_SHORT),
+                 cotest.RepeatStep(nodePing4('client', 'cpe.h0.test'), wait=1, timeout=TIMEOUT_SHORT),
+                 ]
+        tc = TestCase(l)
+        assert cotest.run(tc)
+
+
 class Home4(unittest.TestCase):
     topology = 'ow4'
     router = 'owrt-router-debug'
@@ -261,4 +280,3 @@ if __name__ == '__main__':
     al = logging.getLogger('asyncio')
     al.setLevel(logging.CRITICAL)
     unittest.main()
-
