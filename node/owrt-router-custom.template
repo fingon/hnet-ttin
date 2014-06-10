@@ -1,2 +1,3 @@
-inherit=owrt-router-debug
+# -debug has custom startup, which would be .. painful .. here.
+inherit=owrt-router
 

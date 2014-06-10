@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Tue Jun 10 17:58:39 2014 mstenber
-# Edit time:     187 min
+# Last modified: Tue Jun 10 18:49:11 2014 mstenber
+# Edit time:     190 min
 #
 """
 
@@ -235,7 +235,7 @@ class AdhocFallback(Adhoc):
 
 class Custom(unittest.TestCase):
     topology = 'home7-owrt-custom'
-    router = 'owrt-router-debug'
+    router = 'owrt-router'
     def test(self):
         l = [startTopology(self.topology, self.router)]
         l = l + [cotest.RepeatStep(nodeHasPrefix6('client', '200'),
@@ -247,6 +247,8 @@ class Custom(unittest.TestCase):
         l = l + base_4_remote_tests
         l = l + [cotest.RepeatStep(nodePing6('client', 'cpe.h0.test'), wait=1, timeout=TIMEOUT_SHORT),
                  cotest.RepeatStep(nodePing4('client', 'cpe.h0.test'), wait=1, timeout=TIMEOUT_SHORT),
+                 cotest.RepeatStep(nodePing6('client', '2000:dead:bee0::42'), wait=1, timeout=TIMEOUT_SHORT),
+                 cotest.RepeatStep(nodePing4('client', '172.16.0.13'), wait=1, timeout=TIMEOUT_SHORT),
                  ]
         tc = TestCase(l)
         assert cotest.run(tc)
