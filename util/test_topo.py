@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Tue Jun 10 18:52:04 2014 mstenber
-# Edit time:     191 min
+# Last modified: Wed Jun 11 13:50:14 2014 mstenber
+# Edit time:     193 min
 #
 """
 
@@ -247,8 +247,8 @@ class Custom(unittest.TestCase):
         l = l + base_4_remote_tests
         l = l + [cotest.RepeatStep(nodePing6('client', 'cpe.h0.test'), wait=1, timeout=TIMEOUT_SHORT),
                  cotest.RepeatStep(nodePing4('client', 'cpe.h0.test'), wait=1, timeout=TIMEOUT_SHORT),
-                 cotest.RepeatStep(nodePing6('client', '2000:dead:bee0::42'), wait=1, timeout=TIMEOUT_SHORT),
-                 cotest.RepeatStep(nodePing4('client', '172.16.0.13'), wait=1, timeout=TIMEOUT_SHORT),
+                 cotest.RepeatStep(nodePing6('client', '2000:dead:bee0:70::42'), wait=1, timeout=TIMEOUT_SHORT),
+                 cotest.RepeatStep(nodePing4('client', '172.23.0.13'), wait=1, timeout=TIMEOUT_SHORT),
                  ]
         tc = TestCase(l)
         assert cotest.run(tc)

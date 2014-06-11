@@ -8,8 +8,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Jun 10 17:37:30 2014 mstenber
-# Last modified: Tue Jun 10 18:47:34 2014 mstenber
-# Edit time:     25 min
+# Last modified: Wed Jun 11 13:43:46 2014 mstenber
+# Edit time:     50 min
 #
 
 # Configure any global available
@@ -27,11 +27,11 @@ uci commit hnet
 # covering link_id, iface_id, ip{4,6}assign, dnsname
 # todo: disable_pa, ula_default_router
 uci batch <<EOF
-set network.h0.link_id=0/6
-set network.h0.ip6assign=62
+set network.h0.link_id=7/4
 set network.h0.ip4assign=16
-add_list network.h0.iface_id="::0D/4 10/8"
-add_list network.h0.iface_id="::42/8 2000::/16"
+set network.h0.ip6assign=60
+set network.h0.iface_id="::0D/4@172.0.0.0/8 ::42/8@2000::/16"
+set network.h0.prefix=2000:feed:dead::/64
 set network.h0.dnsname=h0.test.
 EOF
 
