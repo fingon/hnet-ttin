@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Wed Mar 26 18:49:35 2014 mstenber
-# Last modified: Mon Mar 31 17:47:09 2014 mstenber
-# Edit time:     45 min
+# Last modified: Wed Jun 11 13:41:32 2014 mstenber
+# Edit time:     67 min
 #
 """
 
@@ -45,6 +45,7 @@ useful_line_re = re.compile('^cotest: DEBUG: async_system (.*)$').match
 fail_re = re.compile('^(FAIL|ERROR): (\S+) \((\S+)\)').match
 start_log_re = re.compile('^-+ >> begin captured logging << -+$').match
 end_log_re = re.compile('^-+ >> end captured logging << -+$').match
+ran_re = re.compile('^Ran (\d+) tests in').match
 
 end_testcase_re = re.compile('^=======+$').match
 
@@ -57,9 +58,37 @@ class Case:
         return not self.flaky() and len(collections.Counter(self.traces)) > 1
     def broken(self):
         return not self.flaky() and not self.inconsistent()
+    def verdict(self):
+        if self.flaky():
+            return 'flaky'
+        if self.inconsistent():
+            return 'inconsistent'
+        return 'broken'
 
+class StressTestResult:
+    def __init__(self, total_files, total_cases, cases):
+        self.cases = cases
+        self.total_cases = total_cases
+        self.total_files = total_files
+    def cases_ok(self):
+        return self.total_cases - len(self.cases)
+    def cases_fail(self, verdict):
+        cases = [c for c in self.cases.values() if (c.verdict()==verdict or not verdict)]
+        return len(cases)
+    def total(self):
+        return self.total_cases * self.total_files
+    def total_failures(self):
+        c = 0
+        for case in self.cases.values():
+            for trace in case.traces:
+                if trace:
+                    c = c + 1
+        return c
+    def success_rate(self):
+        return 100.0 * (self.total() - self.total_failures()) / self.total()
 def parse_logs(*logs):
     cases = {}
+    num_cases = 0
     for log in logs:
         state = 0
         dq = collections.deque(maxlen=LOG_LENGTH)
@@ -67,6 +96,10 @@ def parse_logs(*logs):
         t = None
         for line in open(log):
             if state == 0:
+                if not num_cases:
+                    m = ran_re(line)
+                    if m is not None:
+                        num_cases = int(m.group(1))
                 m = fail_re(line)
                 if m is None:
                     continue
@@ -108,7 +141,7 @@ def parse_logs(*logs):
         if need > 0:
             l = [''] * need
             case.traces.extend(l)
-    return cases
+    return StressTestResult(len(logs), num_cases, cases)
 
 def print_cases(cases, call, st, st1=False):
     keys = list(sorted(cases.keys()))
@@ -133,8 +166,11 @@ if __name__ == '__main__':
                     nargs='+',
                     help='Log files to parse')
     args = ap.parse_args()
-    cases = parse_logs(*args.logfile)
+    r = parse_logs(*args.logfile)
+    cases = r.cases
     print_cases(cases, 'flaky', True)
     print_cases(cases, 'inconsistent', True)
     print_cases(cases, 'broken', True, True)
+    sr = r.success_rate()
+    print('Success rate: %.2f%%' % sr)
 
