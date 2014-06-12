@@ -8,8 +8,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Jun 10 17:37:30 2014 mstenber
-# Last modified: Wed Jun 11 13:43:46 2014 mstenber
-# Edit time:     50 min
+# Last modified: Thu Jun 12 11:43:00 2014 mstenber
+# Edit time:     53 min
 #
 
 # Configure any global available
@@ -39,7 +39,9 @@ EOF
 
 uci commit network
 
-/etc/init.d/network restart
+#/etc/init.d/network restart
+#restart frequently bugs, should use reload (cyrusff, 20140612)
+/etc/init.d/network reload
 
 # This is necessary if not running the -debug variant. However,
 # as we're testing the argument parsing here, the -debug build is not really 
