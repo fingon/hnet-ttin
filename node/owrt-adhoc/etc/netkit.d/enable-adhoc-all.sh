@@ -8,14 +8,16 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Fri Jun  6 08:41:45 2014 mstenber
-# Last modified: Mon Jun 16 12:04:44 2014 mstenber
-# Edit time:     1 min
+# Last modified: Mon Jun 16 12:36:39 2014 mstenber
+# Edit time:     2 min
 #
 
-uci set network.h0.adhoc=1
-uci set network.h1.adhoc=1
-uci set network.h2.adhoc=1
-uci set network.h3.adhoc=1
+# old format, changed 20140615
+#uci set network.h0.adhoc=1
+uci set network.h0.mode=adhoc
+uci set network.h1.mode=adhoc
+uci set network.h2.mode=adhoc
+uci set network.h3.mode=adhoc
 uci commit network
 
 #/etc/init.d/network restart
