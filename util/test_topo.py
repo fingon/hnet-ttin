@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Wed Jun 11 13:50:14 2014 mstenber
-# Edit time:     193 min
+# Last modified: Mon Jun 16 13:39:13 2014 mstenber
+# Edit time:     196 min
 #
 """
 
@@ -220,6 +220,22 @@ class Guest(unittest.TestCase):
         tc = TestCase(l)
         assert cotest.run(tc)
 
+class Hybrid(unittest.TestCase):
+    topology = 'home7-owrt-hybrid'
+    router = 'owrt-router'
+    def test(self):
+        l = [startTopology(self.topology, self.router)]
+        l = l + [base_6_remote_ping_test] # PCP N/A probably
+        l = l + [base_6_local_ip_step] # sd n/a?
+        l = l + [nodePing6('client', 'ir2.eth1.ir2.home')]
+        l = l + [base_4_setup_test, base_4_remote_ping_test]
+        l = l + [nodePing4('client', 'ir2.eth1.ir2.home')]
+        tc = TestCase(l)
+        assert cotest.run(tc)
+
+class HybridFallback(Hybrid):
+    router = 'owrt-router-debug'
+
 class Adhoc(unittest.TestCase):
     topology = 'home7'
     router = 'owrt-router-adhoc'
@@ -230,7 +246,6 @@ class Adhoc(unittest.TestCase):
         assert cotest.run(tc)
 
 class AdhocFallback(Adhoc):
-    topology = 'home7'
     router = 'owrt-router-debug-adhoc'
 
 class Custom(unittest.TestCase):
