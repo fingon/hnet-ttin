@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Tue Jun 24 11:28:09 2014 mstenber
-# Edit time:     200 min
+# Last modified: Tue Jun 24 11:39:24 2014 mstenber
+# Edit time:     203 min
 #
 """
 
@@ -238,6 +238,7 @@ class Hybrid(unittest.TestCase):
         l = l + self.tests_4
         tc = TestCase(l)
         assert cotest.run(tc)
+    @unittest.skip('current default OpenWrt cannot handle IPv6-only ISP')
     def test_6only(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6')]
         l = l + self.tests_6
