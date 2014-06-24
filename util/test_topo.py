@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Mon Jun 23 17:28:25 2014 mstenber
-# Edit time:     199 min
+# Last modified: Tue Jun 24 11:28:09 2014 mstenber
+# Edit time:     200 min
 #
 """
 
@@ -225,9 +225,9 @@ class Hybrid(unittest.TestCase):
     router = 'owrt-router'
     tests_6 = [base_6_remote_ping_test, # PCP N/A probably
                base_6_local_ip_step,
-               nodePing6('client', 'ir2.eth1.ir2.home')]
+               nodePing6('client', 'ir2.h1.ir2.home')]
     tests_4 = [base_4_setup_test, base_4_remote_ping_test,
-               nodePing4('client', 'ir2.eth1.ir2.home')]
+               nodePing4('client', 'ir2.h1.ir2.home')]
     def test(self):
         l = [startTopology(self.topology, self.router)]
         l = l + self.tests_6 + self.tests_4
