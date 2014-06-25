@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Thu Jun 12 15:16:49 2014 mstenber
-# Edit time:     491 min
+# Last modified: Wed Jun 25 19:34:34 2014 mstenber
+# Edit time:     492 min
 #
 """
 
@@ -270,13 +270,15 @@ def nodePing4(node, remote):
         return rc == 0 and ' bytes from ' in stdout.decode()
     return cotest.Step(_run, name='@%s:ping %s' % (node, remote))
 
-def nodePing6(node, remote, args='', source='', c=1, n=True):
+def nodePing6(node, remote, args='', source='', c=1, n=True, timeout=None):
     if source:
         args = args + ' -I %s' % source
     if n:
         args = args + ' -n'
     if c:
         args = args + ' -c %d' % c
+    if timeout:
+        args = args + ' -w %d' % timeout
     def _run(state):
         rc, stdout, stderr = yield from _nodeExec(node, 'ping6 %s %s' % (args, remote))
         return rc == 0 and ' bytes from ' in stdout.decode()
