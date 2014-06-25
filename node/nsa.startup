@@ -1,0 +1,12 @@
+# NSA doesn't talk IPv6 (to prevent extra chatter from disturbing anyone else)
+sysctl net.ipv6.conf.all.disable_ipv6=1
+
+# _BUT_ NSA logs everything!
+LOGDIR=/hostlab/logs/`hostname`
+mkdir -p $LOGDIR
+
+if [ ! -f $LOGDIR/tcpdump.dat ]
+then
+        /usr/sbin/tcpdump -i any -s 1500 -w $LOGDIR/tcpdump.dat &
+fi
+

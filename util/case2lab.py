@@ -7,8 +7,8 @@
 # Author: Markus Stenberg <fingon@iki.fi>
 #
 # Created:       Wed Jul  4 11:28:46 2012 mstenber
-# Last modified: Tue May 27 11:42:57 2014 mstenber
-# Edit time:     514 min
+# Last modified: Wed Jun 25 14:14:21 2014 mstenber
+# Edit time:     552 min
 #
 """
 
@@ -46,6 +46,11 @@ import pprinter
 import re
 import os, os.path
 import shutil
+
+# man in the middle-machine name if any.  _every_ connection is routed
+# to it, and (at init time) automatically bridges matching the current
+# network configuration are set up.
+KEY_MITM="nsa"
 
 # keys for case configuration
 KEY_MACHINES="machines"
@@ -470,6 +475,7 @@ class Configuration(ReCollectionProcessor, HKVStore):
             return
         pp('%s=%s' % (k, v))
     def HKVToPP(self, h, k, v, pp, depth, upper):
+        has_mitm = KEY_MITM in self.getActiveNodes()
         if upper and upper.get((h,k), None):
             return
         assert k != KEY_TEMPLATE # should be processed elsewhere
@@ -487,9 +493,43 @@ class Configuration(ReCollectionProcessor, HKVStore):
                 v = l[0]
                 # just leave the name of the network - the size should be non
                 assert len(v) > 0
+            if has_mitm:
+                n, v = self.addMITM(h, k, v)
+                pp('%s[%d]=%s' % (KEY_MITM, n, v))
         pp('%(h)s[%(k)s]=%(v)s' % locals())
+    def addMITM(self, h, k, v):
+        # h = node name
+        # k = port name (#)
+        # v = name of logical switch to connect to
+
+        # return value: MITM port # , MITM switch name
+        n = len(self.mitm_list)
+        name ='%s%d' % (KEY_MITM, n)
+        self.mitm_list.append((h, k, v))
+        return n, name
+    def MITMToPP(self, pp):
+        # Create bridges
+        nets = {}
+        for h, k, netname in self.mitm_list:
+            netname = 'net-%s' % netname
+            nets[netname] = 1
+        for net in nets.keys():
+            pp('brctl addbr %s' % net)
+        for i, (h, k, netname) in enumerate(self.mitm_list):
+            netname = 'net-%s' % netname
+            # First, rename interface to <h>-<k>
+            old_ifname = 'eth%d' % i
+            new_ifname = '%s-%s' % (h, k)
+            pp('nameif %(new_ifname)s `ifconfig %(old_ifname)s | grep HWaddr | sed "s/^.*HWaddr //"`' % locals())
+
+            # Then, add it to the appropriate bridge
+            pp('brctl addif %(netname)s %(new_ifname)s' % locals())
+            pp('ifconfig %s up' % new_ifname)
+        for net in nets.keys():
+            pp('ifconfig %s up' % net)
 
     def toPP(self, pp, depth=0, upper=None):
+        self.mitm_list = []
         hs = self.hkv.copy()
         # Dump to string. Note: inherit is processed here
         d = hs.pop(None, {})
@@ -601,6 +641,11 @@ class Configuration(ReCollectionProcessor, HKVStore):
         net_nondhcp = {}
         net_dhcp = {}
 
+        if KEY_MITM in self.getActiveNodes():
+            pp = startups.getPP(KEY_MITM)
+            # Rename interfaces to <host>-<ifnum>
+            # Create bridges
+            self.MITMToPP(pp)
         # Start with interface configuration stuff (so .startup's can
         # override it)
         for h in nodes:
