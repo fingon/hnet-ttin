@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Tue Jun 24 11:39:24 2014 mstenber
-# Edit time:     203 min
+# Last modified: Wed Jun 25 19:34:52 2014 mstenber
+# Edit time:     212 min
 #
 """
 
@@ -281,6 +281,29 @@ class Custom(unittest.TestCase):
         tc = TestCase(l)
         assert cotest.run(tc)
 
+class Mutate(unittest.TestCase):
+    topology = 'home7-nsa'
+    router = 'owrt-router'
+    def test(self):
+        l = base_tests[:]
+        l[0] = startTopology(self.topology, self.router)
+        # Ok. Basic tests succeeded.
+        # Mutate the topology by moving ir3-0 from ROUTER1 to HOME
+        l = l + [nodeRun('nsa', 'brctl delif net-ROUTER1 ir3-0'),
+                 nodeRun('nsa', 'brctl addif net-HOME ir3-0'),
+                 cotest.RepeatStep(nodePing6('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
+                 ]
+        # Mutate the topology by moving ir3-0 from HOME to ROUTER1
+        l = l + [nodeRun('nsa', 'brctl delif net-HOME ir3-0'),
+                 nodeRun('nsa', 'brctl addif net-ROUTER1 ir3-0'),
+                 cotest.RepeatStep(nodePing6('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
+                 ]
+
+        tc = TestCase(l)
+        assert cotest.run(tc)
+
+class MutateFallback(Mutate):
+    router = 'owrt-router-debug'
 
 class Home4(unittest.TestCase):
     topology = 'ow4'
