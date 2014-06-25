@@ -7,8 +7,8 @@
 # Author: Markus Stenberg <fingon@iki.fi>
 #
 # Created:       Wed Jul  4 11:28:46 2012 mstenber
-# Last modified: Wed Jun 25 14:14:21 2014 mstenber
-# Edit time:     552 min
+# Last modified: Wed Jun 25 15:06:27 2014 mstenber
+# Edit time:     555 min
 #
 """
 
@@ -27,9 +27,6 @@ TODO:
 
 - make utility to produce GraphViz description of the cases and their
   relations, to templates
-
-- make utility to produce GraphViz description of the network topology
-  of individual cases (the information should be there)
 
 - generate management interface definitions automatically (for the
   time being, we do it by hand, but that's bit depressing) [ there's a
