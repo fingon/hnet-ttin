@@ -6,8 +6,8 @@
 # Copyright (c) 2013 cisco Systems, Inc.
 #
 # Created:       Tue Apr  9 14:04:26 2013 mstenber
-# Last modified: Wed Jun 25 14:49:37 2014 mstenber
-# Edit time:     9 min
+# Last modified: Wed Jun 25 15:12:23 2014 mstenber
+# Edit time:     12 min
 #
 #
 
@@ -25,8 +25,14 @@ lab/.all:
 	python util/case2lab.py $(CASEARGS)
 	touch lab/.all
 
-lab/%:
-	python util/case2lab.py $(CASEARGS) bird=obird $*
+lab/%/lab.conf:
+	python util/case2lab.py $(CASEARGS) $*
+
+lab/%.neato: lab/%/lab.conf
+	util/lab2dot.py < lab/$*/lab.conf > lab/$*.neato
+
+lab/%.svg: lab/%.neato
+	neato -Tsvg < lab/$*.neato > lab/$*.svg
 
 clean:
 	vclean --clean-all
