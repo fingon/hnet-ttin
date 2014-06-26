@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Wed Jun 11 12:57:29 2014 mstenber
-# Last modified: Tue Jun 24 18:55:47 2014 mstenber
-# Edit time:     26 min
+# Last modified: Thu Jun 26 23:25:11 2014 mstenber
+# Edit time:     30 min
 #
 """
 
@@ -50,14 +50,15 @@ args = ap.parse_args()
 results = list(nosefails.parse_logs(*glob.glob('%s/log*.txt' % dir)) for dir in args.directory)
 
 style = Style(colors=('#00ff00', '#ffa000', '#ff4000', '#ff0000'))
-c = pygal.StackedBar(style=style,  show_minor_x_labels=False, truncate_label=11)
+c = pygal.StackedBar(style=style,  show_minor_x_labels=False, truncate_label=11,
+                     legend_at_bottom=True)
 c.x_labels = uniquify(args.directory)
 c.x_labels_major = list(startify(c.x_labels))
 c.title = 'Stress test results over time'
-c.add('success', [r.cases_ok() for r in results])
-c.add('sometimes fail', [r.cases_fail('flaky') for r in results])
-c.add('various fail', [r.cases_fail('inconsistent') for r in results])
-c.add('fail', [r.cases_fail('broken') for r in results])
+c.add('always success', [r.cases_ok() for r in results])
+c.add('sporadic failure', [r.cases_fail('flaky') for r in results])
+c.add('varying failures', [r.cases_fail('inconsistent') for r in results])
+c.add('same failure always', [r.cases_fail('broken') for r in results])
 import sys, os
 os.write(sys.stdout.fileno(), c.render())
 
