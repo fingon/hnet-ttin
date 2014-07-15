@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Wed Jun 25 19:34:52 2014 mstenber
-# Edit time:     212 min
+# Last modified: Tue Jul 15 18:19:21 2014 mstenber
+# Edit time:     228 min
 #
 """
 
@@ -284,20 +284,52 @@ class Custom(unittest.TestCase):
 class Mutate(unittest.TestCase):
     topology = 'home7-nsa'
     router = 'owrt-router'
-    def test(self):
+    iterations = 1
+    def test_replace(self):
         l = base_tests[:]
         l[0] = startTopology(self.topology, self.router)
         # Ok. Basic tests succeeded.
-        # Mutate the topology by moving ir3-0 from ROUTER1 to HOME
-        l = l + [nodeRun('nsa', 'brctl delif net-ROUTER1 ir3-0'),
-                 nodeRun('nsa', 'brctl addif net-HOME ir3-0'),
-                 cotest.RepeatStep(nodePing6('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
-                 ]
-        # Mutate the topology by moving ir3-0 from HOME to ROUTER1
-        l = l + [nodeRun('nsa', 'brctl delif net-HOME ir3-0'),
-                 nodeRun('nsa', 'brctl addif net-ROUTER1 ir3-0'),
-                 cotest.RepeatStep(nodePing6('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
-                 ]
+        for x in range(self.iterations):
+            # Mutate the topology by moving ir3-0 from ROUTER1 to HOME
+            l = l + [nodeRun('nsa', 'brctl delif net-ROUTER1 ir3-0'),
+                     nodeRun('nsa', 'brctl addif net-HOME ir3-0'),
+                     cotest.RepeatStep(nodePing6('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
+                     cotest.RepeatStep(nodePing4('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
+                     ]
+            # Mutate the topology by moving ir3-0 from HOME to ROUTER1
+            l = l + [nodeRun('nsa', 'brctl delif net-HOME ir3-0'),
+                     nodeRun('nsa', 'brctl addif net-ROUTER1 ir3-0'),
+                     cotest.RepeatStep(nodePing6('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
+                     cotest.RepeatStep(nodePing4('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
+                     ]
+
+        tc = TestCase(l)
+        assert cotest.run(tc)
+    def test_move(self):
+        # Christopher Franke-originated test;
+        # (Same as test_replace, but using different plug ir3-2)
+        # typically ~6 iterations to fail as of 20140715 according to C.F.
+
+        l = base_tests[:]
+        l[0] = startTopology(self.topology, self.router)
+
+        # net-ROUTER32 is empty network -> we can remove it here
+        l = l + [nodeRun('nsa', 'brctl delif net-ROUTER32 ir3-2')]
+
+        # Ok. Basic tests succeeded.
+        for x in range(self.iterations):
+            # Mutate the topology by moving ir3-0 from ROUTER1 to HOME
+            l = l + [nodeRun('nsa', 'brctl delif net-ROUTER1 ir3-0'),
+                     nodeRun('nsa', 'brctl addif net-HOME ir3-2'),
+                     cotest.RepeatStep(nodePing6('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
+                     cotest.RepeatStep(nodePing4('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
+                     ]
+            # Mutate the topology by moving ir3-0 from HOME to ROUTER1
+            l = l + [nodeRun('nsa', 'brctl delif net-HOME ir3-2'),
+                     nodeRun('nsa', 'brctl addif net-ROUTER1 ir3-0'),
+                     cotest.RepeatStep(nodePing6('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
+                     cotest.RepeatStep(nodePing4('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
+                     ]
 
         tc = TestCase(l)
         assert cotest.run(tc)

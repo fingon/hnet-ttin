@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Wed Jun 25 19:34:34 2014 mstenber
-# Edit time:     492 min
+# Last modified: Tue Jul 15 17:43:26 2014 mstenber
+# Edit time:     494 min
 #
 """
 
@@ -264,13 +264,7 @@ def nodeKill(node, cmd):
         return rc == 0
     return cotest.Step(_run, name='kill @%s:%s' % (node, cmd))
 
-def nodePing4(node, remote):
-    def _run(state):
-        rc, stdout, stderr = yield from _nodeExec(node, 'ping -c 1 %s' % remote)
-        return rc == 0 and ' bytes from ' in stdout.decode()
-    return cotest.Step(_run, name='@%s:ping %s' % (node, remote))
-
-def nodePing6(node, remote, args='', source='', c=1, n=True, timeout=None):
+def nodePing6(node, remote, args='', source='', c=1, n=True, timeout=None, cmd='ping6'):
     if source:
         args = args + ' -I %s' % source
     if n:
@@ -280,9 +274,12 @@ def nodePing6(node, remote, args='', source='', c=1, n=True, timeout=None):
     if timeout:
         args = args + ' -w %d' % timeout
     def _run(state):
-        rc, stdout, stderr = yield from _nodeExec(node, 'ping6 %s %s' % (args, remote))
+        rc, stdout, stderr = yield from _nodeExec(node, '%s %s %s' % (cmd, args, remote))
         return rc == 0 and ' bytes from ' in stdout.decode()
-    return cotest.Step(_run, name='@%s:ping6 %s' % (node, remote))
+    return cotest.Step(_run, name='@%s:%s %s' % (node, cmd, remote))
+
+def nodePing4(node, remote, **kwargs):
+    return nodePing6(node, remote, cmd='ping', **kwargs)
 
 def nodeTraceroute6Contains(node, remote, data):
     # In principle this should work; however, traceroute6 does
