@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Tue Jul 15 18:19:21 2014 mstenber
-# Edit time:     228 min
+# Last modified: Wed Jul 16 10:23:09 2014 mstenber
+# Edit time:     244 min
 #
 """
 
@@ -22,6 +22,13 @@ underneath to make sure the test topology(/topologies) work correctly.
 import unittest
 import cotest
 from cotest_ttin import *
+import ipaddress
+import logging
+
+_logger = logging.getLogger('test_topo')
+_debug = _logger.debug
+_info = _logger.info
+
 
 # XXX - validate address lifetimes at client
 class Basic(unittest.TestCase):
@@ -281,6 +288,24 @@ class Custom(unittest.TestCase):
         tc = TestCase(l)
         assert cotest.run(tc)
 
+def ensureNoSamePrefix6(h1, i1, h2, i2):
+    c1 = CMD_IP6_ADDRS_BASE % ('dev %s' % i1)
+    c2 = CMD_IP6_ADDRS_BASE % ('dev %s' % i2)
+    a1 = updateNodeAddresses6(h1, cmd=c1, stripPrefix=False)
+    a2 = updateNodeAddresses6(h2, cmd=c2, stripPrefix=False)
+    def _run(state):
+        l1 = state['nodes'][h1]['addrs']
+        l2 = state['nodes'][h2]['addrs']
+        _debug('ensureNoSamePrefix6 %s <> %s' % (l1, l2))
+        for a1 in l1:
+            n1 = ipaddress.ip_network(a1, strict=False)
+            for a2 in l2:
+                n2 = ipaddress.ip_network(a2, strict=False)
+                if n1 == n2:
+                    return False
+        return True
+    return [a1, a2, cotest.Step(_run, name='ensure no same v6 prefix')]
+
 class Mutate(unittest.TestCase):
     topology = 'home7-nsa'
     router = 'owrt-router'
@@ -288,7 +313,7 @@ class Mutate(unittest.TestCase):
     def test_replace(self):
         l = base_tests[:]
         l[0] = startTopology(self.topology, self.router)
-        # Ok. Basic tests succeeded.
+
         for x in range(self.iterations):
             # Mutate the topology by moving ir3-0 from ROUTER1 to HOME
             l = l + [nodeRun('nsa', 'brctl delif net-ROUTER1 ir3-0'),
@@ -316,19 +341,18 @@ class Mutate(unittest.TestCase):
         # net-ROUTER32 is empty network -> we can remove it here
         l = l + [nodeRun('nsa', 'brctl delif net-ROUTER32 ir3-2')]
 
-        # Ok. Basic tests succeeded.
         for x in range(self.iterations):
-            # Mutate the topology by moving ir3-0 from ROUTER1 to HOME
             l = l + [nodeRun('nsa', 'brctl delif net-ROUTER1 ir3-0'),
                      nodeRun('nsa', 'brctl addif net-HOME ir3-2'),
                      cotest.RepeatStep(nodePing6('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
                      cotest.RepeatStep(nodePing4('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
+                     cotest.RepeatStep(ensureNoSamePrefix6('ir3', 'eth0', 'ir1', 'eth1'), wait=1, timeout=TIMEOUT),
                      ]
-            # Mutate the topology by moving ir3-0 from HOME to ROUTER1
             l = l + [nodeRun('nsa', 'brctl delif net-HOME ir3-2'),
                      nodeRun('nsa', 'brctl addif net-ROUTER1 ir3-0'),
                      cotest.RepeatStep(nodePing6('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
                      cotest.RepeatStep(nodePing4('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
+                     cotest.RepeatStep(ensureNoSamePrefix6('ir3', 'eth2', 'cpe', 'eth0'), wait=1, timeout=TIMEOUT),
                      ]
 
         tc = TestCase(l)

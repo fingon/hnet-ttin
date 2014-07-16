@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Jul 15 17:43:26 2014 mstenber
-# Edit time:     494 min
+# Last modified: Wed Jul 16 10:16:18 2014 mstenber
+# Edit time:     501 min
 #
 """
 
@@ -297,7 +297,9 @@ def nodeTraceroute6Contains(node, remote, data):
     return cotest.Step(_run, name='@%s:traceroute6 %s has %s' % (node, remote, data))
 
 CMD_IP4_ADDRS='ip -4 addr | grep inet'
-CMD_IP6_ADDRS='ip -6 addr show scope global | grep -v deprecated | grep inet6'
+CMD_IP6_ADDRS_BASE='ip -6 addr show scope global %s | grep -v deprecated | grep inet6'
+CMD_IP6_ADDRS=CMD_IP6_ADDRS_BASE % ''
+
 
 IP_V4_PREFIX='inet '
 IP_V6_PREFIX='inet6 '
@@ -316,9 +318,12 @@ def nodeHasPrefix4(node, prefix, **kwargs):
 def nodeHasPrefix6(node, prefix, **kwargs):
     return _nodeHasPrefix(node, CMD_IP6_ADDRS, IP_V6_PREFIX + prefix, **kwargs)
 
-def updateNodeAddresses6(node, *, minimum=1, maximum=None, timeout=5, exclude=[]):
+def updateNodeAddresses6(node, *,
+                         cmd=CMD_IP6_ADDRS,
+                         minimum=1, maximum=None, timeout=5, exclude=[],
+                         stripPrefix=True):
     def _run(state):
-        rc, stdout, stderr = yield from _nodeExec(node, CMD_IP6_ADDRS)
+        rc, stdout, stderr = yield from _nodeExec(node, cmd)
         rl = []
         state['nodes'][node]['addrs'] = rl
         for line in stdout.decode().split('\n'):
@@ -329,7 +334,8 @@ def updateNodeAddresses6(node, *, minimum=1, maximum=None, timeout=5, exclude=[]
                 continue
             addr = l[1]
             assert '/' in addr
-            addr = addr.split('/')[0]
+            if stripPrefix:
+                addr = addr.split('/')[0]
             found = False
             for e in exclude:
                 if addr.startswith(e):
