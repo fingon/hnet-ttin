@@ -4,7 +4,7 @@
 # LOGDIR has been created before, and set -> just reuse it
 
 # Start hnetd (we intentionally don't use init script here)
-HNETD_ARGS="-d /etc/init.d/dnsmasq -f /tmp/dnsmasq.d/hnet.conf -o /usr/sbin/hnetd-ohp-script -n $HOSTNAME -r /bin/true -c /usr/sbin/hnetd-pcp-script"
+HNETD_ARGS="-d /etc/init.d/dnsmasq -f /tmp/dnsmasq.d/hnet.conf -o /usr/sbin/hnetd-ohp-script -n $HOSTNAME -r /bin/true -c /usr/sbin/hnetd-pcp-script --loglevel 7"
 
 #HNETD_ARGS=""
 
