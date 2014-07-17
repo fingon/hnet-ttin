@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Jul 15 18:20:19 2014 mstenber
-# Last modified: Tue Jul 15 18:31:34 2014 mstenber
-# Edit time:     1 min
+# Last modified: Wed Jul 16 10:13:50 2014 mstenber
+# Edit time:     4 min
 #
 """
 
@@ -23,11 +23,14 @@ same test_ may help.
 import test_topo
 import unittest
 
+# test_move
+# typically ~6 iterations to fail as of 20140715 according to C.F.
+
 class MutateSlow(test_topo.Mutate):
-    iterations = 50
+    iterations = 10
 
 class MutateFallbackSlow(test_topo.MutateFallback):
-    iterations = 50
+    iterations = 10
 
 if __name__ == '__main__':
     import logging
