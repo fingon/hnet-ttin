@@ -12,9 +12,9 @@
 # Edit time:     1 min
 #
 
-uci set network.h0.adhoc=1
-uci set network.h1.adhoc=1
-uci set network.h2.adhoc=1
-uci set network.h3.adhoc=1
+uci set network.h0.mode=adhoc
+uci set network.h1.mode=adhoc
+uci set network.h2.mode=adhoc
+uci set network.h3.mode=adhoc
 uci commit network
 /etc/init.d/network restart

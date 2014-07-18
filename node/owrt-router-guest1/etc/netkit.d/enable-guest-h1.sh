@@ -12,6 +12,6 @@
 # Edit time:     3 min
 #
 
-uci set network.h1.guest=1
+uci set network.h1.mode=guest
 uci commit network
 /etc/init.d/network restart
