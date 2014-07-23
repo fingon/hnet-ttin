@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Mon Jul 21 17:27:14 2014 mstenber
-# Edit time:     487 min
+# Last modified: Wed Jul 23 05:03:36 2014 mstenber
+# Edit time:     495 min
 #
 """
 
@@ -220,7 +220,7 @@ def routersNoCrashes():
 def routersReady():
     return _forAllRouters(routerReady, 'routers ready')
 
-def nodeLives(node):
+def nodeLives(node, timeout=5):
     def _run(state):
         cmd = 'ps ax | grep -v grep | grep -q "umid=%s" && echo found' % node
         rc, stdout, stderr = yield from cotest.async_system(cmd)
@@ -235,7 +235,7 @@ def nodeLives(node):
             _debug('node %s not ok - %d' % (node, rc))
             return False
         return True
-    return cotest.Step(_run, name='%s lives' % node)
+    return cotest.Step(_run, name='%s lives' % node, timeout=timeout)
 
 def topologyLives():
     n = 'topology lives'
@@ -246,31 +246,31 @@ def topologyLives():
         return r
     return cotest.Step(_run, name=n)
 
-def nodeRun(node, cmd):
+def nodeRun(node, cmd, timeout=60):
     def _run(state):
         rc, *x = yield from _nodeExec(node, cmd)
         return rc == 0
-    return cotest.Step(_run, name='@%s:%s' % (node, cmd))
+    return cotest.Step(_run, name='@%s:%s' % (node, cmd), timeout=timeout)
 
-def nodeStart(node, cmd):
+def nodeStart(node, cmd, timeout=10):
     def _run(state):
         rc, *x = yield from _nodeExec(node, "start-stop-daemon -S -b -x %s" % cmd)
         return rc == 0
-    return cotest.Step(_run, name='start @%s:%s' % (node, cmd))
+    return cotest.Step(_run, name='start @%s:%s' % (node, cmd), timeout=timeout)
 
-def nodeKill(node, cmd):
+def nodeKill(node, cmd, timeout=10):
     def _run(state):
         rc, *x = yield from _nodeExec(node, "start-stop-daemon -K -x %s" % cmd)
         return rc == 0
-    return cotest.Step(_run, name='kill @%s:%s' % (node, cmd))
+    return cotest.Step(_run, name='kill @%s:%s' % (node, cmd), timeout=timeout)
 
-def nodePing4(node, remote):
+def nodePing4(node, remote, timeout=60):
     def _run(state):
         rc, stdout, stderr = yield from _nodeExec(node, 'ping -c 1 %s' % remote)
         return rc == 0 and ' bytes from ' in stdout.decode()
-    return cotest.Step(_run, name='@%s:ping %s' % (node, remote))
+    return cotest.Step(_run, name='@%s:ping %s' % (node, remote), timeout=timeout)
 
-def nodePing6(node, remote, args='', source='', c=1, n=True):
+def nodePing6(node, remote, args='', source='', c=1, n=True, timeout=60):
     if source:
         args = args + ' -I %s' % source
     if n:
@@ -280,9 +280,9 @@ def nodePing6(node, remote, args='', source='', c=1, n=True):
     def _run(state):
         rc, stdout, stderr = yield from _nodeExec(node, 'ping6 %s %s' % (args, remote))
         return rc == 0 and ' bytes from ' in stdout.decode()
-    return cotest.Step(_run, name='@%s:ping6 %s' % (node, remote))
+    return cotest.Step(_run, name='@%s:ping6 %s' % (node, remote), timeout=timeout)
 
-def nodeTraceroute6Contains(node, remote, data):
+def nodeTraceroute6Contains(node, remote, data,timeout=60):
     # In principle this should work; however, traceroute6 does
     # something stupid with tty and it's not compatible with mconsole
     # exec..
@@ -295,7 +295,7 @@ def nodeTraceroute6Contains(node, remote, data):
             _debug('missing %s from %s' % (data.decode(), r.decode()))
             return
         return True
-    return cotest.Step(_run, name='@%s:traceroute6 %s has %s' % (node, remote, data))
+    return cotest.Step(_run, name='@%s:traceroute6 %s has %s' % (node, remote, data), timeout=timeout)
 
 CMD_IP4_ADDRS='ip -4 addr | grep inet'
 CMD_IP6_ADDRS='ip -6 addr show scope global | grep -v deprecated | grep inet6'
