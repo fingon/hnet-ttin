@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Wed Jul 16 10:16:18 2014 mstenber
-# Edit time:     501 min
+# Last modified: Fri Jul 25 14:22:21 2014 mstenber
+# Edit time:     503 min
 #
 """
 
@@ -133,8 +133,12 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300, or
         state['clients'] = cd
         isd = {}
         state['isps'] = isd
+        home = os.environ['HOME']
+        rc, *x = yield from cotest.async_system('rm -rf %s' % os.path.join(home, '.netkit', 'mconsole'))
+        if rc:
+            _info('rm mconsole failed with exit code %d' % rc)
+            return
         with open('lab/%s/lab.conf' % topology) as f:
-            home = os.environ['HOME']
             for line in f:
                 m = _template_re(line)
                 if m is None: continue
@@ -146,10 +150,6 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300, or
                     isd[node] = {}
                 if 'client' in node:
                     cd[node] = {}
-                rc, *x = yield from cotest.async_system('rm -rf %s' % os.path.join(home, '.netkit', 'mconsole', node))
-                if rc:
-                    _info('rm mconsole failed with exit code %d' % rc)
-                    return
         assert rd, 'have to have routers present'
         cmd = '(cd lab/%s && lstart -p123 < /dev/null)' % topology
         rc, stdout, stderr = cotest.sync_system(cmd, timeout)
