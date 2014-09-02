@@ -8,11 +8,12 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Jun 16 13:00:19 2014 mstenber
-# Last modified: Mon Jun 16 13:01:54 2014 mstenber
+# Last modified: Tue Sep  2 11:16:28 2014 mstenber
 # Edit time:     1 min
 #
 
 uci set network.h0.mode=hybrid
+uci set network.h0.reqprefix=58
 uci commit network
 
 #/etc/init.d/network restart
