@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Jun  2 17:05:05 2014 mstenber
-# Last modified: Wed Jun  4 12:46:18 2014 mstenber
-# Edit time:     63 min
+# Last modified: Tue Sep  2 13:04:38 2014 mstenber
+# Edit time:     71 min
 #
 """
 
@@ -42,6 +42,7 @@ parser.add_argument('-T', '--tcp', action='store_true')
 parser.add_argument('-U', '--udp', action='store_true')
 parser.add_argument('-4', '--ipv4', action='store_true')
 parser.add_argument('-6', '--ipv6', action='store_true')
+parser.add_argument('-a', '--announce', action='store_true')
 parser.add_argument('-p', '--port', type=int, help='port number')
 parser.add_argument('-i', '--ip', type=str, help='internal ip')
 parser.add_argument('-t', '--timeout', type=int, default=1, help='timeout')
@@ -64,7 +65,8 @@ def handle_one(p, iface, timeout):
 
     if reply:
         print reply.show()
-        print 'got', reply.ext_ip, reply.ext_port
+        if reply.opcode != 128:
+            print 'got', reply.ext_ip, reply.ext_port
 
 
 if __name__ == '__main__':
@@ -73,12 +75,19 @@ if __name__ == '__main__':
     host = to_v6ish(args.ip)
     port = args.port
     protocol = 0
+    opcode = 1
+    if args.announce:
+        opcode = 0
     if args.tcp:
         protocol = 6
     elif args.udp:
         protocol = 17
-    assert protocol, 'choose -4 or -6'
-    assert port, 'choose port'
+    p = PCP(opcode=opcode)
+    if opcode:
+        assert protocol, 'choose -t or -u'
+        assert port, 'choose port'
+        p.protocol = protocol
+        p.int_port = port
     if is_ipv4(args.ip) or args.ipv4:
         #print conf.route.routes
         for r in conf.route.routes:
@@ -86,7 +95,7 @@ if __name__ == '__main__':
                 continue
             host = host or str(r[-1])
             host = to_v6ish(host)
-            p = PCP(opcode=1, int_port=port, protocol=protocol, src_ip=host)
+            p.src_ip = host
             p = IP(dst=r[2]) / UDP(sport=5350) / p
             handle_one(p, None, timeout=args.timeout)
             break
@@ -105,12 +114,12 @@ if __name__ == '__main__':
                 #dst = r[2] + ' %' + r[3]
                 dst = r[2]
                 iface = r[3]
-                p = PCP(opcode=1, int_port=port, protocol=protocol, src_ip=h)
+                p.src_ip = h
                 # If sending more than one, we have to use different nonces
                 p.nonce1 = random.randint(0,0xffffffff)
                 p.nonce2 = random.randint(0,0xffffffff)
                 p.nonce3 = random.randint(0,0xffffffff)
 
-                p = IPv6(src=h, dst=dst) / UDP(sport=1234) / p
-                handle_one(p, iface, timeout=args.timeout)
+                rp = IPv6(src=h, dst=dst) / UDP(sport=1234) / p
+                handle_one(rp, iface, timeout=args.timeout)
             break
