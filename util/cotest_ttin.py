@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Fri Jul 25 14:22:21 2014 mstenber
-# Edit time:     503 min
+# Last modified: Tue Sep  2 12:40:44 2014 mstenber
+# Edit time:     505 min
 #
 """
 
@@ -544,7 +544,7 @@ base_6_remote_ping_test = [
     waitRouterPrefix6('200', timeout=TIMEOUT_INITIAL),
     # slight delay acceptable after first-hop router gets address
     cotest.RepeatStep(nodeHasPrefix6('client', '200'),
-                      wait=1, timeout=5),
+                      wait=1, timeout=TIMEOUT_SHORT),
     cotest.RepeatStep(nodePing6('client', 'h-server'),
                       wait=1, timeout=TIMEOUT),
     cotest.RepeatStep(nodePing6('client', 'server.v6.lab.example.com'),
