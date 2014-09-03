@@ -15,7 +15,9 @@ model-fs=../../openwrt-uml-bin/openwrt-uml-ext4.img
 # override preinit
 #append_init=init=/sbin/preinit
 
-append_root=root=98:0
+# Not needed since 3.9.2014 (changed my netkit default not to have
+# partitions either)
+#append_root=root=98:0
 
 0=HOME
 1=ISP
