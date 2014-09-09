@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Tue Sep  2 16:50:22 2014 mstenber
-# Edit time:     249 min
+# Last modified: Tue Sep  9 10:21:21 2014 mstenber
+# Edit time:     250 min
 #
 """
 
@@ -267,7 +267,7 @@ class HybridFallback(Hybrid):
     router = 'owrt-router-debug'
 
 class Adhoc(unittest.TestCase):
-    topology = 'home7'
+    topology = 'home7-owrt-adhoc'
     router = 'owrt-router-adhoc'
     def test(self):
         l = base_tests[:]
