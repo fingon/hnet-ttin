@@ -1,3 +1,7 @@
-inherit=hnet-build,owrt-feed-dhclient,skv-6rd
-mem=64
+inherit=hnet-build
+#mem=64
+# w/o valgrind this might work, or not
+
+mem=256
+# w/ valgrind, this is enough
 

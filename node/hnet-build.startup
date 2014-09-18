@@ -14,7 +14,16 @@ then
     HNET=`realpath /hostroot$HOSTLAB`
     HNET=`realpath $HNET/../../..`
     echo "export HNET=$HNET" >> $ENVSH
-    echo 'export LD_LIBRARY_PATH=/hostroot/lib/x86_64-linux-gnu:/hostroot/lib:$HNET/build/lib' >> $ENVSH
+
+# this doesn't seem to work that well
+# (shell scripts call system tools (NetKit Debian ones), 
+# so the libcs better be in sync _in any case_.
+
+#    echo 'export LD_LIBRARY_PATH=/hostroot/lib/x86_64-linux-gnu:/hostroot/lib:$HNET/build/lib' >> $ENVSH
+
+# but at least this is mandatory
+    echo 'export LD_LIBRARY_PATH=/hostroot/lib:$HNET/build/lib' >> $ENVSH
+
     echo 'export PATH=$HNET/build/bin:$HNET/build/sbin:$PATH' >> $ENVSH
     #echo 'export CORE=$HNET/component/core' >> $ENVSH
     echo 'export BUILD=$HNET/build' >> $ENVSH

@@ -1,41 +1,83 @@
+# Use the hnetenv for this session
 . /usr/bin/hnetenv.sh
 
-for BIN in babeld jshn odhcp6c uci
+# Also, make the new shell spawned for root use it too
+echo '. /usr/bin/hnetenv.sh' >> /root/.bashrc
+
+# These shouldn't be neccessary due to hnetenv.
+#for FILE in $BUILD/bin/* $BUILD/sbin/*
+#do
+#        if [ -x $FILE -o -h $FILE ]
+#        then
+#                ln -sf $FILE /usr/bin
+#        fi
+#done
+
+# However, support files have fixed places..
+for DIR in $BUILD/share/*
 do
-        ln -sf $BUILD/bin/$BIN /usr/bin
-done
-for BIN in hnet-{call,ifup,ifdown} hnetd hnetd-backend odhcpd ohybridproxy
-do
-        ln -sf $BUILD/sbin/$BIN /usr/sbin
+        if [ -d $DIR ]
+        then
+               ln -sf $DIR /usr/share/
+        fi
 done
 
-ln -sf $BUILD/share/hnetd /usr/share/
+ln -s $BUILD/sbin/hnetd-backend /usr/sbin
 
 mkdir -p /usr/local/var/run
+
+_withdev () {
+         DEV=$1
+         shift
+         ip link | grep -q ${DEV}: && eval $*
+}
 
 # .. just in case (if this is used stand-alone)
 # enable ipv6 forwarding
 echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
 
 # Make sure interfaces are up
-ifconfig eth0 up
-ifconfig eth1 up
-ifconfig eth2 up
-ifconfig eth3 up
+_withdev eth0 ifconfig eth0 up
+_withdev eth1 ifconfig eth1 up
+_withdev eth2 ifconfig eth2 up
+_withdev eth3 ifconfig eth3 up
 
+# Some kernel modules might be useful. If it fails, too bad.
+# (These are not autoloaded, unlike most modules, at least as of 09/2014.)
+modprobe ipt_REJECT 
+modprobe ip6t_REJECT
+
+mkdir -p /tmp/dnsmasq.d
+
+LOGDIR=/hostlab/logs/`hostname`
 mkdir -p $LOGDIR
 
 # Start odhcpd
 sleep 1
 odhcpd &
 
-# Start hnetd (need some delay to wait for ubusd to go up, sigh..)
+VALGRIND=
+
+# Default valgrind mode
+#VALGRIND="valgrind --suppressions=/valgrind-suppressions.txt"
+
+# If lacking faith in the current suppression list
+VALGRIND=valgrind
+
+# If adding new suppression targets..
+#VALGRIND="valgrind --suppressions=/valgrind-suppressions.txt --gen-suppressions=all"
+
+HNETD_ARGS=""
+HNETD_ARGS="-n $HOSTNAME -r /bin/true -o /usr/share/hnetd/ohp.script -c /usr/share/hnetd/pcp.script -d /etc/init.d/dnsmasq -f /tmp/dnsmasq.d/hnet.conf --loglevel 7"
+
+# Start hnetd 
 sleep 1
-hnetd -r /bin/true 2> $LOGDIR/hnetd.stderr > $LOGDIR/hnetd.stdout &
+# default dash is braindead, even worse than busybox, on Debian..
+bash -c "`echo $VALGRIND` hnetd `echo $HNETD_ARGS` >& $LOGDIR/hnetd.log" &
 
 # And configure it
-hnet-ifup eth0
-hnet-ifup eth1
-hnet-ifup eth2
-hnet-ifup eth3
+_withdev eth0 hnet-ifup eth0 &
+_withdev eth1 hnet-ifup eth1 &
+_withdev eth2 hnet-ifup eth2 &
+_withdev eth3 hnet-ifup eth3 &
 
