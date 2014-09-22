@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Tue Sep  9 10:21:21 2014 mstenber
-# Edit time:     250 min
+# Last modified: Mon Sep 22 13:30:48 2014 mstenber
+# Edit time:     254 min
 #
 """
 
@@ -55,14 +55,12 @@ class Basic(unittest.TestCase):
     def test_6only(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6')]
         l = l + base_6_tests + fw_test
-        l = l + [nodeHasPrefix6('client', '2000:')]
         tc = TestCase(l)
         assert cotest.run(tc)
     def test_6only_64(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6-64')]
         l = l + [cotest.NotStep(nodeHasPrefix6('client', '2000:'))]
         l = l + [nodeRun('client', 'dhclient -6 eth0')]
-        l = l + [nodeHasPrefix6('client', '2000:')]
         l = l + base_6_tests + fw_test
         tc = TestCase(l)
         assert cotest.run(tc)
@@ -70,7 +68,6 @@ class Basic(unittest.TestCase):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6-62')]
         l = l + [cotest.NotStep(nodeHasPrefix6('client', '2000:'))]
         l = l + [nodeRun('client', 'dhclient -6 eth0')]
-        l = l + [nodeHasPrefix6('client', '2000:')]
         l = l + base_6_tests + fw_test
         tc = TestCase(l)
         assert cotest.run(tc)
@@ -79,7 +76,6 @@ class Basic(unittest.TestCase):
         # lifetime, it should disappear from the client.
         l = [startTopology(self.topology, self.router, ispTemplate='isp6-inf')]
         l = l + base_6_tests + fw_test
-        l = l + [nodeHasPrefix6('client', '2000:')]
 
         # Kill ipv6 uplink -> should disappear from client's preferred
         # addresses in a minute
