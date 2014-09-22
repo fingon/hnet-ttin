@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Mon Sep 22 13:30:48 2014 mstenber
-# Edit time:     254 min
+# Last modified: Mon Sep 22 14:51:04 2014 mstenber
+# Edit time:     256 min
 #
 """
 
@@ -59,6 +59,7 @@ class Basic(unittest.TestCase):
         assert cotest.run(tc)
     def test_6only_64(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6-64')]
+        l = l + [waitRouterPrefix6('200', timeout=TIMEOUT_INITIAL)]
         l = l + [cotest.NotStep(nodeHasPrefix6('client', '2000:'))]
         l = l + [nodeRun('client', 'dhclient -6 eth0')]
         l = l + base_6_tests + fw_test
@@ -66,6 +67,7 @@ class Basic(unittest.TestCase):
         assert cotest.run(tc)
     def test_6only_62(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6-62')]
+        l = l + [waitRouterPrefix6('200', timeout=TIMEOUT_INITIAL)]
         l = l + [cotest.NotStep(nodeHasPrefix6('client', '2000:'))]
         l = l + [nodeRun('client', 'dhclient -6 eth0')]
         l = l + base_6_tests + fw_test
