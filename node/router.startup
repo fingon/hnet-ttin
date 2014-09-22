@@ -1,3 +1,6 @@
+# Dump cores
+ulimit -c unlimited
+
 # Use the hnetenv for this session
 . /usr/bin/hnetenv.sh
 
@@ -52,10 +55,6 @@ mkdir -p /tmp/dnsmasq.d
 LOGDIR=/hostlab/logs/`hostname`
 mkdir -p $LOGDIR
 
-# Start odhcpd
-sleep 1
-odhcpd &
-
 VALGRIND=
 
 # Default valgrind mode
@@ -70,14 +69,20 @@ VALGRIND=valgrind
 HNETD_ARGS=""
 HNETD_ARGS="-n $HOSTNAME -r /bin/true -o /usr/share/hnetd/ohp.script -c /usr/share/hnetd/pcp.script -d /etc/init.d/dnsmasq -f /tmp/dnsmasq.d/hnet.conf --loglevel 7"
 
+# Start odhcpd
+# .. no point really, backend (re)starts it a lot
+#sleep 1
+#bash -c "`echo $VALGRIND` odhcpd >& $LOGDIR/odhcpd.log >& $LOGDIR/odhcpd.log" &
+
 # Start hnetd 
-sleep 1
 # default dash is braindead, even worse than busybox, on Debian..
 bash -c "`echo $VALGRIND` hnetd `echo $HNETD_ARGS` >& $LOGDIR/hnetd.log" &
 
 # And configure it
-_withdev eth0 hnet-ifup eth0 &
-_withdev eth1 hnet-ifup eth1 &
-_withdev eth2 hnet-ifup eth2 &
-_withdev eth3 hnet-ifup eth3 &
+_withdev eth0 hnet-ifup eth0
+_withdev eth1 hnet-ifup eth1
+_withdev eth2 hnet-ifup eth2
+_withdev eth3 hnet-ifup eth3
 
+# Mark that the UML VM has finished booting so tests can start
+echo done > $LOGDIR/status

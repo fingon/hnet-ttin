@@ -9,7 +9,7 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Sep  2 12:40:44 2014 mstenber
+# Last modified: Thu Sep 18 17:48:26 2014 mstenber
 # Edit time:     505 min
 #
 """
@@ -102,7 +102,7 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300, or
         with open('util/cotest.py') as f:
             pass
         args = []
-        if routerTemplate:
+        if routerTemplate and routerTemplate != originalRouterTemplate:
             args.append('--replace-template')
             args.append('%s=%s' % (originalRouterTemplate, routerTemplate))
         if ispTemplate:
