@@ -22,7 +22,7 @@ then
 #    echo 'export LD_LIBRARY_PATH=/hostroot/lib/x86_64-linux-gnu:/hostroot/lib:$HNET/build/lib' >> $ENVSH
 
 # but at least this is mandatory
-    echo 'export LD_LIBRARY_PATH=/hostroot/lib:$HNET/build/lib' >> $ENVSH
+    echo 'export LD_LIBRARY_PATH=$HNET/build/lib' >> $ENVSH
 
     echo 'export PATH=$HNET/build/bin:$HNET/build/sbin:$PATH' >> $ENVSH
     #echo 'export CORE=$HNET/component/core' >> $ENVSH
