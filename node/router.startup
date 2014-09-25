@@ -69,6 +69,10 @@ VALGRIND=valgrind
 HNETD_ARGS=""
 HNETD_ARGS="-n $HOSTNAME -r /bin/true -o /usr/share/hnetd/ohp.script -c /usr/share/hnetd/pcp.script -d /etc/init.d/dnsmasq -f /tmp/dnsmasq.d/hnet.conf --loglevel 7"
 
+# Start miniupnpd
+sh $BUILD/etc/miniupnpd/iptables_init.sh
+miniupnpd -f /etc/miniupnpd.conf
+
 # Start odhcpd
 # .. no point really, backend (re)starts it a lot
 #sleep 1
