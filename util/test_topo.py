@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Mon Sep 22 14:51:04 2014 mstenber
-# Edit time:     256 min
+# Last modified: Thu Sep 25 11:18:07 2014 mstenber
+# Edit time:     257 min
 #
 """
 
@@ -68,7 +68,9 @@ class Basic(unittest.TestCase):
     def test_6only_62(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6-62')]
         l = l + [waitRouterPrefix6('200', timeout=TIMEOUT_INITIAL)]
-        l = l + [cotest.NotStep(nodeHasPrefix6('client', '2000:'))]
+        #l = l + [cotest.NotStep(nodeHasPrefix6('client', '2000:'))]
+        # No guarantee that the client may not have gotten /64 - this is
+        # race condition. only in 6only_64 is it guaranteed no /64
         l = l + [nodeRun('client', 'dhclient -6 eth0')]
         l = l + base_6_tests + fw_test
         tc = TestCase(l)
