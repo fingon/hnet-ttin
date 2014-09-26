@@ -50,8 +50,6 @@ _withdev eth3 ifconfig eth3 up
 modprobe ipt_REJECT 
 modprobe ip6t_REJECT
 
-mkdir -p /tmp/dnsmasq.d
-
 LOGDIR=/hostlab/logs/`hostname`
 mkdir -p $LOGDIR
 
@@ -66,11 +64,18 @@ VALGRIND=valgrind
 # If adding new suppression targets..
 #VALGRIND="valgrind --suppressions=/valgrind-suppressions.txt --gen-suppressions=all"
 
+HOSTNAME=`hostname`
 HNETD_ARGS=""
-HNETD_ARGS="-n $HOSTNAME -r /bin/true -o /usr/share/hnetd/ohp.script -c /usr/share/hnetd/pcp.script -d /etc/init.d/dnsmasq -f /tmp/dnsmasq.d/hnet.conf --loglevel 7"
+HNETD_ARGS="-r /bin/true -o /usr/share/hnetd/ohp.script -c /usr/share/hnetd/pcp.script -d /etc/init.d/dnsmasq -f /etc/dnsmasq.d/hnet.conf -n $HOSTNAME -p /var/run/hnet_pd --loglevel 7"
 
 # Start miniupnpd
-sh $BUILD/etc/miniupnpd/iptables_init.sh
+#sh $BUILD/etc/miniupnpd/iptables_init.sh
+iptables -t nat -N MINIUPNPD
+iptables -t mangle -N MINIUPNPD
+iptables -t filter -N MINIUPNPD
+ip6tables -t filter -N MINIUPNPD
+
+
 miniupnpd -f /etc/miniupnpd.conf
 
 # Start odhcpd
@@ -87,6 +92,9 @@ _withdev eth0 hnet-ifup eth0
 _withdev eth1 hnet-ifup eth1
 _withdev eth2 hnet-ifup eth2
 _withdev eth3 hnet-ifup eth3
+
+# We need mdnsd too
+mdnsd
 
 # Mark that the UML VM has finished booting so tests can start
 echo done > $LOGDIR/status
