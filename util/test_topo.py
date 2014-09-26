@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Thu Sep 25 11:18:07 2014 mstenber
-# Edit time:     257 min
+# Last modified: Fri Sep 26 13:41:35 2014 mstenber
+# Edit time:     262 min
 #
 """
 
@@ -29,42 +29,42 @@ _logger = logging.getLogger('test_topo')
 _debug = _logger.debug
 _info = _logger.info
 
+class UnitTestCase(unittest.TestCase):
+    def tcRun(self, l):
+        tc = TestCase(l)
+        assert cotest.run(tc)
+
 
 # XXX - validate address lifetimes at client
-class Basic(unittest.TestCase):
+class Basic(UnitTestCase):
     topology = 'home7'
     router = 'owrt-router'
     def test(self):
         l = base_tests[:]
         l[0] = startTopology(self.topology, self.router)
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
     def test_ula(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp'),
              waitRouterPrefix6('fd')] + base_6_local_sd_test
         # local_ip isn't applicable as no GUA and it checks for non-fd::/8
         # + fw_test - not relevant - no outside!
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
     def test_4only(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp4')]
         l = l + base_4_tests + base_6_local_tests + fw_test
         l.remove(base_6_local_ip_step) # We won't have GUA
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
     def test_6only(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6')]
         l = l + base_6_tests + fw_test
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
     def test_6only_64(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6-64')]
         l = l + [waitRouterPrefix6('200', timeout=TIMEOUT_INITIAL)]
         l = l + [cotest.NotStep(nodeHasPrefix6('client', '2000:'))]
         l = l + [nodeRun('client', 'dhclient -6 eth0')]
         l = l + base_6_tests + fw_test
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
     def test_6only_62(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6-62')]
         l = l + [waitRouterPrefix6('200', timeout=TIMEOUT_INITIAL)]
@@ -73,8 +73,7 @@ class Basic(unittest.TestCase):
         # race condition. only in 6only_64 is it guaranteed no /64
         l = l + [nodeRun('client', 'dhclient -6 eth0')]
         l = l + base_6_tests + fw_test
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
     def test_6only_inf_cpe_isp_down(self):
         # Basic idea: when uplink disappears even with infinite
         # lifetime, it should disappear from the client.
@@ -88,8 +87,7 @@ class Basic(unittest.TestCase):
         l = l + [cotest.RepeatStep(cotest.NotStep(nodeHasPrefix6('client', '2000:')),
                                    timeout=TIMEOUT, wait=1)]
 
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
     def test_6only_link_down_up(self):
         # Make sure if we ifdown client facing interface, it gets up
         # with same address. We test that by NOT updating the client
@@ -105,14 +103,12 @@ class Basic(unittest.TestCase):
         # of 2014-04-17..
         l = l + [cotest.RepeatStep(nodePingFromAll6('client', 'h-server'),
                                    wait=1, timeout=TIMEOUT)]
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
     def test_6rd(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp4-6rd')]
         l = l + base_6_tests + base_4_tests + fw_test
         l = l + [nodeHasPrefix6('client', '2001:')]
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
     def test_6rd_6(self):
         l = [startTopology(self.topology, self.router,
                            ispTemplate='isp4-6rd-6'),
@@ -122,13 +118,12 @@ class Basic(unittest.TestCase):
         l = l + base_6_tests + base_4_tests + fw_test
         l = l + [nodeHasPrefix6('client', '2000:'),
                  nodeHasPrefix6('client', '2001:')]
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
 
 class BasicFallback(Basic):
     router = 'owrt-router-debug'
 
-class MH(unittest.TestCase):
+class MH(UnitTestCase):
     topology = 'home10-3isp'
     router = 'owrt-router'
     def test(self):
@@ -140,13 +135,12 @@ class MH(unittest.TestCase):
                  nodeHasPrefix6('client', '2000:cafe:'),
                  nodeHasPrefix6('client', '2000:beef:')]
 
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
 
 class MHFallback(MH):
     router = 'owrt-router-debug'
 
-class Lease(unittest.TestCase):
+class Lease(UnitTestCase):
     def test(self):
         l = base_tests[:]
         # initially, make sure stuff works as normal
@@ -156,13 +150,12 @@ class Lease(unittest.TestCase):
         tl = base_4_tests[:]
         tl.remove(base_4_setup_test)
         l = l + base_6_tests + tl + fw_test
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
 
 class LeaseFallback(Lease):
     router = 'owrt-router-debug'
 
-class Large(unittest.TestCase):
+class Large(UnitTestCase):
     topology = 'home14'
     router = 'owrt-router'
     def setUp(self):
@@ -173,7 +166,7 @@ class Large(unittest.TestCase):
         self.l = l
     def test(self):
         tc = TestCase(self.l)
-        assert cotest.run(tc)
+        assert cotest.tcRun(tc)
     def test_mutation(self):
         # Initial route should include ir9
         l = self.l
@@ -193,8 +186,7 @@ class Large(unittest.TestCase):
         # 'faster' because routes are better (no waiting 180 seconds)
         l = l + [nodeGo('ir9'), nodeStop('ir4'), nodeStop('ir6')]
         l = l + base_6_tests + base_4_remote_tests
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
 
 
 class LargeFallback(Large):
@@ -202,7 +194,7 @@ class LargeFallback(Large):
 
 # Specific ~test cases with unique topology
 
-class DownPD(unittest.TestCase):
+class DownPD(UnitTestCase):
     topology = 'home8'
     router = 'owrt-router-debug'
     def test(self):
@@ -218,10 +210,9 @@ class DownPD(unittest.TestCase):
         # they _are_ bound to fail.
         l.remove(base_6_remote_pcp_test)
         l.remove(base_4_remote_pcp_test)
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
 
-class Guest(unittest.TestCase):
+class Guest(UnitTestCase):
     topology = 'home7-owrt-guest'
     router = 'owrt-router-debug'
     def test(self):
@@ -232,10 +223,9 @@ class Guest(unittest.TestCase):
         l = l + [cotest.NotStep(base_6_local_sd_test, timeout=TIMEOUT_SHORT)]
         l = l + [cotest.NotStep(base_4_local_test, timeout=TIMEOUT_SHORT)]
         # XXX - make sure no HNCP and TCP traffic in tcpdump
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
 
-class Hybrid(unittest.TestCase):
+class Hybrid(UnitTestCase):
     topology = 'home7-owrt-hybrid'
     router = 'owrt-router'
     tests_6 = [base_6_remote_ping_test, # PCP N/A probably
@@ -248,37 +238,33 @@ class Hybrid(unittest.TestCase):
     def test(self):
         l = [startTopology(self.topology, self.router)]
         l = l + self.tests_6 + self.tests_4
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
     def test_4only(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp4')]
         l = l + self.tests_4
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
     @unittest.skip('current default OpenWrt cannot handle IPv6-only ISP')
     def test_6only(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6')]
         l = l + self.tests_6
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
 
 
 class HybridFallback(Hybrid):
     router = 'owrt-router-debug'
 
-class Adhoc(unittest.TestCase):
+class Adhoc(UnitTestCase):
     topology = 'home7-owrt-adhoc'
     router = 'owrt-router-adhoc'
     def test(self):
         l = base_tests[:]
         l[0] = startTopology(self.topology, self.router)
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
 
 class AdhocFallback(Adhoc):
     router = 'owrt-router-debug-adhoc'
 
-class Custom(unittest.TestCase):
+class Custom(UnitTestCase):
     topology = 'home7-owrt-custom'
     router = 'owrt-router'
     def test(self):
@@ -295,8 +281,7 @@ class Custom(unittest.TestCase):
                  cotest.RepeatStep(nodePing6('client', '2000:dead:bee0:70::42'), wait=1, timeout=TIMEOUT_SHORT),
                  cotest.RepeatStep(nodePing4('client', '172.23.0.13'), wait=1, timeout=TIMEOUT_SHORT),
                  ]
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
 
 def ensureNoSamePrefix6(h1, i1, h2, i2):
     c1 = CMD_IP6_ADDRS_BASE % ('dev %s' % i1)
@@ -316,7 +301,7 @@ def ensureNoSamePrefix6(h1, i1, h2, i2):
         return True
     return [a1, a2, cotest.Step(_run, name='ensure no same v6 prefix')]
 
-class Mutate(unittest.TestCase):
+class Mutate(UnitTestCase):
     topology = 'home7-nsa'
     router = 'owrt-router'
     iterations = 1
@@ -338,8 +323,7 @@ class Mutate(unittest.TestCase):
                      cotest.RepeatStep(nodePing4('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
                      ]
 
-        tc = TestCase(l)
-        assert cotest.run(tc)
+            self.tcRun(l)
     def test_move(self):
         # Christopher Franke-originated test;
         # (Same as test_replace, but using different plug ir3-2)
@@ -365,13 +349,12 @@ class Mutate(unittest.TestCase):
                      cotest.RepeatStep(ensureNoSamePrefix6('ir3', 'eth2', 'cpe', 'eth0'), wait=1, timeout=TIMEOUT),
                      ]
 
-        tc = TestCase(l)
-        assert cotest.run(tc)
+            self.tcRun(l)
 
 class MutateFallback(Mutate):
     router = 'owrt-router-debug'
 
-class Home4(unittest.TestCase):
+class Home4(UnitTestCase):
     topology = 'ow4'
     router = 'owrt-router-debug'
     def test(self):
@@ -389,8 +372,7 @@ class Home4(unittest.TestCase):
                  cotest.RepeatStep(nodePing4('client', 'openwrt.h0.openwrt.home'), wait=1, timeout=TIMEOUT_SHORT),
                  ]
 
-        tc = TestCase(l)
-        assert cotest.run(tc)
+        self.tcRun(l)
 
 
 if __name__ == '__main__':

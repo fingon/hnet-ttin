@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Thu Sep 18 17:48:26 2014 mstenber
-# Edit time:     505 min
+# Last modified: Fri Sep 26 13:45:04 2014 mstenber
+# Edit time:     515 min
 #
 """
 
@@ -213,6 +213,11 @@ def _forAllRouters(f, n):
         return r
     return cotest.Step(_run, name=n)
 
+def addRewrites(d):
+    def _run(state):
+        state.setdefault('rewrite', {}).update(d)
+        return True
+    return cotest.Step(_run, name='addRewrites %s' % repr(d))
 
 def routersNoCrashes():
     return _forAllRouters(routerNoCrashes, 'routers did not crash')
@@ -264,6 +269,11 @@ def nodeKill(node, cmd):
         return rc == 0
     return cotest.Step(_run, name='kill @%s:%s' % (node, cmd))
 
+def _rewriteFQDN(state, remote):
+    h = state.get('rewrite', {})
+    remote = h.get(remote, remote)
+    return remote
+
 def nodePing6(node, remote, args='', source='', c=1, n=True, timeout=None, cmd='ping6'):
     if source:
         args = args + ' -I %s' % source
@@ -274,7 +284,8 @@ def nodePing6(node, remote, args='', source='', c=1, n=True, timeout=None, cmd='
     if timeout:
         args = args + ' -w %d' % timeout
     def _run(state):
-        rc, stdout, stderr = yield from _nodeExec(node, '%s %s %s' % (cmd, args, remote))
+        nremote = _rewriteFQDN(state, remote)
+        rc, stdout, stderr = yield from _nodeExec(node, '%s %s %s' % (cmd, args, nremote))
         return rc == 0 and ' bytes from ' in stdout.decode()
     return cotest.Step(_run, name='@%s:%s %s' % (node, cmd, remote))
 
