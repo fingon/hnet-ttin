@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Fri Sep 26 13:45:04 2014 mstenber
-# Edit time:     515 min
+# Last modified: Mon Sep 29 14:06:02 2014 mstenber
+# Edit time:     518 min
 #
 """
 
@@ -105,6 +105,7 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300, or
         if routerTemplate and routerTemplate != originalRouterTemplate:
             args.append('--replace-template')
             args.append('%s=%s' % (originalRouterTemplate, routerTemplate))
+        state['routerTemplate'] = routerTemplate or originalRouterTemplate
         if ispTemplate:
             args.append('--replace-template')
             args.append('isp4-6=%s' % ispTemplate)
@@ -385,6 +386,9 @@ def nodePingToAll6(node, remote, **kwargs):
 
 def nodeInterfaceFirewallZoneIs(node, interface, zone):
     def _run(state):
+        # Cannot check firewall state on Debian?
+        if state['routerTemplate'] == 'router':
+            return True
         cmd = 'ifstatus %s | grep "\\"zone\\": " | cut -d ":" -f 2' % interface
         rc, r, stderr = yield from _nodeExec(node, cmd)
         if rc:
