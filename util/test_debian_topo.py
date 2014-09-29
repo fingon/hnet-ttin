@@ -9,8 +9,8 @@
 # Copyright (c) 2014 Markus Stenberg
 #
 # Created:       Thu Sep 18 17:39:46 2014 mstenber
-# Last modified: Fri Sep 26 13:44:43 2014 mstenber
-# Edit time:     9 min
+# Last modified: Mon Sep 29 14:18:16 2014 mstenber
+# Edit time:     12 min
 #
 """
 
@@ -38,6 +38,19 @@ class DebianBasic(test_topo.Basic):
         l = l[:]
         l[0:0] = [cotest_ttin.addRewrites(rewrites)]
         test_topo.Basic.tcRun(self, l)
+
+class DebianMH(test_topo.MH):
+    router = 'router'
+    tcRun = DebianBasic.tcRun
+
+class DebianLarge(test_topo.Large):
+    router = 'router'
+    tcRun = DebianBasic.tcRun
+
+class DebianDownPD(test_topo.DownPD):
+    router = 'router'
+    tcRun = DebianBasic.tcRun
+
 if __name__ == '__main__':
     import logging
     logging.basicConfig(level=logging.DEBUG,
