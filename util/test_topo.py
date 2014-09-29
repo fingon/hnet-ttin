@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Fri Sep 26 13:41:35 2014 mstenber
-# Edit time:     262 min
+# Last modified: Mon Sep 29 14:21:09 2014 mstenber
+# Edit time:     265 min
 #
 """
 
@@ -165,8 +165,7 @@ class Large(UnitTestCase):
                 waitRouterPrefix6('200', wait=5, timeout=300)]
         self.l = l
     def test(self):
-        tc = TestCase(self.l)
-        assert cotest.tcRun(tc)
+        self.tcRun(self.l)
     def test_mutation(self):
         # Initial route should include ir9
         l = self.l
