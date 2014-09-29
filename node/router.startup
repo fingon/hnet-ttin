@@ -26,6 +26,7 @@ do
 done
 
 ln -s $BUILD/sbin/hnetd-backend /usr/sbin
+ln -fs $BUILD/bin/dnsmasq /usr/sbin
 
 mkdir -p /usr/local/var/run
 
@@ -68,15 +69,16 @@ HOSTNAME=`hostname`
 HNETD_ARGS=""
 HNETD_ARGS="-r /bin/true -o /usr/share/hnetd/ohp.script -c /usr/share/hnetd/pcp.script -d /etc/init.d/dnsmasq -f /etc/dnsmasq.d/hnet.conf -n $HOSTNAME -p /var/run/hnet_pd --loglevel 7"
 
-# Start miniupnpd
+# Start miniupnpd (only on CPE nodes)
 #sh $BUILD/etc/miniupnpd/iptables_init.sh
-iptables -t nat -N MINIUPNPD
-iptables -t mangle -N MINIUPNPD
-iptables -t filter -N MINIUPNPD
-ip6tables -t filter -N MINIUPNPD
-
-
-miniupnpd -f /etc/miniupnpd.conf
+if [ `echo $HOSTNAME | sed 's/cpe.*$/cpe/'` = "cpe" ]
+then
+        iptables -t nat -N MINIUPNPD
+        iptables -t mangle -N MINIUPNPD
+        iptables -t filter -N MINIUPNPD
+        ip6tables -t filter -N MINIUPNPD
+        miniupnpd -f /etc/miniupnpd.conf
+fi
 
 # Start odhcpd
 # .. no point really, backend (re)starts it a lot
