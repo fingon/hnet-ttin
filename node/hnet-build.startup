@@ -30,3 +30,9 @@ then
 else
     echo "echo 'No HOSTLAB available yet hnetenv.sh sourced?'" >> $ENVSH
 fi
+
+# Make symlink to own user account so that e.g. gdb will find sources
+ASSIGN_VARIABLES=`cat /proc/cmdline | awk -v FS== -v RS=' ' '
+            ($1=="hosthome") {print "HOSTHOME=" $2}'`
+eval "$ASSIGN_VARIABLES"
+ln -s /hosthome $HOSTHOME
