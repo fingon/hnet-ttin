@@ -1,0 +1,163 @@
+diff --git a/include/net/xfrm.h b/include/net/xfrm.h
+index fb5654a..8871e88 100644
+--- a/include/net/xfrm.h
++++ b/include/net/xfrm.h
+@@ -1250,7 +1250,7 @@ static __inline__ int
+ __xfrm4_state_addr_check(const struct xfrm_state *x,
+ 			 const xfrm_address_t *daddr, const xfrm_address_t *saddr)
+ {
+-	if (daddr->a4 == x->id.daddr.a4 &&
++	if ((daddr->a4 == x->id.daddr.a4 || !daddr->a4 || !x->id.daddr.a4) &&
+ 	    (saddr->a4 == x->props.saddr.a4 || !saddr->a4 || !x->props.saddr.a4))
+ 		return 1;
+ 	return 0;
+@@ -1260,9 +1260,11 @@ static __inline__ int
+ __xfrm6_state_addr_check(const struct xfrm_state *x,
+ 			 const xfrm_address_t *daddr, const xfrm_address_t *saddr)
+ {
+-	if (ipv6_addr_equal((struct in6_addr *)daddr, (struct in6_addr *)&x->id.daddr) &&
++	if ((ipv6_addr_equal((struct in6_addr *)daddr, (struct in6_addr *)&x->id.daddr) ||
++	     ipv6_addr_any((struct in6_addr *)daddr) ||
++	     ipv6_addr_any((struct in6_addr *)&x->id.daddr)) &&
+ 	    (ipv6_addr_equal((struct in6_addr *)saddr, (struct in6_addr *)&x->props.saddr) ||
+-	     ipv6_addr_any((struct in6_addr *)saddr) || 
++	     ipv6_addr_any((struct in6_addr *)saddr) ||
+ 	     ipv6_addr_any((struct in6_addr *)&x->props.saddr)))
+ 		return 1;
+ 	return 0;
+diff --git a/net/xfrm/xfrm_state.c b/net/xfrm/xfrm_state.c
+index 40f1b3e..a29c5da 100644
+--- a/net/xfrm/xfrm_state.c
++++ b/net/xfrm/xfrm_state.c
+@@ -669,22 +669,24 @@ static struct xfrm_state *__xfrm_state_lookup(struct net *net, u32 mark,
+ 					      __be32 spi, u8 proto,
+ 					      unsigned short family)
+ {
+-	unsigned int h = xfrm_spi_hash(net, daddr, spi, proto, family);
++	static xfrm_address_t addr_wildcard = { };
+ 	struct xfrm_state *x;
++	int i;
+ 
+-	hlist_for_each_entry(x, net->xfrm.state_byspi+h, byspi) {
+-		if (x->props.family != family ||
+-		    x->id.spi       != spi ||
+-		    x->id.proto     != proto ||
+-		    !xfrm_addr_equal(&x->id.daddr, daddr, family))
+-			continue;
+-
+-		if ((mark & x->mark.m) != x->mark.v)
+-			continue;
+-		xfrm_state_hold(x);
+-		return x;
++	for (i = 0 ; i < 2 ; i++) {
++		struct xfrm_address_t *addr = i ? &addr_wildcard : daddr;
++		unsigned int h = xfrm_spi_hash(net, addr, spi, proto, family);
++		hlist_for_each_entry(x, net->xfrm.state_byspi+h, byspi) {
++			if (x->props.family != family ||
++			    x->id.spi       != spi ||
++			    x->id.proto     != proto ||
++			    x->mark.v       != (mark & x->mark.m) ||
++			    !xfrm_addr_equal(&x->id.daddr, addr, family))
++				continue;
++			xfrm_state_hold(x);
++			return x;
++		}
+ 	}
+-
+ 	return NULL;
+ }
+ 
+@@ -699,12 +701,11 @@ static struct xfrm_state *__xfrm_state_lookup_byaddr(struct net *net, u32 mark,
+ 	hlist_for_each_entry(x, net->xfrm.state_bysrc+h, bysrc) {
+ 		if (x->props.family != family ||
+ 		    x->id.proto     != proto ||
++		    x->mark.v       != (mark & x->mark.m) ||
+ 		    !xfrm_addr_equal(&x->id.daddr, daddr, family) ||
+ 		    !xfrm_addr_equal(&x->props.saddr, saddr, family))
+ 			continue;
+ 
+-		if ((mark & x->mark.m) != x->mark.v)
+-			continue;
+ 		xfrm_state_hold(x);
+ 		return x;
+ 	}
+@@ -779,50 +780,40 @@ xfrm_state_find(const xfrm_address_t *daddr, const xfrm_address_t *saddr,
+ 		struct xfrm_policy *pol, int *err,
+ 		unsigned short family)
+ {
+-	static xfrm_address_t saddr_wildcard = { };
++	static xfrm_address_t addr_wildcard = { };
+ 	struct net *net = xp_net(pol);
+-	unsigned int h, h_wildcard;
++	unsigned int h;
+ 	struct xfrm_state *x, *x0, *to_put;
+ 	int acquire_in_progress = 0;
+ 	int error = 0;
+ 	struct xfrm_state *best = NULL;
+ 	u32 mark = pol->mark.v & pol->mark.m;
+ 	unsigned short encap_family = tmpl->encap_family;
++	int i;
+ 
+ 	to_put = NULL;
+ 
+ 	spin_lock_bh(&net->xfrm.xfrm_state_lock);
+-	h = xfrm_dst_hash(net, daddr, saddr, tmpl->reqid, encap_family);
+-	hlist_for_each_entry(x, net->xfrm.state_bydst+h, bydst) {
+-		if (x->props.family == encap_family &&
+-		    x->props.reqid == tmpl->reqid &&
+-		    (mark & x->mark.m) == x->mark.v &&
+-		    !(x->props.flags & XFRM_STATE_WILDRECV) &&
+-		    xfrm_state_addr_check(x, daddr, saddr, encap_family) &&
+-		    tmpl->mode == x->props.mode &&
+-		    tmpl->id.proto == x->id.proto &&
+-		    (tmpl->id.spi == x->id.spi || !tmpl->id.spi))
+-			xfrm_state_look_at(pol, x, fl, encap_family,
+-					   &best, &acquire_in_progress, &error);
+-	}
+-	if (best || acquire_in_progress)
+-		goto found;
+-
+-	h_wildcard = xfrm_dst_hash(net, daddr, &saddr_wildcard, tmpl->reqid, encap_family);
+-	hlist_for_each_entry(x, net->xfrm.state_bydst+h_wildcard, bydst) {
+-		if (x->props.family == encap_family &&
+-		    x->props.reqid == tmpl->reqid &&
+-		    (mark & x->mark.m) == x->mark.v &&
+-		    !(x->props.flags & XFRM_STATE_WILDRECV) &&
+-		    xfrm_addr_equal(&x->id.daddr, daddr, encap_family) &&
+-		    tmpl->mode == x->props.mode &&
+-		    tmpl->id.proto == x->id.proto &&
+-		    (tmpl->id.spi == x->id.spi || !tmpl->id.spi))
+-			xfrm_state_look_at(pol, x, fl, encap_family,
+-					   &best, &acquire_in_progress, &error);
++	for (i = 0; i < 3 && !best && !acquire_in_progress; i++) {
++		/* 0 = daddr, saddr.
++		 * 1 = daddr, any
++		 * 2 = any, any */
++		h = xfrm_dst_hash(net, i < 2 ? daddr : &addr_wildcard,
++				  i < 1 ? saddr : &addr_wildcard,
++				  tmpl->reqid, encap_family);
++		hlist_for_each_entry(x, net->xfrm.state_bydst+h, bydst) {
++			if (x->props.family == encap_family &&
++			    x->props.reqid == tmpl->reqid &&
++			    (mark & x->mark.m) == x->mark.v &&
++			    xfrm_state_addr_check(x, daddr, saddr, encap_family) &&
++			    tmpl->mode == x->props.mode &&
++			    tmpl->id.proto == x->id.proto &&
++			    (tmpl->id.spi == x->id.spi || !tmpl->id.spi))
++				xfrm_state_look_at(pol, x, fl, encap_family,
++						   &best, &acquire_in_progress, &error);
++		}
+ 	}
+ 
+-found:
+ 	x = best;
+ 	if (!x && !error && !acquire_in_progress) {
+ 		if (tmpl->id.spi &&
+@@ -896,7 +887,6 @@ xfrm_stateonly_find(struct net *net, u32 mark,
+ 		if (x->props.family == family &&
+ 		    x->props.reqid == reqid &&
+ 		    (mark & x->mark.m) == x->mark.v &&
+-		    !(x->props.flags & XFRM_STATE_WILDRECV) &&
+ 		    xfrm_state_addr_check(x, daddr, saddr, family) &&
+ 		    mode == x->props.mode &&
+ 		    proto == x->id.proto &&

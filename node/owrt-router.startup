@@ -1,3 +1,13 @@
+# N/A - there is nothing per-if 
+#echo '#! /bin/ssh' > /etc/hotplug.d/iface/50-hnet-security
+#echo 'sh /foo.sh' >> /etc/hotplug.d/iface/50-hnet-security
+
+# Just run it at boot time..
+# note that this requires ip-full package, no ip package,
+# and patch to enable wildcard IPsec SA destinations
+# (patches/999-xfrm_any.patch)
+sh /foo.sh
+
 # Make sure shell scripts are executable (sigh)
 chmod a+x /usr/share/hnet/*.sh
 
