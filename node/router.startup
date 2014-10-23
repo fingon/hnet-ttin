@@ -25,8 +25,15 @@ do
         fi
 done
 
-ln -s $BUILD/sbin/hnetd-backend /usr/sbin
-ln -fs $BUILD/bin/dnsmasq /usr/sbin
+for FILE in hnetd-backend hnetd-routing
+do
+        ln -s $BUILD/sbin/$FILE /usr/sbin
+done
+
+for FILE in dnsmasq
+do
+        ln -s $BUILD/bin/$FILE /usr/sbin
+done
 
 mkdir -p /usr/local/var/run
 
@@ -48,7 +55,7 @@ _withdev eth3 ifconfig eth3 up
 
 # Some kernel modules might be useful. If it fails, too bad.
 # (These are not autoloaded, unlike most modules, at least as of 09/2014.)
-modprobe ipt_REJECT 
+modprobe ipt_REJECT
 modprobe ip6t_REJECT
 
 LOGDIR=/hostlab/logs/`hostname`
@@ -67,7 +74,7 @@ VALGRIND=valgrind
 
 HOSTNAME=`hostname`
 HNETD_ARGS=""
-HNETD_ARGS="-r /bin/true -o /usr/share/hnetd/ohp.script -c /usr/share/hnetd/pcp.script -d /etc/init.d/dnsmasq -f /etc/dnsmasq.d/hnet.conf -n $HOSTNAME -p /var/run/hnet_pd --loglevel 7"
+HNETD_ARGS="-r /usr/sbin/hnetd-routing -o /usr/share/hnetd/ohp.script -c /usr/share/hnetd/pcp.script -d /etc/init.d/dnsmasq -f /etc/dnsmasq.d/hnet.conf -n $HOSTNAME -p /var/run/hnet_pd --loglevel 7"
 
 # Start miniupnpd (only on CPE nodes)
 #sh $BUILD/etc/miniupnpd/iptables_init.sh
@@ -85,7 +92,7 @@ fi
 #sleep 1
 #bash -c "`echo $VALGRIND` odhcpd >& $LOGDIR/odhcpd.log >& $LOGDIR/odhcpd.log" &
 
-# Start hnetd 
+# Start hnetd
 # default dash is braindead, even worse than busybox, on Debian..
 bash -c "`echo $VALGRIND` hnetd `echo $HNETD_ARGS` >& $LOGDIR/hnetd.log" &
 
