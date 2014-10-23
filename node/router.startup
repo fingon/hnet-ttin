@@ -61,6 +61,9 @@ modprobe ip6t_REJECT
 LOGDIR=/hostlab/logs/`hostname`
 mkdir -p $LOGDIR
 
+# Start tcpdump too, just in case
+/usr/sbin/tcpdump -i eth0 -s 1500 -w $LOGDIR/tcpdump.dat &
+
 VALGRIND=
 
 # Default valgrind mode
@@ -72,9 +75,13 @@ VALGRIND=valgrind
 # If adding new suppression targets..
 #VALGRIND="valgrind --suppressions=/valgrind-suppressions.txt --gen-suppressions=all"
 
+PASSWORD="" # no DTLS
+#PASSWORD="--password foo" # DTLS
+
 HOSTNAME=`hostname`
-HNETD_ARGS=""
-HNETD_ARGS="-r /usr/sbin/hnetd-routing -o /usr/share/hnetd/ohp.script -c /usr/share/hnetd/pcp.script -d /etc/init.d/dnsmasq -f /etc/dnsmasq.d/hnet.conf -n $HOSTNAME -p /var/run/hnet_pd --loglevel 7"
+
+HNETD_ARGS="-r /usr/sbin/hnetd-routing -o /usr/share/hnetd/ohp.script -c /usr/share/hnetd/pcp.script -d /etc/init.d/dnsmasq -f /etc/dnsmasq.d/hnet.conf -n $HOSTNAME -p /var/run/hnet_pd --loglevel 7 $PASSWORD"
+
 
 # Start miniupnpd (only on CPE nodes)
 #sh $BUILD/etc/miniupnpd/iptables_init.sh
