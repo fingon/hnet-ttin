@@ -1,0 +1,23 @@
+{
+   itoa-broken-ish-1
+   Memcheck:Value8
+   fun:_itoa_word
+}
+{
+   itoa-broken-ish-2
+   Memcheck:Cond
+   fun:_itoa_word
+}
+{
+   syslog-broken-1
+   Memcheck:Cond
+   fun:vfprintf
+   fun:__vsyslog_chk
+   fun:syslog
+}
+{
+   large-buffers-used-so-ok
+   Memcheck:Param
+   socketcall.sendto(msg)
+   fun:__sendto_nocancel
+}
