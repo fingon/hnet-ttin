@@ -1,3 +1,5 @@
+# -*- shell-script -*-
+
 # Dump cores
 ulimit -c unlimited
 
@@ -74,6 +76,9 @@ VALGRIND="valgrind --suppressions=/valgrind-suppressions.txt"
 
 # If adding new suppression targets..
 VALGRIND="valgrind --suppressions=/valgrind-suppressions.txt --gen-suppressions=all"
+
+# GDB (in a screen)
+#VALGRIND="screen -dmS hnetd gdb -ex run --args"
 
 PASSWORD="" # no DTLS
 #PASSWORD="--password foo" # DTLS
