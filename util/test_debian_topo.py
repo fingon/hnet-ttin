@@ -9,8 +9,8 @@
 # Copyright (c) 2014 Markus Stenberg
 #
 # Created:       Thu Sep 18 17:39:46 2014 mstenber
-# Last modified: Mon Sep 29 14:18:16 2014 mstenber
-# Edit time:     12 min
+# Last modified: Thu Nov  6 16:00:50 2014 mstenber
+# Edit time:     14 min
 #
 """
 
@@ -46,6 +46,8 @@ class DebianMH(test_topo.MH):
 class DebianLarge(test_topo.Large):
     router = 'router'
     tcRun = DebianBasic.tcRun
+
+del DebianLarge # this does not work due to netkit failing with bunch of Debian VMs; reason is not known
 
 class DebianDownPD(test_topo.DownPD):
     router = 'router'
