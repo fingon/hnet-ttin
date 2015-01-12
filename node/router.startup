@@ -69,13 +69,13 @@ mkdir -p $LOGDIR
 VALGRIND=
 
 # Default valgrind mode
-VALGRIND="valgrind --suppressions=/valgrind-suppressions.txt"
+#VALGRIND="valgrind --suppressions=/valgrind-suppressions.txt"
 
 # If lacking faith in the current suppression list
 #VALGRIND=valgrind
 
 # If adding new suppression targets..
-VALGRIND="valgrind --suppressions=/valgrind-suppressions.txt --gen-suppressions=all"
+#VALGRIND="valgrind --suppressions=/valgrind-suppressions.txt --gen-suppressions=all"
 
 # GDB (in a screen)
 #VALGRIND="screen -dmS hnetd gdb -ex run --args"
