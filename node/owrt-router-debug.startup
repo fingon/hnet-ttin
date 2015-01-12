@@ -3,8 +3,11 @@
 
 # LOGDIR has been created before, and set -> just reuse it
 
+# Disable babel (hnetd-routing checks for -x)
+chmod 000 /usr/sbin/babeld
+
 # Start hnetd (we intentionally don't use init script here)
-HNETD_ARGS="-d /etc/init.d/dnsmasq -f /tmp/dnsmasq.d/hnet.conf -o /usr/sbin/hnetd-ohp-script -n $HOSTNAME -r /bin/true -c /usr/sbin/hnetd-pcp-script --loglevel 7"
+HNETD_ARGS="-d /etc/init.d/dnsmasq -f /tmp/dnsmasq.d/hnet.conf -o /usr/sbin/hnetd-ohp-script -n $HOSTNAME -r /usr/sbin/hnetd-routing -c /usr/sbin/hnetd-pcp-script --loglevel 7"
 
 #HNETD_ARGS=""
 
