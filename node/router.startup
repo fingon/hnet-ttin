@@ -82,6 +82,7 @@ VALGRIND=
 
 PASSWORD="" # no DTLS
 #PASSWORD="--password foo" # DTLS
+#PASSWORD="--certificate /cert.pem --privatekey /key.pem --trust /tmp/trust.dat" # DTLS trust mode
 
 HOSTNAME=`hostname`
 
@@ -116,6 +117,12 @@ _withdev eth3 hnet-ifup eth3
 
 # We need mdnsd too
 mdnsd
+
+# hnet-trust
+if echo $PASSWORD | grep trust > /dev/null
+then
+    hnet-trust set-trust-timer 123
+fi
 
 # Mark that the UML VM has finished booting so tests can start
 echo done > $LOGDIR/status
