@@ -9,8 +9,8 @@
 # Copyright (c) 2014 Markus Stenberg
 #
 # Created:       Thu Sep 18 17:39:46 2014 mstenber
-# Last modified: Thu Nov  6 16:00:50 2014 mstenber
-# Edit time:     14 min
+# Last modified: Tue Feb  3 19:46:00 2015 mstenber
+# Edit time:     18 min
 #
 """
 
@@ -38,6 +38,15 @@ class DebianBasic(test_topo.Basic):
         l = l[:]
         l[0:0] = [cotest_ttin.addRewrites(rewrites)]
         test_topo.Basic.tcRun(self, l)
+
+class DebianPassword(unittest.TestCase):
+    topology = 'home7'
+    router = 'router-password'
+    test = DebianBasic.test
+    tcRun = DebianBasic.tcRun
+
+class DebianTrust(DebianPassword):
+    router = 'router-trust'
 
 class DebianMH(test_topo.MH):
     router = 'router'

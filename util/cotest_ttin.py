@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Mon Sep 29 14:06:02 2014 mstenber
-# Edit time:     518 min
+# Last modified: Tue Feb  3 19:47:44 2015 mstenber
+# Edit time:     519 min
 #
 """
 
@@ -387,7 +387,7 @@ def nodePingToAll6(node, remote, **kwargs):
 def nodeInterfaceFirewallZoneIs(node, interface, zone):
     def _run(state):
         # Cannot check firewall state on Debian?
-        if state['routerTemplate'] == 'router':
+        if state['routerTemplate'].startswith('router'):
             return True
         cmd = 'ifstatus %s | grep "\\"zone\\": " | cut -d ":" -f 2' % interface
         rc, r, stderr = yield from _nodeExec(node, cmd)

@@ -1,0 +1,1 @@
+--certificate /cert.pem --privatekey /key.pem --trust /tmp/trust.dat

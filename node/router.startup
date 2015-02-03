@@ -86,13 +86,17 @@ VALGRIND=
 # GDB (in a screen)
 #VALGRIND="screen -dmS hnetd gdb -ex run --args"
 
-PASSWORD="" # no DTLS
-#PASSWORD="--password foo" # DTLS
-#PASSWORD="--certificate /cert.pem --privatekey /key.pem --trust /tmp/trust.dat" # DTLS trust mode
+OPTIONS="" # no DTLS
+#OPTIONS="--password foo" # DTLS
+#OPTIONS="--certificate /cert.pem --privatekey /key.pem --trust /tmp/trust.dat" # DTLS trust mode
+if [ -f /etc/netkit/hnetd.options ]
+then
+    OPTIONS=`cat /etc/netkit/hnetd.options`
+fi
 
 HOSTNAME=`hostname`
 
-HNETD_ARGS="-r /usr/sbin/hnetd-routing -o /usr/share/hnetd/ohp.script -c /usr/share/hnetd/pcp.script -d /etc/init.d/dnsmasq -f /etc/dnsmasq.d/hnet.conf -n $HOSTNAME -p /var/run/hnet_pd --loglevel 7 $PASSWORD"
+HNETD_ARGS="-r /usr/sbin/hnetd-routing -o /usr/share/hnetd/ohp.script -c /usr/share/hnetd/pcp.script -d /etc/init.d/dnsmasq -f /etc/dnsmasq.d/hnet.conf -n $HOSTNAME -p /var/run/hnet_pd --loglevel 7 $OPTIONS"
 
 
 # Start miniupnpd (only on CPE nodes)
@@ -122,17 +126,17 @@ mdnsd
 # second option, but as we want to do valgrind etc, this is 'generic' choice)
 while ! hnet-dump | grep -q node ; do sleep 0.1 ; done
 
-# And configure it
+# hnet-trust
+if echo "$OPTIONS" | grep -q trust
+then
+    hnet-trust set-trust-timer 123
+fi
+
+# fire up interfaces now that they have been 'configured'
 _withdev eth0 hnet-ifup eth0
 _withdev eth1 hnet-ifup eth1
 _withdev eth2 hnet-ifup eth2
 _withdev eth3 hnet-ifup eth3
-
-# hnet-trust
-if echo $PASSWORD | grep trust > /dev/null
-then
-    hnet-trust set-trust-timer 123
-fi
 
 # Mark that the UML VM has finished booting so tests can start
 echo done > $LOGDIR/status
