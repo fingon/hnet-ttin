@@ -7,16 +7,16 @@ if [ -n "$HOSTLAB" ]
 then
     if [ ! -d /hostroot ]
     then
-        mkdir /hostroot  
+        mkdir /hostroot
     fi
-    mount / /hostroot -t hostfs 
+    mount / /hostroot -t hostfs
 
     HNET=`realpath /hostroot$HOSTLAB`
     HNET=`realpath $HNET/../../..`
     echo "export HNET=$HNET" >> $ENVSH
 
 # this doesn't seem to work that well
-# (shell scripts call system tools (NetKit Debian ones), 
+# (shell scripts call system tools (NetKit Debian ones),
 # so the libcs better be in sync _in any case_.
 
 #    echo 'export LD_LIBRARY_PATH=/hostroot/lib/x86_64-linux-gnu:/hostroot/lib:$HNET/build/lib' >> $ENVSH

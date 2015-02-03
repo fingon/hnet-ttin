@@ -1,5 +1,11 @@
 # -*- shell-script -*-
 
+# Debian 7.x stable dnsmasq hack as we want minimal dnsmasq, it is not
+# dnssec-enabled.  However, the init script in 7.x at some point
+# changed to use it.. gnn.
+#dpkg --purge dns-root-data # This is the elegant way to do it
+rm -rf /usr/share/dns  # and this is the fast.. :-p
+
 # Dump cores
 ulimit -c unlimited
 
