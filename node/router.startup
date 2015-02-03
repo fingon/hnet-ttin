@@ -115,14 +115,18 @@ fi
 # default dash is braindead, even worse than busybox, on Debian..
 bash -c "`echo $VALGRIND` hnetd `echo $HNETD_ARGS` >& $LOGDIR/hnetd.log" &
 
+# We need mdnsd too
+mdnsd
+
+# Make sure hnetd IPC is up and running (starting it as daemon is
+# second option, but as we want to do valgrind etc, this is 'generic' choice)
+while ! hnet-dump | grep -q node ; do sleep 0.1 ; done
+
 # And configure it
 _withdev eth0 hnet-ifup eth0
 _withdev eth1 hnet-ifup eth1
 _withdev eth2 hnet-ifup eth2
 _withdev eth3 hnet-ifup eth3
-
-# We need mdnsd too
-mdnsd
 
 # hnet-trust
 if echo $PASSWORD | grep trust > /dev/null
