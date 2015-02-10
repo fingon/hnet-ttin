@@ -8,14 +8,14 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Fri Mar 28 13:15:39 2014 mstenber
-# Last modified: Tue Jun 17 15:50:17 2014 mstenber
+# Last modified: Tue Feb 10 18:58:55 2015 mstenber
 # Edit time:     6 min
 #
 
 # Minor utility script which runs the full topology tests 5 times, and
 # stores the logs.
 
-DIRNAME=${1:-stress}-`date +'%m-%d'`
+DIRNAME=${1:-stress}-`date +'%y-%m-%d'`
 
 mkdir -p $DIRNAME
 for RUN in 1 2 3 4 5
