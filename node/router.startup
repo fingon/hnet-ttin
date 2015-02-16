@@ -133,10 +133,10 @@ then
 fi
 
 # fire up interfaces now that they have been 'configured'
-_withdev eth0 hnet-ifup eth0
-_withdev eth1 hnet-ifup eth1
-_withdev eth2 hnet-ifup eth2
-_withdev eth3 hnet-ifup eth3
+_withdev eth0 hnet-ifup -P 10000 eth0
+_withdev eth1 hnet-ifup -P 10001 eth1
+_withdev eth2 hnet-ifup -P 10002 eth2
+_withdev eth3 hnet-ifup -P 10003 eth3
 
 # Mark that the UML VM has finished booting so tests can start
 echo done > $LOGDIR/status
