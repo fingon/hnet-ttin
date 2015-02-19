@@ -8,7 +8,7 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Jun 10 17:37:30 2014 mstenber
-# Last modified: Thu Jun 12 11:43:00 2014 mstenber
+# Last modified: Thu Feb 19 12:29:43 2015 mstenber
 # Edit time:     53 min
 #
 
@@ -41,13 +41,15 @@ uci commit network
 
 #/etc/init.d/network restart
 #restart frequently bugs, should use reload (cyrusff, 20140612)
-/etc/init.d/network reload
+#/etc/init.d/network reload
 
 # This is necessary if not running the -debug variant. However,
 # as we're testing the argument parsing here, the -debug build is not really 
 # applicable in general.
-/etc/init.d/hnetd restart
+#/etc/init.d/hnetd restart
 
+# (The official way(tm))
+reload_config
 
 
 
