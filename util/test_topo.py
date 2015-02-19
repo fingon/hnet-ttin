@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Mon Sep 29 14:21:09 2014 mstenber
-# Edit time:     265 min
+# Last modified: Thu Feb 19 11:38:50 2015 mstenber
+# Edit time:     267 min
 #
 """
 
@@ -122,6 +122,18 @@ class Basic(UnitTestCase):
 
 class BasicFallback(Basic):
     router = 'owrt-router-debug'
+
+class Password(unittest.TestCase):
+    topology = 'home7'
+    router = 'owrt-router-password'
+    test = Basic.test
+    tcRun = Basic.tcRun
+
+class Trust(unittest.TestCase):
+    topology = 'home7'
+    router = 'owrt-router-trust'
+    test = Basic.test
+    tcRun = Basic.tcRun
 
 class MH(UnitTestCase):
     topology = 'home10-3isp'

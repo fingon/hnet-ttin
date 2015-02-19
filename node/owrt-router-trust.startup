@@ -1,0 +1,12 @@
+# Fire up the tcpdump too (by default, owrt-router does not have it)
+tcpdump -n -i eth0 -s 1500 -w $LOGDIR/tcpdump_eth0.dat &
+
+uci set hnet.security.trust_store=/tmp/trust.dat
+uci set hnet.security.certificate_file=/cert.pem
+uci set hnet.security.private_key_file=/key.pem
+uci commit hnet
+reload_config
+
+sleep 1
+hnet-trust set-trust-timer 123
+
