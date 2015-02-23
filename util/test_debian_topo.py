@@ -9,7 +9,7 @@
 # Copyright (c) 2014 Markus Stenberg
 #
 # Created:       Thu Sep 18 17:39:46 2014 mstenber
-# Last modified: Tue Feb  3 19:46:00 2015 mstenber
+# Last modified: Mon Feb 23 13:17:00 2015 mstenber
 # Edit time:     18 min
 #
 """
@@ -25,6 +25,9 @@ import cotest_ttin
 rewrites = {'cpe.h0.cpe.home': 'cpe.eth0.cpe.home',
             'ir3.h0.ir3.home': 'ir3.eth0.ir3.home',
             }
+
+class DebianBase(test_topo.Base):
+    router = 'router'
 
 class DebianBasic(test_topo.Basic):
     router = 'router'
