@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Mon Feb 23 12:52:00 2015 mstenber
-# Edit time:     524 min
+# Last modified: Mon Feb 23 15:56:34 2015 mstenber
+# Edit time:     527 min
 #
 """
 
@@ -519,6 +519,7 @@ base_4_remote_pcp_test = [
     ]
 
 base_4_remote_tests = [base_4_remote_ping_test] + [base_4_remote_pcp_test]
+# pcp test is removed in some tests -> have to be separate single list
 
 base_4_local_test = [
     # Service discovery
@@ -584,7 +585,8 @@ base_6_remote_pcp_test = [
     #nodeKill('client', '/usr/bin/socat'),
     ]
 
-base_6_remote_tests = base_6_remote_ping_test + base_6_remote_pcp_test
+base_6_remote_tests = base_6_remote_ping_test + [base_6_remote_pcp_test]
+# pcp test is removed in some tests -> have to be separate single list
 
 base_6_local_tests = [base_6_local_ip_step] + base_6_local_sd_test
 
