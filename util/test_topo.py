@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Thu Feb 19 11:38:50 2015 mstenber
-# Edit time:     267 min
+# Last modified: Mon Feb 23 12:20:31 2015 mstenber
+# Edit time:     273 min
 #
 """
 
@@ -34,15 +34,20 @@ class UnitTestCase(unittest.TestCase):
         tc = TestCase(l)
         assert cotest.run(tc)
 
-
-# XXX - validate address lifetimes at client
-class Basic(UnitTestCase):
+class Base(UnitTestCase):
     topology = 'home7'
     router = 'owrt-router'
     def test(self):
         l = base_tests[:]
         l[0] = startTopology(self.topology, self.router)
         self.tcRun(l)
+
+
+# XXX - validate address lifetimes at client
+class Basic(Base):
+    test = None
+    # nop - we don't really want to repeat the normal test
+
     def test_ula(self):
         l = [startTopology(self.topology, self.router, ispTemplate='isp'),
              waitRouterPrefix6('fd')] + base_6_local_sd_test
@@ -123,17 +128,11 @@ class Basic(UnitTestCase):
 class BasicFallback(Basic):
     router = 'owrt-router-debug'
 
-class Password(unittest.TestCase):
-    topology = 'home7'
+class Password(Base):
     router = 'owrt-router-password'
-    test = Basic.test
-    tcRun = Basic.tcRun
 
-class Trust(unittest.TestCase):
-    topology = 'home7'
+class Trust(Base):
     router = 'owrt-router-trust'
-    test = Basic.test
-    tcRun = Basic.tcRun
 
 class MH(UnitTestCase):
     topology = 'home10-3isp'
