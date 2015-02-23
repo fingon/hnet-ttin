@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Mon Feb 23 12:20:31 2015 mstenber
-# Edit time:     273 min
+# Last modified: Mon Feb 23 12:54:33 2015 mstenber
+# Edit time:     282 min
 #
 """
 
@@ -235,6 +235,21 @@ class Guest(UnitTestCase):
         # XXX - make sure no HNCP and TCP traffic in tcpdump
         self.tcRun(l)
 
+# AKA 'Dave test'
+class Disable(UnitTestCase):
+    topology = 'home7-owrt-ir3'
+    router = 'owrt-router-nopa'
+    def test(self):
+        # Remote (IPv6) connectivity should work, with no IP addresses
+        # on nodes in the middle.
+        l = [startTopology(self.topology, self.router)] + base_6_remote_tests
+        assert l[1].name.startswith('wait') # waitRouterPrefix6
+        del l[1]
+        l[1].timeout = TIMEOUT # override the 'client has ip address' check to have longer duration
+        # Finally, make sure 'ir2' does not have an address
+        l.append(cotest.NotStep(nodeHasPrefix6('ir2', '2000')))
+        self.tcRun(l)
+
 class Hybrid(UnitTestCase):
     topology = 'home7-owrt-hybrid'
     router = 'owrt-router'
@@ -264,7 +279,7 @@ class HybridFallback(Hybrid):
     router = 'owrt-router-debug'
 
 class Adhoc(UnitTestCase):
-    topology = 'home7-owrt-adhoc'
+    topology = 'home7-owrt-cpe'
     router = 'owrt-router-adhoc'
     def test(self):
         l = base_tests[:]

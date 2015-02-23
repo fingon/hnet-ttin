@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Feb  3 19:47:44 2015 mstenber
-# Edit time:     519 min
+# Last modified: Mon Feb 23 12:52:00 2015 mstenber
+# Edit time:     524 min
 #
 """
 
@@ -584,9 +584,9 @@ base_6_remote_pcp_test = [
     #nodeKill('client', '/usr/bin/socat'),
     ]
 
-base_6_remote_tests = [base_6_remote_ping_test] + [base_6_remote_pcp_test]
+base_6_remote_tests = base_6_remote_ping_test + base_6_remote_pcp_test
 
-base_6_local_tests = [base_6_local_ip_step] + [base_6_local_sd_test]
+base_6_local_tests = [base_6_local_ip_step] + base_6_local_sd_test
 
 base_6_tests = base_6_remote_tests + base_6_local_tests
 

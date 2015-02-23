@@ -1,0 +1,10 @@
+uci batch <<EOF
+set network.h0.disable_pa=1
+set network.h1.disable_pa=1
+set network.h2.disable_pa=1
+set network.h3.disable_pa=1
+EOF
+
+uci commit
+
+reload_config
