@@ -7,6 +7,16 @@ uci set hnet.security.private_key_file=/key.pem
 uci commit hnet
 reload_config
 
-sleep 1
+# Ugh. hnet seems to take some time to get restarted. 1 second sleep
+# may not be even enough.
+sleep 3
+
+while ! hnet-dump | grep -q node ; do sleep 0.1 ; done
+
 hnet-trust set-trust-timer 123
 
+# Also trust anything added before this; cleaner(?) way to handle races
+for RID in `hnet-trust list | grep '": {' | cut -d '"' -f 2`
+do
+        hnet-trust set $RID positive
+done
