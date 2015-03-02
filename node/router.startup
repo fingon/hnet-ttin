@@ -96,7 +96,7 @@ fi
 
 HOSTNAME=`hostname`
 
-HNETD_ARGS="-r /usr/sbin/hnetd-routing -o /usr/share/hnetd/ohp.script -c /usr/share/hnetd/pcp.script -d /hack-dnsmasq-restart.sh -f /etc/dnsmasq.d/hnet.conf -n $HOSTNAME -p /var/run/hnet_pd --loglevel 7 $OPTIONS"
+HNETD_ARGS="-M /usr/share/hnetd/multicast.script -r /usr/sbin/hnetd-routing -o /usr/share/hnetd/ohp.script -c /usr/share/hnetd/pcp.script -d /hack-dnsmasq-restart.sh -f /etc/dnsmasq.d/hnet.conf -n $HOSTNAME -p /var/run/hnet_pd --loglevel 7 $OPTIONS"
 
 
 # Start miniupnpd (only on CPE nodes)
