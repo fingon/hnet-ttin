@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Mon Feb 23 12:54:33 2015 mstenber
-# Edit time:     282 min
+# Last modified: Tue Mar  3 12:23:22 2015 mstenber
+# Edit time:     284 min
 #
 """
 
@@ -67,7 +67,7 @@ class Basic(Base):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6-64')]
         l = l + [waitRouterPrefix6('200', timeout=TIMEOUT_INITIAL)]
         l = l + [cotest.NotStep(nodeHasPrefix6('client', '2000:'))]
-        l = l + [nodeRun('client', 'dhclient -6 eth0')]
+        l = l + [nodeRun('client', 'dhclient -6 eth0', timeout=TIMEOUT)]
         l = l + base_6_tests + fw_test
         self.tcRun(l)
     def test_6only_62(self):
@@ -76,7 +76,7 @@ class Basic(Base):
         #l = l + [cotest.NotStep(nodeHasPrefix6('client', '2000:'))]
         # No guarantee that the client may not have gotten /64 - this is
         # race condition. only in 6only_64 is it guaranteed no /64
-        l = l + [nodeRun('client', 'dhclient -6 eth0')]
+        l = l + [nodeRun('client', 'dhclient -6 eth0', timeout=TIMEOUT)]
         l = l + base_6_tests + fw_test
         self.tcRun(l)
     def test_6only_inf_cpe_isp_down(self):
@@ -298,7 +298,7 @@ class Custom(UnitTestCase):
                                    wait=1, timeout=TIMEOUT)]
 
         l = l + base_6_remote_tests
-        l = l + [nodeRun('client', 'dhclient eth0')]
+        l = l + [nodeRun('client', 'dhclient eth0', timeout=TIMEOUT_INITIAL)]
         l = l + [waitRouterPrefix4('172.', timeout=TIMEOUT_INITIAL)]
         l = l + base_4_remote_tests
         l = l + [cotest.RepeatStep(nodePing6('client', 'cpe.h0.test'), wait=1, timeout=TIMEOUT_SHORT),
@@ -392,7 +392,7 @@ class Home4(UnitTestCase):
                                    wait=1, timeout=TIMEOUT)]
 
         l = l + base_6_remote_tests
-        l = l + [nodeRun('client', 'dhclient eth0')] + base_4_remote_tests
+        l = l + [nodeRun('client', 'dhclient eth0', timeout=TIMEOUT)] + base_4_remote_tests
         l = l + [cotest.RepeatStep(nodePing6('client', 'openwrt.h0.openwrt.home'), wait=1, timeout=TIMEOUT_SHORT),
                  cotest.RepeatStep(nodePing4('client', 'openwrt.h0.openwrt.home'), wait=1, timeout=TIMEOUT_SHORT),
                  ]

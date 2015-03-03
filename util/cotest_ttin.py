@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Mon Feb 23 15:56:34 2015 mstenber
-# Edit time:     527 min
+# Last modified: Tue Mar  3 12:22:47 2015 mstenber
+# Edit time:     529 min
 #
 """
 
@@ -252,11 +252,11 @@ def topologyLives():
         return r
     return cotest.Step(_run, name=n)
 
-def nodeRun(node, cmd):
+def nodeRun(node, cmd, **kw):
     def _run(state):
         rc, *x = yield from _nodeExec(node, cmd)
         return rc == 0
-    return cotest.Step(_run, name='@%s:%s' % (node, cmd))
+    return cotest.Step(_run, name='@%s:%s' % (node, cmd), **kw)
 
 def nodeStart(node, cmd):
     def _run(state):
@@ -492,7 +492,7 @@ base_4_setup_test = [
     waitRouterPrefix4('10.', timeout=TIMEOUT_INITIAL),
     #cotest.NotStep(nodeHasPrefix4('client', '10.')), # in nested pd, 192.*
     cotest.NotStep(nodePing4('client', 'h-server')),
-    nodeRun('client', 'dhclient eth0'),
+    nodeRun('client', 'dhclient eth0', timeout=TIMEOUT),
     ]
 
 base_4_remote_ping_test = [
