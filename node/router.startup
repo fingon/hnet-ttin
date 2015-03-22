@@ -117,10 +117,10 @@ fi
 
 # Start hnetd
 # default dash is braindead, even worse than busybox, on Debian..
-bash -c "`echo $VALGRIND` hnetd `echo $HNETD_ARGS` >& $LOGDIR/hnetd.log" &
+bash -c "$VALGRIND hnetd $HNETD_ARGS >& $LOGDIR/hnetd.log" &
 
 # We need mdnsd too
-mdnsd
+bash -c "mdnsd -debug >& $LOGDIR/mdnsd.log" &
 
 # Make sure hnetd IPC is up and running (starting it as daemon is
 # second option, but as we want to do valgrind etc, this is 'generic' choice)
