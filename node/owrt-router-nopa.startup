@@ -1,10 +1,11 @@
-uci batch <<EOF
-set network.h0.disable_pa=1
-set network.h1.disable_pa=1
-set network.h2.disable_pa=1
-set network.h3.disable_pa=1
-EOF
+#-*-sh-*-
+uci set network.h0.disable_pa=1
+uci set network.h1.disable_pa=1
+uci set network.h2.disable_pa=1
+uci set network.h3.disable_pa=1
+# I wonder why this did not work with uci batch.. oh well, not interested
+# enough to debug now (03/2015)
 
-uci commit
+uci commit network
 
 reload_config
