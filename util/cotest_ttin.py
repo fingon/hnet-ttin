@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Mar  3 12:22:47 2015 mstenber
-# Edit time:     529 min
+# Last modified: Tue Mar 24 20:18:40 2015 mstenber
+# Edit time:     532 min
 #
 """
 
@@ -540,7 +540,7 @@ base_4_tests = [base_4_setup_test] + base_4_remote_tests + [base_4_local_test]
 ignored_address_prefixes = [
     'fd', # ULA
     '::192.168', # IPv6/6rd
-    '2001:6400:', # IPv6/6rd
+    '2001:6400::', # IPv6/6rd network-wide address
     ]
 base_6_local_ip_step = cotest.RepeatStep([updateNodeAddresses6('cpe', exclude=ignored_address_prefixes), nodePingToAll6('client', 'cpe')], wait=1, timeout=TIMEOUT)
 
