@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Mar 24 20:18:40 2015 mstenber
-# Edit time:     532 min
+# Last modified: Tue Apr 21 10:31:31 2015 mstenber
+# Edit time:     542 min
 #
 """
 
@@ -44,7 +44,7 @@ KEY_TOPOLOGY='topology'
 
 @asyncio.coroutine
 def _killTopology():
-    cotest.sync_system('killall -9q uml_mconsole', 10) # ignore return value
+    cotest.sync_system('killall -9q uml_mconsole lstart', 10) # ignore return value
     cmd = 'vclean --clean-all'
     rc, *x = yield from cotest.async_system(cmd)
     return rc == 0
@@ -135,7 +135,7 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300, or
         isd = {}
         state['isps'] = isd
         home = os.environ['HOME']
-        rc, *x = yield from cotest.async_system('rm -rf %s' % os.path.join(home, '.netkit', 'mconsole'))
+        rc, *x = yield from cotest.async_system('rm -rf %s %s' % (os.path.join(home, '.netkit', 'mconsole'), os.path.join(home, '.netkit', 'hubs')))
         if rc:
             _info('rm mconsole failed with exit code %d' % rc)
             return
