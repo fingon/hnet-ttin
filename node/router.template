@@ -1,4 +1,4 @@
-inherit=hnet-build
+inherit=debian,hnet-build
 #mem=64
 # w/o valgrind this might work, or not
 

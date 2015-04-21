@@ -1,9 +1,3 @@
-# Debian7.0 - /run/resolvconf/interface is missing -> create it
-if [ ! -d /run/resolvconf ]
-then
-        resolvconf --create-runtime-directories
-fi
-
 # Start named
 /etc/init.d/bind9 start
 

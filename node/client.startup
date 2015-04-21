@@ -18,19 +18,6 @@ chmod 0600 /root/.ssh/authorized_keys
 # stateless support in ISC DHCP 4.2.4), so I guess at some point we
 # have to do stateful DHCPv6 config so it can provide stateless info
 # to those who rather do SLAAC
-
-if [ ! -d /run/resolvconf ]
-then
-        # (Fix the resolv.conf - by default Debian leaves some dummy there
-        # even if resolvconf is in use, sigh)
-        ln -sf /etc/resolvconf/run/resolv.conf /etc/
-
-        # Debian7.0 - /run/resolvconf/interface is missing -> create it
-        resolvconf --create-runtime-directories
-        #mkdir -p /run/resolvconf/interface
-        resolvconf --enable-updates
-fi
-
 /etc/init.d/rdnssd start
 
 # Start tcpdump based on `hostname` as well, to store all packets

@@ -1,4 +1,4 @@
-inherit=common,lsadr
+inherit=common,debian,lsadr
 
 # Addresses are provided here; however, downstream assignment services
 # are in the various isp sub-classes.
