@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Jun  2 17:05:05 2014 mstenber
-# Last modified: Tue Sep  2 13:04:38 2014 mstenber
-# Edit time:     71 min
+# Last modified: Wed Apr 22 10:25:33 2015 mstenber
+# Edit time:     72 min
 #
 """
 
@@ -65,7 +65,7 @@ def handle_one(p, iface, timeout):
 
     if reply:
         print reply.show()
-        if reply.opcode != 128:
+        if reply.opcode != 128 and reply.ext_port > 0:
             print 'got', reply.ext_ip, reply.ext_port
 
 
