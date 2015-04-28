@@ -17,7 +17,6 @@ ifconfig eth0 up
 sleep 3
 
 tcpdump -n -i eth0 -s 1500 -w $LOGDIR/tcpdump_eth0.dat &
-ip monitor >& $LOGDIR/ip_monitor.txt &
 
 mkdir -p /tmp/dnsmasq.d
 VALGRIND=

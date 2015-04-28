@@ -3,4 +3,7 @@ HOSTNAME=`cat /proc/sys/kernel/hostname`
 LOGDIR=/hostlab/logs/$HOSTNAME
 mkdir -p $LOGDIR
 
+# Useful for determining what is going on with routing..
+ip monitor | logger -t ip_monitor &
+
 echo done > $LOGDIR/status
