@@ -4,6 +4,11 @@ LOGDIR=/hostlab/logs/$HOSTNAME
 mkdir -p $LOGDIR
 
 # Useful for determining what is going on with routing..
-ip monitor | logger -t ip_monitor &
+#ip monitor | logger -t ip_monitor &
+
+# Useful for finding out what moves around..
+#ifconfig eth0 up
+#sleep 1
+#tcpdump -n -i eth0 -s 1500 -w $LOGDIR/tcpdump_eth0.dat &
 
 echo done > $LOGDIR/status
