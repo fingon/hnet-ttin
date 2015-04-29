@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Tue Mar  3 12:23:22 2015 mstenber
-# Edit time:     284 min
+# Last modified: Tue Apr 28 16:18:49 2015 mstenber
+# Edit time:     301 min
 #
 """
 
@@ -330,22 +330,30 @@ class Mutate(UnitTestCase):
     topology = 'home7-nsa'
     router = 'owrt-router'
     iterations = 1
+    mutation_timeout = TIMEOUT + 15 * 4 # Babel hello window * interval
+    # the default TIMEOUT being minute isn't really enough, given Babel
+    # may take that long (or longer) to realize the peer is not around anymore.
     def test_replace(self):
         l = base_tests[:]
         l[0] = startTopology(self.topology, self.router)
+
+
+        cpe_pingable_s = cotest.StepSequence([
+            cotest.RepeatStep(nodePing6('client', 'cpe.home', timeout=2), wait=1),
+            cotest.RepeatStep(nodePing4('client', 'cpe.home', timeout=2), wait=1)
+            ],
+            timeout=self.mutation_timeout)
 
         for x in range(self.iterations):
             # Mutate the topology by moving ir3-0 from ROUTER1 to HOME
             l = l + [nodeRun('nsa', 'brctl delif net-ROUTER1 ir3-0'),
                      nodeRun('nsa', 'brctl addif net-HOME ir3-0'),
-                     cotest.RepeatStep(nodePing6('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
-                     cotest.RepeatStep(nodePing4('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
+                     cpe_pingable_s,
                      ]
             # Mutate the topology by moving ir3-0 from HOME to ROUTER1
             l = l + [nodeRun('nsa', 'brctl delif net-HOME ir3-0'),
                      nodeRun('nsa', 'brctl addif net-ROUTER1 ir3-0'),
-                     cotest.RepeatStep(nodePing6('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
-                     cotest.RepeatStep(nodePing4('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
+                     cpe_pingable_s,
                      ]
 
             self.tcRun(l)
@@ -360,24 +368,29 @@ class Mutate(UnitTestCase):
         # net-ROUTER32 is empty network -> we can remove it here
         l = l + [nodeRun('nsa', 'brctl delif net-ROUTER32 ir3-2')]
 
+        cpe_pingable_s = cotest.StepSequence([
+            cotest.RepeatStep(nodePing6('client', 'cpe.home', timeout=2), wait=1),
+            cotest.RepeatStep(nodePing4('client', 'cpe.home', timeout=2), wait=1)
+            ],
+            timeout=self.mutation_timeout)
+
         for x in range(self.iterations):
             l = l + [nodeRun('nsa', 'brctl delif net-ROUTER1 ir3-0'),
                      nodeRun('nsa', 'brctl addif net-HOME ir3-2'),
-                     cotest.RepeatStep(nodePing6('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
-                     cotest.RepeatStep(nodePing4('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
-                     cotest.RepeatStep(ensureNoSamePrefix6('ir3', 'eth0', 'ir1', 'eth1'), wait=1, timeout=TIMEOUT),
+                     cpe_pingable_s,
+                     cotest.RepeatStep(ensureNoSamePrefix6('ir3', 'eth0', 'ir1', 'eth1'), wait=1, timeout=self.mutation_timeout),
                      ]
             l = l + [nodeRun('nsa', 'brctl delif net-HOME ir3-2'),
                      nodeRun('nsa', 'brctl addif net-ROUTER1 ir3-0'),
-                     cotest.RepeatStep(nodePing6('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
-                     cotest.RepeatStep(nodePing4('client', 'cpe.home', timeout=2), wait=1, timeout=TIMEOUT),
-                     cotest.RepeatStep(ensureNoSamePrefix6('ir3', 'eth2', 'cpe', 'eth0'), wait=1, timeout=TIMEOUT),
+                     cpe_pingable_s,
+                     cotest.RepeatStep(ensureNoSamePrefix6('ir3', 'eth2', 'cpe', 'eth0'), wait=1, timeout=self.mutation_timeout),
                      ]
 
             self.tcRun(l)
 
 class MutateFallback(Mutate):
     router = 'owrt-router-debug'
+    mutation_timeout = TIMEOUT
 
 class Home4(UnitTestCase):
     topology = 'ow4'
