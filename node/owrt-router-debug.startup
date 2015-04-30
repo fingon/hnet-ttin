@@ -13,11 +13,6 @@ HNETD_ARGS="-d /etc/init.d/dnsmasq -f /tmp/dnsmasq.d/hnet.conf -o /usr/sbin/hnet
 
 echo debug-start > $LOGDIR/status
 
-ifconfig eth0 up
-sleep 3
-
-tcpdump -n -i eth0 -s 1500 -w $LOGDIR/tcpdump_eth0.dat &
-
 mkdir -p /tmp/dnsmasq.d
 VALGRIND=
 
