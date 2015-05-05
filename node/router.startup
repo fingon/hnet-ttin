@@ -86,6 +86,9 @@ VALGRIND=
 # GDB (in a screen)
 #VALGRIND="screen -dmS hnetd gdb -ex run --args"
 
+# GDB (in tmux)
+#VALGRIND="tmux new-session -d -n hnetd -s hnetd"
+
 OPTIONS="" # no DTLS
 #OPTIONS="--password foo" # DTLS
 #OPTIONS="--certificate /cert.pem --privatekey /key.pem --trust /tmp/trust.dat" # DTLS trust mode
