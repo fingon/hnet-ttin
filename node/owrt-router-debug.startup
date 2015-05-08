@@ -27,9 +27,9 @@ VALGRIND=
 
 `echo $VALGRIND` /usr/sbin/hnetd `echo $HNETD_ARGS` >& $LOGDIR/hnetd.log &
 
-`echo $VALGRIND` /usr/sbin/odhcpd >& $LOGDIR/odhcpd.log &
+`echo $VALGRIND` /usr/sbin/odhcpd | logger -t odhcpd &
 
-mdnsd -debug >& $LOGDIR/mdnsd.log &
+mdnsd -debug 2>&1 | logger -t mdnsd &
 
 echo debug-done > $LOGDIR/status
 
