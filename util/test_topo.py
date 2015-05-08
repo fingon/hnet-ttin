@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Tue Apr 28 16:18:49 2015 mstenber
-# Edit time:     301 min
+# Last modified: Fri May  8 11:25:23 2015 mstenber
+# Edit time:     303 min
 #
 """
 
@@ -67,7 +67,9 @@ class Basic(Base):
         l = [startTopology(self.topology, self.router, ispTemplate='isp6-64')]
         l = l + [waitRouterPrefix6('200', timeout=TIMEOUT_INITIAL)]
         l = l + [cotest.NotStep(nodeHasPrefix6('client', '2000:'))]
-        l = l + [nodeRun('client', 'dhclient -6 eth0', timeout=TIMEOUT)]
+        l = l + [cotest.RepeatStep([nodeRun('client', 'dhclient -6 eth0', timeout=TIMEOUT),
+                                    nodeHasPrefix6('client', '2000:')], wait=1,
+                                   timeout=TIMEOUT)]
         l = l + base_6_tests + fw_test
         self.tcRun(l)
     def test_6only_62(self):
@@ -76,7 +78,9 @@ class Basic(Base):
         #l = l + [cotest.NotStep(nodeHasPrefix6('client', '2000:'))]
         # No guarantee that the client may not have gotten /64 - this is
         # race condition. only in 6only_64 is it guaranteed no /64
-        l = l + [nodeRun('client', 'dhclient -6 eth0', timeout=TIMEOUT)]
+        l = l + [cotest.RepeatStep([nodeRun('client', 'dhclient -6 eth0', timeout=TIMEOUT),
+                                    nodeHasPrefix6('client', '2000:')], wait=1,
+                                   timeout=TIMEOUT)]
         l = l + base_6_tests + fw_test
         self.tcRun(l)
     def test_6only_inf_cpe_isp_down(self):
