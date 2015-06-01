@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Fri May  8 11:25:23 2015 mstenber
-# Edit time:     303 min
+# Last modified: Mon Jun  1 13:53:23 2015 mstenber
+# Edit time:     304 min
 #
 """
 
@@ -128,6 +128,9 @@ class Basic(Base):
         l = l + [nodeHasPrefix6('client', '2000:'),
                  nodeHasPrefix6('client', '2001:')]
         self.tcRun(l)
+
+class BaseFallback(Base):
+    router = 'owrt-router-debug'
 
 class BasicFallback(Basic):
     router = 'owrt-router-debug'
