@@ -26,3 +26,9 @@
    obj:/lib/libuClibc-0.9.33.2.so
    fun:inet_ntop
 }
+{
+   hncp-pa-brokenness-hopefully-ok
+   Memcheck:Cond
+   fun:hpa_get_hpa_advp
+   fun:hpa_update_ra_tlv
+}

@@ -15,15 +15,17 @@ echo debug-start > $LOGDIR/status
 
 mkdir -p /tmp/dnsmasq.d
 VALGRIND=
+VALGRIND_SHARED_ARGS="--child-silent-after-fork=yes -q"
 
 # Default valgrind mode
-#VALGRIND="valgrind --suppressions=/valgrind-suppressions.txt"
+#VALGRIND="valgrind $VALGRIND_SHARED_ARGS --suppressions=/valgrind-suppressions.txt"
 
 # If lacking faith in the current suppression list
-#VALGRIND=valgrind
+#VALGRIND="valgrind $VALGRIND_SHARED_ARGS"
+
 
 # If adding new suppression targets..
-#VALGRIND="valgrind --suppressions=/valgrind-suppressions.txt --gen-suppressions=all"
+#VALGRIND="valgrind $VALGRIND_SHARED_ARGS --suppressions=/valgrind-suppressions.txt --gen-suppressions=all"
 
 `echo $VALGRIND` /usr/sbin/hnetd `echo $HNETD_ARGS` >& $LOGDIR/hnetd.log &
 
