@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Tue Apr 21 10:31:31 2015 mstenber
-# Edit time:     542 min
+# Last modified: Wed Jun  3 12:59:43 2015 mstenber
+# Edit time:     543 min
 #
 """
 
@@ -499,7 +499,10 @@ base_4_remote_ping_test = [
     # this is never first -> no need for TIMEOUT_INITIALs
     #nodeHasPrefix4('client', '10.'), # in nested pd, we do 192.*
     # 30 seconds =~ time for routing to settle
-    cotest.RepeatStep(nodePing4('client', 'h-server'), wait=1, timeout=TIMEOUT),
+
+    # Given renumbering event on the route (which is not impossible), Babel
+    # may take 'awhile' to recover from it. sigh.
+    cotest.RepeatStep(nodePing4('client', 'h-server'), wait=1, timeout=TIMEOUT_INITIAL),
     cotest.RepeatStep(nodePing4('client', 'server.v4.lab.example.com'), wait=1, timeout=TIMEOUT),
 
     ]
@@ -530,7 +533,7 @@ base_4_local_test = [
                       wait=1, timeout=TIMEOUT_SHORT),
     # If it's not first-hop, availability of cpe doesn't imply ir3
     cotest.RepeatStep(nodePing4('client', 'ir3.h0.ir3.home'),
-                      wait=1, timeout=TIMEOUT),
+                      wait=1, timeout=TIMEOUT_INITIAL),
 
     ]
 
