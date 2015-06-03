@@ -10,12 +10,16 @@ fi
 
 # Make sure dnsmasq does not filter RFC1918 responses
 uci set dhcp.@dnsmasq[0].rebind_protection=0
+uci set dhcp.@dnsmasq[0].boguspriv=0
 uci commit dhcp
 
 # default is 256kb.. we don't really care though
 #uci set system.@system[0].log_size=256
 uci set system.@system[0].log_size=10000
 uci commit system
+
+# Reload the system config based on what we just did
+reload_config
 
 # If dynamic debug is enabled we can do something like this:
 #echo 'format kobject: +p' > /sys/kernel/debug/dynamic_debug/control
