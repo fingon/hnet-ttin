@@ -73,15 +73,16 @@ mkdir -p $LOGDIR
 /usr/sbin/tcpdump -i eth0 -s 1500 -w $LOGDIR/tcpdump.dat &
 
 VALGRIND=
+VALGRIND_SHARED_ARGS="--child-silent-after-fork=yes -q"
 
 # Default valgrind mode
-#VALGRIND="valgrind --suppressions=/valgrind-suppressions.txt"
+#VALGRIND="valgrind $VALGRIND_SHARED_ARGS --suppressions=/valgrind-suppressions.txt"
 
 # If lacking faith in the current suppression list
-#VALGRIND=valgrind
+#VALGRIND="valgrind $VALGRIND_SHARED_ARGS"
 
 # If adding new suppression targets..
-#VALGRIND="valgrind --suppressions=/valgrind-suppressions.txt --gen-suppressions=all"
+#VALGRIND="valgrind  $VALGRIND_SHARED_ARGS --suppressions=/valgrind-suppressions.txt --gen-suppressions=all"
 
 # GDB (in a screen)
 #VALGRIND="screen -dmS hnetd gdb -ex run --args"
