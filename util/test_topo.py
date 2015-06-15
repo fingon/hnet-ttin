@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Mon Jun  1 13:53:23 2015 mstenber
-# Edit time:     304 min
+# Last modified: Mon Jun 15 12:00:40 2015 mstenber
+# Edit time:     312 min
 #
 """
 
@@ -281,8 +281,21 @@ class Hybrid(UnitTestCase):
         l = l + self.tests_6
         self.tcRun(l)
 
-
 class HybridFallback(Hybrid):
+    router = 'owrt-router-debug'
+
+class Leaf(UnitTestCase):
+    topology = 'home7-owrt-leaf'
+    router = 'owrt-router'
+    def test(self):
+        l = base_tests[:] + [
+            cotest.RepeatStep(nodePing6('client', 'cpe.h0.ir1.home'),
+                              wait=1, timeout=TIMEOUT),
+                ]
+        l[0] = startTopology(self.topology, self.router)
+        self.tcRun(l)
+
+class LeafFallback(Leaf):
     router = 'owrt-router-debug'
 
 class Adhoc(UnitTestCase):
