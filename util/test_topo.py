@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Mon Jun 15 12:00:40 2015 mstenber
-# Edit time:     312 min
+# Last modified: Tue Jun 16 09:54:23 2015 mstenber
+# Edit time:     314 min
 #
 """
 
@@ -350,9 +350,13 @@ class Mutate(UnitTestCase):
     topology = 'home7-nsa'
     router = 'owrt-router'
     iterations = 1
-    mutation_timeout = TIMEOUT + 15 * 4 # Babel hello window * interval
+    mutation_timeout = 180
     # the default TIMEOUT being minute isn't really enough, given Babel
     # may take that long (or longer) to realize the peer is not around anymore.
+
+    # In the real world, at least 43:57->46:08 delay has been seen. So use
+    # 3 minutes for now..
+
     def test_replace(self):
         l = base_tests[:]
         l[0] = startTopology(self.topology, self.router)
