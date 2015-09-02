@@ -9,9 +9,10 @@ fi
 # XXX SUPER HACK XXX
 
 # Make sure dnsmasq does not filter RFC1918 responses
-uci set dhcp.@dnsmasq[0].rebind_protection=0
-uci set dhcp.@dnsmasq[0].boguspriv=0
-uci commit dhcp
+#uci set dhcp.@dnsmasq[0].rebind_protection=0
+#uci set dhcp.@dnsmasq[0].boguspriv=0
+#uci commit dhcp
+# Moved to hnetd package 2015.09.02.
 
 # default is 256kb.. we don't really care though
 #uci set system.@system[0].log_size=256
