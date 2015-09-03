@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 15:52:19 2014 mstenber
-# Last modified: Tue Jun 16 09:54:23 2015 mstenber
-# Edit time:     314 min
+# Last modified: Thu Sep  3 11:17:23 2015 mstenber
+# Edit time:     315 min
 #
 """
 
@@ -86,7 +86,7 @@ class Basic(Base):
     def test_6only_inf_cpe_isp_down(self):
         # Basic idea: when uplink disappears even with infinite
         # lifetime, it should disappear from the client.
-        l = [startTopology(self.topology, self.router, ispTemplate='isp6-inf')]
+        l = [startTopology(self.topology, self.router, ispTemplate='isp6-inf', rdnssdBroken=True)]
         l = l + base_6_tests + fw_test
 
         # Kill ipv6 uplink -> should disappear from client's preferred
@@ -114,13 +114,13 @@ class Basic(Base):
                                    wait=1, timeout=TIMEOUT)]
         self.tcRun(l)
     def test_6rd(self):
-        l = [startTopology(self.topology, self.router, ispTemplate='isp4-6rd')]
+        l = [startTopology(self.topology, self.router, ispTemplate='isp4-6rd', rdnssdBroken=True)]
         l = l + base_6_tests + base_4_tests + fw_test
         l = l + [nodeHasPrefix6('client', '2001:')]
         self.tcRun(l)
     def test_6rd_6(self):
         l = [startTopology(self.topology, self.router,
-                           ispTemplate='isp4-6rd-6'),
+                           ispTemplate='isp4-6rd-6', rdnssdBroken=True),
              cotest.RepeatStep(updateNodeAddresses6('client', minimum=2),
                                wait=5, timeout=TIMEOUT),
              ]

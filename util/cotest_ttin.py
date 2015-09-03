@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Wed Jun  3 12:59:43 2015 mstenber
-# Edit time:     543 min
+# Last modified: Thu Sep  3 11:20:55 2015 mstenber
+# Edit time:     550 min
 #
 """
 
@@ -95,9 +95,10 @@ def nodeGo(node):
     return cotest.Step(_run, name='go %s' % node)
 
 # Allow for fail or two
-def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300, originalRouterTemplate="router"):
+def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300, originalRouterTemplate="router", **kw):
     @asyncio.coroutine
     def _run(state):
+        state.update(**kw)
         # Check we're inside ttin main directory
         with open('util/cotest.py') as f:
             pass
@@ -172,6 +173,14 @@ def startTopology(topology, routerTemplate, *, ispTemplate=None, timeout=300, or
                                          exceptionIsFailure=True),
                              wait=1,
                              timeout=timeout)
+
+def ifStateHasFlag(fl, step):
+    n = 'check flag %s' % fl
+    def _run(state):
+        if state.get(fl):
+            yield from step.run(state)
+        return True
+    return cotest.Step(_run, name=n)
 
 def routerReady(router):
     n = 'router %s ready' % router
@@ -566,6 +575,8 @@ base_6_remote_ping_test = [
                       wait=1, timeout=TIMEOUT_SHORT),
     cotest.RepeatStep(nodePing6('client', 'h-server'),
                       wait=1, timeout=TIMEOUT),
+    ifStateHasFlag('rdnssdBroken',
+                   nodeRun('client', 'dhclient -6 -S eth0', timeout=TIMEOUT)),
     cotest.RepeatStep(nodePing6('client', 'server.v6.lab.example.com'),
                       wait=1, timeout=TIMEOUT),
     cotest.RepeatStep([updateNodeAddresses6('client', exclude=['fd']),
