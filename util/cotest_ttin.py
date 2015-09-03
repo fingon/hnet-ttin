@@ -9,8 +9,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 25 10:39:18 2014 mstenber
-# Last modified: Thu Sep  3 11:20:55 2015 mstenber
-# Edit time:     550 min
+# Last modified: Thu Sep  3 12:00:35 2015 mstenber
+# Edit time:     555 min
 #
 """
 
@@ -561,7 +561,11 @@ base_6_local_sd_test = [
     cotest.RepeatStep(nodePing6('client', 'cpe.h0.cpe.home'),
                       wait=1, timeout=TIMEOUT_INITIAL),
     # Almost SD ;) (hardcoded dnsmasq host-address on first hop)
-    cotest.RepeatStep(nodePing6('client', 'cpe.home'),
+
+    # Note: with TIMEOUT_SHORT, we need timeout=2 for ping itself so
+    # that test does not 'fail' due to dnsmasq reboot or whatever
+    # happening at same time.
+    cotest.RepeatStep(nodePing6('client', 'cpe.home', timeout=2),
                       wait=1, timeout=TIMEOUT_SHORT),
     # If it's not first-hop, availability of cpe doesn't imply ir3
     cotest.RepeatStep(nodePing6('client', 'ir3.h0.ir3.home'),
