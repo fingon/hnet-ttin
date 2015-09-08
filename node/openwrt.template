@@ -1,3 +1,5 @@
+inherit=common
+
 # ../.. = ttin directory
 kernel=../../openwrt-uml-bin/openwrt-uml-vmlinux
 model-fs=../../openwrt-uml-bin/openwrt-uml-ext4.img

@@ -1,4 +1,4 @@
 # Just pure OpenWrt build with configuration files for network etc. to use hnet
-inherit=common,openwrt
+inherit=openwrt
 mem=64
 
