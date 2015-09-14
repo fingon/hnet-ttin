@@ -9,8 +9,8 @@
 # Copyright (c) 2015 cisco Systems, Inc.
 #
 # Created:       Mon Sep 14 09:09:01 2015 mstenber
-# Last modified: Mon Sep 14 14:49:35 2015 mstenber
-# Edit time:     22 min
+# Last modified: Mon Sep 14 15:04:24 2015 mstenber
+# Edit time:     23 min
 #
 """
 
@@ -79,4 +79,4 @@ for x in range(args.jobs):
     else:
         pid = 0
     if not pid:
-        torture(args.server, x, args.debug)
+        torture(args.server, x, args.debug, args.tcp)
