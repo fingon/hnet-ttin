@@ -6,9 +6,13 @@ then
 fi
 
 # Debian7.0 - /run/resolvconf/interface is missing -> create it
-if [ ! -d /run/resolvconf ]
+if egrep -q '^7' /etc/debian_version
 then
-        resolvconf --create-runtime-directories
+        resolvconf --create-runtime-directories || mkdir /run/resolvconf
         resolvconf --enable-updates
 fi
 
+if egrep -q '^8' /etc/debian_version
+then
+        /etc/init.d/resolvconf start
+fi
